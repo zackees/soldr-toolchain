@@ -82,6 +82,24 @@ def _is_local_blob_entry(entry: dict) -> bool:
     return "media.githubusercontent.com/media/" in url
 
 
+def _is_lfs_pointer(path: Path) -> bool:
+    """True if `path` is a git-lfs pointer file (not the real binary).
+
+    LFS pointers are small (~130 bytes) ASCII files starting with the
+    spec URL. We check both the size and the magic prefix to avoid
+    misclassifying a very short real binary.
+    """
+    if not path.is_file():
+        return False
+    try:
+        if path.stat().st_size > 1024:
+            return False
+        head = path.read_bytes()[:64]
+    except OSError:
+        return False
+    return head.startswith(b"version https://git-lfs.github.com/spec/")
+
+
 def _file_sha256(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as f:
@@ -215,6 +233,13 @@ class AssetIndexLocalParityTest(unittest.TestCase):
         )
 
     def test_local_entries_match_freshly_derived(self) -> None:
+        """Compare checked-in local-blob rows to what the script would
+        re-derive from on-disk content. Skip any row whose underlying
+        file is an unmaterialized LFS pointer — we can't sha-check
+        bytes we don't have, and GitHub Actions sometimes fails to
+        smudge LFS (bandwidth quota, etc.). The fresh-derive only sees
+        what's actually on disk, so the comparison would be apples-to-
+        oranges for those rows."""
         fresh = bai.build_asset_index(
             ASSETS_DIR,
             repo_owner="zackees",
@@ -226,16 +251,29 @@ class AssetIndexLocalParityTest(unittest.TestCase):
             (e["owner"], e["repo"], e["tag"], e["asset"]): e
             for e in fresh["entries"]
         }
-        checked_local = {
-            (e["owner"], e["repo"], e["tag"], e["asset"]): e
-            for e in self.checked_in["entries"]
-            if _is_local_blob_entry(e)
-        }
+        checked_local: dict[tuple[str, str, str, str], dict] = {}
+        for e in self.checked_in["entries"]:
+            if not _is_local_blob_entry(e):
+                continue
+            # Map URL back to a filesystem path under ASSETS_DIR. The URL
+            # shape is "https://media.githubusercontent.com/media/<owner>/
+            # <repo>/<branch>/<rel>". We pull the trailing rel path off.
+            url = e["url"]
+            marker = f"/{e['tag']}/"
+            if marker not in url:
+                marker = "/assets/"
+            rel = url.split(marker, 1)[-1] if marker in url else None
+            disk_path = (ASSETS_DIR / rel) if rel else None
+            if disk_path and _is_lfs_pointer(disk_path):
+                continue
+            checked_local[(e["owner"], e["repo"], e["tag"], e["asset"])] = e
+
         self.assertEqual(
             set(checked_local.keys()),
             set(fresh_local.keys()) & set(checked_local.keys()),
             msg="checked-in asset-index.json has local-blob entries the "
-                "script wouldn't re-derive — likely a script-vs-file drift",
+                "script wouldn't re-derive (skipping LFS-pointer rows) — "
+                "likely a script-vs-file drift",
         )
         for key, checked in checked_local.items():
             fresh_entry = fresh_local[key]
@@ -254,6 +292,35 @@ class AssetIndexLocalParityTest(unittest.TestCase):
                 sha = entry["sha256"]
                 self.assertEqual(len(sha), 64)
                 self.assertTrue(all(c in "0123456789abcdef" for c in sha))
+
+
+@unittest.skipIf(ASSETS_DIR is None, _SKIP_REASON)
+class CDNServesRealLFSBytesTest(unittest.TestCase):
+    """When LFS smudge fails in the test runner, the file on disk is the
+    pointer text but the live CDN serves the real binary. This regression
+    guard does a HEAD on every local-blob URL in asset-index.json so we
+    catch the case where the CDN itself isn't serving real bytes (e.g.
+    LFS quota exhausted, blob deleted from LFS)."""
+
+    def test_local_blob_urls_serve_real_size(self) -> None:
+        import urllib.request
+        path = ASSETS_DIR / "asset-index.json"
+        checked_in = json.loads(path.read_text(encoding="utf-8"))
+        for e in checked_in["entries"]:
+            if not _is_local_blob_entry(e):
+                continue
+            with self.subTest(asset=e["asset"]):
+                req = urllib.request.Request(e["url"], method="HEAD")
+                try:
+                    with urllib.request.urlopen(req, timeout=30) as resp:
+                        size = int(resp.headers.get("Content-Length", "0"))
+                except Exception as exc:
+                    self.skipTest(f"network unavailable: {exc}")
+                self.assertGreater(
+                    size, 1024,
+                    msg=f"{e['url']!r} served only {size} bytes — "
+                        "LFS may be serving the pointer or the blob is missing",
+                )
 
 
 @unittest.skipIf(ASSETS_DIR is None, _SKIP_REASON)
