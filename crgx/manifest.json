@@ -1,4 +1,5 @@
 {
+  "$schema": "https://zackees.github.io/manifest.json/v1/manifest.schema.json",
   "kind": "Catalog",
   "schema_version": 1,
   "tool": "crgx",
