@@ -1,30 +1,23 @@
 name: Refresh release manifest
 
-# Nightly refresh of soldr-toolchain's `assets` orphan branch — a
-# public JSON catalogue of third-party tool releases served at
-# https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/...
+# Nightly refresh of soldr-toolchain's `assets` orphan branch — a public
+# catalogue of third-party tool releases served at
+#   https://zackees.github.io/soldr-toolchain/  (GitHub Pages)
+#   https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/...
 #
-# The job:
-#   1) checks out THREE refs into sibling worktrees:
-#        main         -> scripts that do the work
-#        assets       -> the catalogue tree (where commits land)
-#        zackees/soldr/main -> pinned-version Rust constants
-#   2) runs build_manifest.py against the assets checkout
-#   3) runs build_asset_index.py to rebuild the sha-bearing flat
-#      asset-index.json (consumed by soldr's manifest_lookup.rs)
-#   4) commits + pushes if anything changed (no-op when upstream
-#      hasn't shipped — write_if_changed gates per-tool files; an
-#      empty diff means an empty `git commit` is skipped entirely)
+# Pipeline:
+#   1) build_manifest.py        -> v5 tree in a scratch dir (queries GitHub API)
+#   2) build_asset_index.py     -> writes v5 asset-index.json (sha-bearing flat index)
+#   3) convert_v5_to_v1.py      -> projects v5 -> manifest.json v1 (Index + Catalogs)
+#                                  into the `assets` checkout, alongside the LFS blob
+#   4) build_site.py            -> writes index.html landing page
+#   5) commit + push if anything changed
 #
-# Triggered nightly + manually. Authenticated via `secrets.GITHUB_TOKEN`
-# so the API quota is the 5000 req/hour authenticated bucket, not the
-# 60 req/hour anonymous one.
+# Authenticated via secrets.GITHUB_TOKEN so the API quota is the 5000 req/hour
+# authenticated bucket, not the 60 req/hour anonymous one.
 
 on:
   schedule:
-    # 06:30 UTC every day — late enough that any upstream release that
-    # shipped during US business hours (≤ ~02:00 UTC) is captured in
-    # the same calendar day's refresh.
     - cron: "30 6 * * *"
   workflow_dispatch:
 
@@ -46,13 +39,11 @@ jobs:
           ref: main
           path: main
 
-      - name: Checkout soldr-toolchain assets (catalogue tree)
+      - name: Checkout soldr-toolchain assets (catalogue tree + LFS blob)
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           ref: assets
           path: assets
-          # LFS smudge so the SDK binary is real bytes, not a pointer
-          # (build_asset_index.py hashes file content).
           lfs: true
 
       - name: Checkout zackees/soldr (pinned-version source)
@@ -62,32 +53,45 @@ jobs:
           ref: main
           path: soldr
 
-      - name: Show python version (pre-installed on ubuntu-24.04)
+      - name: Show python version
         shell: bash
         run: python3 --version
 
-      - name: Run build_manifest.py
+      - name: Build v5 tree into scratch dir
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p v5-scratch
           python3 main/scripts/build_manifest.py \
-              --output-dir assets \
+              --output-dir v5-scratch \
               --repo-root soldr
 
-      - name: Build asset-index.json (sha-bearing flat index)
-        # Consumed by soldr's crates/soldr-cli/src/fetch/manifest_lookup.rs
-        # at runtime. Locally-hosted blobs under <tool>/<version>/<platform>/
-        # contribute on-disk shas; GitHub releases contribute shas only
-        # when the release ships a SHA256SUMS asset.
+      - name: Build v5 asset-index.json (sha-bearing flat index)
         shell: bash
         run: |
           set -euo pipefail
           python3 main/scripts/build_asset_index.py \
-              --manifest-checkout assets \
-              --output assets/asset-index.json \
+              --manifest-checkout v5-scratch \
+              --output v5-scratch/asset-index.json \
               --branch assets
+
+      - name: Convert v5 -> manifest.json v1 (Index + Catalogs)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 main/scripts/convert_v5_to_v1.py \
+              --src v5-scratch \
+              --dest assets
+
+      - name: Build index.html landing page
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 main/scripts/build_site.py \
+              --src assets \
+              --output assets/index.html
 
       - name: Commit + push if anything changed
         shell: bash
