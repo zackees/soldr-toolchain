@@ -55,6 +55,70 @@ EXTRA_MAP: dict[str, tuple[str, str]] = {
 }
 
 
+def _collapse_darwin_universal2(platforms: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Detect identical assets shipped under both `darwin/x86_64` and
+    `darwin/aarch64` and collapse them into a single `darwin/universal2`
+    entry.
+
+    Two entries are considered identical if they have the same filename,
+    URL, AND sha256 (or both lack sha256 — the URL+filename match is
+    sufficient when sha is missing). This matches the apple-sdk pattern
+    in soldr-toolchain where a fat Mach-O is duplicated under each
+    concrete darwin arch.
+
+    Other multi-arch fan-out (e.g. linux/x86_64+aarch64 with same bytes)
+    is left untouched — `universal2` is an Apple-specific convention.
+    """
+    by_key: dict[tuple[str, str, str], list[int]] = {}
+    for i, p in enumerate(platforms):
+        plat = p.get("platform", {}) or {}
+        asset = p.get("asset", {}) or {}
+        if plat.get("os") != "darwin":
+            continue
+        arch = plat.get("arch", "")
+        if arch not in ("x86_64", "aarch64"):
+            continue
+        # Compare on the identity of the asset itself.
+        key = (
+            asset.get("filename", ""),
+            (asset.get("urls") or [""])[0],
+            asset.get("sha256", ""),
+        )
+        by_key.setdefault(key, []).append(i)
+
+    collapse_indices: set[int] = set()
+    for indices in by_key.values():
+        if len(indices) < 2:
+            continue
+        # Confirm the two entries cover BOTH darwin arches (not e.g.
+        # x86_64 listed twice with different variants).
+        archs = {platforms[i]["platform"].get("arch", "") for i in indices}
+        if archs != {"x86_64", "aarch64"}:
+            continue
+        collapse_indices.update(indices)
+
+    if not collapse_indices:
+        return platforms
+
+    out: list[dict[str, Any]] = []
+    universal_emitted: set[tuple[str, str, str]] = set()
+    for i, p in enumerate(platforms):
+        if i not in collapse_indices:
+            out.append(p)
+            continue
+        plat = p["platform"]
+        asset = p["asset"]
+        key = (asset.get("filename", ""), (asset.get("urls") or [""])[0], asset.get("sha256", ""))
+        if key in universal_emitted:
+            continue
+        universal_emitted.add(key)
+        # Drop arch -> universal2; preserve other platform fields (os_version, etc.)
+        new_plat = dict(plat)
+        new_plat["arch"] = "universal2"
+        out.append({"platform": new_plat, "asset": asset})
+    return out
+
+
 def split_platform_key(key: str) -> dict[str, str] | None:
     """`linux-x64-musl` -> `{os: linux, arch: x86_64, libc: musl}`.
 
@@ -127,6 +191,8 @@ def convert_per_tool_release(
             "platform": platform_tuple,
             "asset":    asset_out,
         })
+
+    platforms_out = _collapse_darwin_universal2(platforms_out)
 
     # Use the upstream `tag` as the v1 version so it round-trips against the
     # v5 top-level `latest` / `pinned` pointers (which also use the tag).
@@ -267,12 +333,11 @@ def main() -> int:
     data = write_json(args.dest / "manifest.json", index)
     print(f"  wrote manifest.json ({len(data)} bytes, {len(index['tools'])} tools)")
 
-    # Copy asset-index.json verbatim for backward compat / debugging.
-    # Skip when src and dest point at the same file (in-place regeneration).
-    src_asset_index = args.src / "asset-index.json"
-    dst_asset_index = args.dest / "asset-index.json"
-    if src_asset_index.exists() and src_asset_index.resolve() != dst_asset_index.resolve():
-        shutil.copy2(src_asset_index, dst_asset_index)
+    # asset-index.json is no longer copied here. After the v1 migration
+    # its attribution columns (owner, repo, tag) reflect v1 reality —
+    # which the v5-source file does NOT know about. The workflow now
+    # runs build_asset_index.py separately AGAINST the v1 tree (--dest)
+    # so attribution is always self-consistent.
 
     return 0
 
