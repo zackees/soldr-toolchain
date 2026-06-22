@@ -1,0 +1,217 @@
+{
+  "$schema": "https://zackees.github.io/manifest.json/v1/manifest.schema.json",
+  "kind": "Catalog",
+  "schema_version": 1,
+  "tool": "conan-core",
+  "online_url": "https://zackees.github.io/soldr-toolchain/conan-core/manifest.json",
+  "channels": {
+    "latest-stable": "2026-06-22",
+    "stable": "2026-06-22"
+  },
+  "releases": [
+    {
+      "schema_version": 1,
+      "version": "2026-06-22",
+      "published_at": "2026-06-22T00:00:00Z",
+      "min_client_version": 1,
+      "platforms": [
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "conan-core-linux-x86_64-glibc.tar.zst",
+            "media_type": "application/zstd",
+            "provides": [
+              "curl",
+              "zlib",
+              "sqlite3",
+              "protobuf",
+              "libssh2",
+              "libpng",
+              "libjpeg-turbo",
+              "libwebp",
+              "freetype",
+              "harfbuzz",
+              "openssl"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "conan-core-linux-aarch64-glibc.tar.zst",
+            "media_type": "application/zstd",
+            "provides": [
+              "curl",
+              "zlib",
+              "sqlite3",
+              "protobuf",
+              "libssh2",
+              "libpng",
+              "libjpeg-turbo",
+              "libwebp",
+              "freetype",
+              "harfbuzz",
+              "openssl"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "conan-core-linux-x86_64-musl.tar.zst",
+            "media_type": "application/zstd",
+            "provides": [
+              "curl",
+              "zlib",
+              "sqlite3",
+              "protobuf",
+              "libssh2",
+              "libpng",
+              "libjpeg-turbo",
+              "libwebp",
+              "freetype",
+              "harfbuzz",
+              "openssl"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "conan-core-linux-aarch64-musl.tar.zst",
+            "media_type": "application/zstd",
+            "provides": [
+              "curl",
+              "zlib",
+              "sqlite3",
+              "protobuf",
+              "libssh2",
+              "libpng",
+              "libjpeg-turbo",
+              "libwebp",
+              "freetype",
+              "harfbuzz",
+              "openssl"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "x86_64",
+            "abi": "msvc"
+          },
+          "variant": {
+            "flavor": "static-md"
+          },
+          "asset": {
+            "filename": "conan-core-windows-x86_64-msvc-static-md.tar.zst",
+            "media_type": "application/zstd",
+            "provides": [
+              "curl",
+              "zlib",
+              "sqlite3",
+              "protobuf",
+              "libssh2",
+              "libpng",
+              "libjpeg-turbo",
+              "libwebp",
+              "freetype",
+              "harfbuzz",
+              "openssl"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "aarch64",
+            "abi": "msvc"
+          },
+          "variant": {
+            "flavor": "static-md"
+          },
+          "asset": {
+            "filename": "conan-core-windows-aarch64-msvc-static-md.tar.zst",
+            "media_type": "application/zstd",
+            "provides": [
+              "curl",
+              "zlib",
+              "sqlite3",
+              "protobuf",
+              "libssh2",
+              "libpng",
+              "libjpeg-turbo",
+              "libwebp",
+              "freetype",
+              "harfbuzz",
+              "openssl"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "conan-core-darwin-aarch64.tar.zst",
+            "media_type": "application/zstd",
+            "provides": [
+              "curl",
+              "zlib",
+              "sqlite3",
+              "protobuf",
+              "libssh2",
+              "libpng",
+              "libjpeg-turbo",
+              "libwebp",
+              "freetype",
+              "harfbuzz",
+              "openssl"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "conan-core-darwin-x86_64.tar.zst",
+            "media_type": "application/zstd",
+            "provides": [
+              "curl",
+              "zlib",
+              "sqlite3",
+              "protobuf",
+              "libssh2",
+              "libpng",
+              "libjpeg-turbo",
+              "libwebp",
+              "freetype",
+              "harfbuzz",
+              "openssl"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
