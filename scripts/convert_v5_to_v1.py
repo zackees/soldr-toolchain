@@ -303,6 +303,52 @@ def hash_sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _preserve_vendored_entries(
+    dest: Path,
+    v5_tool_names: set[str],
+) -> dict[str, dict[str, Any]]:
+    """Read the EXISTING v1 Index in `dest` (if any) and return entries
+    for tools that aren't in the v5 source — those are vendored
+    (apple-sdk, xwin-cache, ...). The converter shouldn't touch them.
+
+    Returns a {tool_name: ToolEntry} dict. Re-computes descriptor
+    sha256/size from the on-disk catalog file so any manual edit to a
+    vendored catalog is reflected without a separate manual step.
+    """
+    import hashlib
+    index_path = dest / "manifest.json"
+    if not index_path.is_file():
+        return {}
+    try:
+        existing = json.loads(index_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if existing.get("kind") != "Index":
+        return {}
+    out: dict[str, dict[str, Any]] = {}
+    for name, entry in (existing.get("tools") or {}).items():
+        if name in v5_tool_names:
+            continue  # GH-derived; the converter is rebuilding this
+        # vendored: preserve, but refresh descriptor from on-disk catalog
+        desc = dict((entry.get("descriptor") or {}))
+        rel_url = desc.get("url", "")
+        if rel_url and not rel_url.startswith(("http://", "https://")):
+            cat_path = dest / rel_url
+            if cat_path.is_file():
+                blob = cat_path.read_bytes()
+                desc["sha256"] = hashlib.sha256(blob).hexdigest()
+                desc["size_bytes"] = len(blob)
+            else:
+                print(f"  warn: vendored {name} catalog missing: {cat_path}", file=sys.stderr)
+                continue
+        out[name] = {
+            **entry,
+            "descriptor": desc,
+        }
+        print(f"  preserving vendored tool: {name}", file=sys.stderr)
+    return out
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--src",  type=Path, required=True, help="v5 tree root (assets branch checkout)")
@@ -315,9 +361,11 @@ def main() -> int:
 
     args.dest.mkdir(parents=True, exist_ok=True)
 
+    v5_tool_names = set((top_level_v5.get("tools") or {}).keys())
+
     # Per-tool Catalogs (write first so we can hash them for the Index).
     catalog_sha: dict[str, tuple[str, int]] = {}
-    for tool_name in sorted((top_level_v5.get("tools") or {}).keys()):
+    for tool_name in sorted(v5_tool_names):
         per_tool_path = args.src / tool_name / "manifest.json"
         if not per_tool_path.exists():
             print(f"  warn: {per_tool_path} missing, skipping {tool_name}", file=sys.stderr)
@@ -332,10 +380,19 @@ def main() -> int:
         catalog_sha[tool_name] = (hash_sha256(data), len(data))
         print(f"  wrote {tool_name}/manifest.json ({len(data)} bytes, {len(catalog['releases'])} releases)")
 
-    # Top-level Index.
+    # Preserve vendored entries from the destination tree (apple-sdk,
+    # xwin-cache, etc.) — those live independently of the v5 pipeline.
+    vendored_entries = _preserve_vendored_entries(args.dest, v5_tool_names)
+
+    # Top-level Index — start from v5-derived entries, then merge in vendored.
     index = convert_index(top_level_v5, catalog_sha)
+    for name, entry in vendored_entries.items():
+        index["tools"][name] = entry
+    # Re-sort tools for stable output.
+    index["tools"] = dict(sorted(index["tools"].items()))
     data = write_json(args.dest / "manifest.json", index)
-    print(f"  wrote manifest.json ({len(data)} bytes, {len(index['tools'])} tools)")
+    print(f"  wrote manifest.json ({len(data)} bytes, {len(index['tools'])} tools, "
+          f"{len(vendored_entries)} vendored preserved)")
 
     # asset-index.json is no longer copied here. After the v1 migration
     # its attribution columns (owner, repo, tag) reflect v1 reality —
