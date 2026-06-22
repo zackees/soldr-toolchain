@@ -178,7 +178,11 @@ def convert_per_tool_release(
                   file=sys.stderr)
             continue
         filename = pval.get("filename") or ""
-        sha256 = (by_filename.get(filename) or {}).get("sha256", "")
+        # Prefer the sha embedded in the v5 platform entry (populated
+        # from GitHub's per-asset `digest` field by build_manifest.py
+        # since the universal2 / api-digest change). Fall back to the
+        # asset-index for legacy data and locally-hosted blobs.
+        sha256 = pval.get("sha256") or (by_filename.get(filename) or {}).get("sha256", "")
         url = pval.get("url") or ""
         asset_out: dict[str, Any] = {
             "filename":   filename,
