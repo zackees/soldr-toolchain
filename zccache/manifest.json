@@ -5407,7 +5407,8 @@
             "size_bytes": 6716008,
             "urls": [
               "https://github.com/zackees/zccache/releases/download/1.2.8/zccache-1.2.8-aarch64-apple-darwin.tar.gz"
-            ]
+            ],
+            "sha256": "7018069d81dd2cfc62b2385cf0a7dc2d6ab8021e9f48235f1d1a2013a10d4f24"
           }
         },
         {
@@ -5420,7 +5421,8 @@
             "size_bytes": 6959916,
             "urls": [
               "https://github.com/zackees/zccache/releases/download/1.2.8/zccache-1.2.8-x86_64-apple-darwin.tar.gz"
-            ]
+            ],
+            "sha256": "659009cd070c5f0525cbb90943b2476756c9e30894c64cb4e845bcc9c35c2ce8"
           }
         },
         {
@@ -5434,7 +5436,8 @@
             "size_bytes": 7066109,
             "urls": [
               "https://github.com/zackees/zccache/releases/download/1.2.8/zccache-1.2.8-aarch64-unknown-linux-gnu.tar.gz"
-            ]
+            ],
+            "sha256": "acd2a8342c2e423adb6d4f99eb115ff76cd1aafb82cede6551473a02c62ec494"
           }
         },
         {
@@ -5448,7 +5451,8 @@
             "size_bytes": 7652686,
             "urls": [
               "https://github.com/zackees/zccache/releases/download/1.2.8/zccache-1.2.8-x86_64-unknown-linux-gnu.tar.gz"
-            ]
+            ],
+            "sha256": "9406a6f475b74e0509384240d029e6bc417c14b2cb0bf886d7d644f0f1531545"
           }
         },
         {
@@ -5462,7 +5466,8 @@
             "size_bytes": 6372500,
             "urls": [
               "https://github.com/zackees/zccache/releases/download/1.2.8/zccache-1.2.8-aarch64-pc-windows-msvc.tar.gz"
-            ]
+            ],
+            "sha256": "be43fa400a876b414863c808eee09fbd06c6c58da17b595cb0420d8a9bab8676"
           }
         },
         {
@@ -5476,7 +5481,8 @@
             "size_bytes": 6857942,
             "urls": [
               "https://github.com/zackees/zccache/releases/download/1.2.8/zccache-1.2.8-x86_64-pc-windows-msvc.tar.gz"
-            ]
+            ],
+            "sha256": "99ba81acb3fd7aba26ed3e12c1f700e4242478f2e879a984a92383809de3f11f"
           }
         }
       ],
