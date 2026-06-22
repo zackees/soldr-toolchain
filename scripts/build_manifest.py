@@ -186,6 +186,13 @@ def build_release_entry(
     platforms: dict[str, dict[str, Any]] = {}
     for asset in release.get("assets", []):
         asset_name = asset["name"]
+        # `digest` is a GitHub-provided "<algo>:<hex>" string (sha256 today).
+        # Available on every release asset; lets us populate per-asset
+        # sha256 without fetching a SHA256SUMS sidecar.
+        digest_raw = asset.get("digest") or ""
+        sha256 = ""
+        if digest_raw.startswith("sha256:"):
+            sha256 = digest_raw[len("sha256:"):].lower()
         entry = {
             "url": asset["browser_download_url"],
             "size": asset.get("size"),
@@ -193,17 +200,19 @@ def build_release_entry(
             "created_at": asset.get("created_at"),
             "updated_at": asset.get("updated_at"),
         }
+        if sha256:
+            entry["sha256"] = sha256
         assets[asset_name] = entry
         platform_key = derive_platform_key(asset_name)
         if platform_key is not None:
-            platforms.setdefault(
-                platform_key,
-                {
-                    "filename": asset_name,
-                    "url": entry["url"],
-                    "size": entry["size"],
-                },
-            )
+            plat = {
+                "filename": asset_name,
+                "url": entry["url"],
+                "size": entry["size"],
+            }
+            if sha256:
+                plat["sha256"] = sha256
+            platforms.setdefault(platform_key, plat)
     entry: dict[str, Any] = {}
     if tool is not None:
         entry["tool"] = tool
