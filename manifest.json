@@ -10,7 +10,8 @@
         "media_type": "application/vnd.manifest.v1+json",
         "sha256": "be6985dbb3a67b4b8c25546dec7ab1acad2bef1d72e04d317887551b383f2d01"
       },
-      "summary": "messense/cargo-zigbuild"
+      "summary": "messense/cargo-zigbuild",
+      "kind_hint": "sysroot"
     },
     "cargo-chef": {
       "descriptor": {
@@ -19,7 +20,8 @@
         "media_type": "application/vnd.manifest.v1+json",
         "sha256": "5c50b386910860d9f285bae4acee98026200ae280e59248d01ac0c075b34e533"
       },
-      "summary": "LukeMathWalker/cargo-chef"
+      "summary": "LukeMathWalker/cargo-chef",
+      "kind_hint": "tool"
     },
     "cargo-xwin": {
       "descriptor": {
@@ -28,7 +30,8 @@
         "media_type": "application/vnd.manifest.v1+json",
         "sha256": "4d50ab4e8bb6b8f8e905175ccbcf2522e4e967095eebf120c5bc566612b6ee5f"
       },
-      "summary": "rust-cross/cargo-xwin"
+      "summary": "rust-cross/cargo-xwin",
+      "kind_hint": "tool"
     },
     "cargo-zigbuild": {
       "descriptor": {
@@ -37,7 +40,8 @@
         "media_type": "application/vnd.manifest.v1+json",
         "sha256": "c79e686bc99e83de9cbd7b318b33959e57b096992b9efb67eac2c064f31f9690"
       },
-      "summary": "rust-cross/cargo-zigbuild"
+      "summary": "rust-cross/cargo-zigbuild",
+      "kind_hint": "tool"
     },
     "crgx": {
       "descriptor": {
@@ -46,7 +50,8 @@
         "media_type": "application/vnd.manifest.v1+json",
         "sha256": "0bdce03efd61ce0667da2242fc96a254cc565a364ff26de8d686acbd75ec0974"
       },
-      "summary": "yfedoseev/crgx"
+      "summary": "yfedoseev/crgx",
+      "kind_hint": "tool"
     },
     "zccache": {
       "descriptor": {
@@ -55,7 +60,8 @@
         "media_type": "application/vnd.manifest.v1+json",
         "sha256": "99f9319c5ae87c2b669a3c6c20bc13a6858818b21643252d790cff6c12eda4a4"
       },
-      "summary": "zackees/zccache"
+      "summary": "zackees/zccache",
+      "kind_hint": "tool"
     }
   }
 }
