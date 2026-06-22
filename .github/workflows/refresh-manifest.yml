@@ -85,6 +85,19 @@ jobs:
               --src v5-scratch \
               --dest assets
 
+      - name: Re-build asset-index.json against the v1 tree
+        # asset-index.json is the legacy flat (owner, repo, tag, asset,
+        # url, sha256) index. After v1 migration its attribution columns
+        # must reflect v1 reality (the converter no longer copies the
+        # v5-attributed file).
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 main/scripts/build_asset_index.py \
+              --manifest-checkout assets \
+              --output assets/asset-index.json \
+              --branch assets
+
       - name: Build index.html landing page
         shell: bash
         run: |
