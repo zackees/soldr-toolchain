@@ -11,6 +11,7 @@ dependencies = []
 [dependency-groups]
 dev = [
     "pytest>=8",
+    "manifest-json @ git+https://github.com/zackees/manifest.json",
 ]
 
 [tool.pytest.ini_options]

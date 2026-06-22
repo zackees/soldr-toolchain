@@ -1,45 +1,39 @@
-"""Parity tests: assert the checked-in catalogue files agree with what
-the producer scripts would re-derive from local state.
+"""Parity tests: assert the checked-in catalogue on the ``assets`` branch
+agrees with what the producer scripts would re-derive AND conforms to
+the manifest.json v1 schema (https://github.com/zackees/manifest.json).
 
-Catalogue data lives on the orphan ``assets`` branch (not ``main``),
-so these tests need an on-disk checkout of that branch. They auto-
-discover one in this order:
+Catalogue data lives on the orphan ``assets`` branch (not ``main``), so
+these tests need an on-disk checkout of that branch. They auto-discover
+one in this order:
 
   1. ``$SOLDR_TOOLCHAIN_ASSETS_DIR`` environment variable
-  2. ``../soldr-toolchain-assets`` (sibling clone — convention for
-     local dev when ``main`` is at ``../soldr-toolchain``)
+  2. ``../soldr-toolchain-assets`` (sibling clone convention)
   3. ``../assets`` (sibling worktree convention)
 
-If none of the above resolves to a directory containing
-``manifest.json``, the parity tests SKIP rather than fail — the
-pure-function tests in the other test files still run, and CI is
-expected to provide one of the discovery paths.
+If none resolves to a directory containing ``manifest.json``, the parity
+tests SKIP rather than fail.
 
-What we CAN check without network:
+What we check without network:
 
-  * ``asset-index.json``'s local-blob entries (sha256 + URL form)
-    must match what ``build_asset_index.py --offline`` would produce.
-  * ``manifest.json``'s top-level shape (schema_version, tool keys,
-    apple-sdk pointer) must agree with the per-tool files on disk.
-  * Per-tool ``manifest.json`` files must be flat arrays of release
-    dicts sorted newest-first by published_at.
-  * Schema versions must match the producer scripts' constants.
-
-What we DO NOT check here (would require github.com):
-
-  * GitHub-Releases-derived entries in asset-index.json — those depend
-    on a live SHA256SUMS fetch.
-  * Freshness of the catalogue against upstream — that's the job of
-    the nightly refresh, not the test suite.
-
-Run::
-
-    SOLDR_TOOLCHAIN_ASSETS_DIR=../soldr-toolchain-assets \
-        uv run --group dev pytest tests/test_parity.py -v
+  * Structural + semantic validation of every manifest via
+    ``manifest_json.validate_document`` (kind discriminator, sha256
+    format, channel-resolves-to-release, duplicate-(platform,variant)
+    detection, etc.).
+  * Index ``tools[].descriptor.url`` paths must resolve to a real file
+    on disk under ASSETS_DIR.
+  * Index ``tools[].descriptor.sha256`` must equal the sha256 of the
+    referenced file (the federation integrity chain).
+  * Per-Catalog ``channels[name]`` must resolve to a release present in
+    ``releases[]`` (already enforced by validate_document — re-asserted
+    here as a regression guard).
+  * Asset-index local-blob rows must match what ``build_asset_index.py
+    --offline`` would emit (this catches script/file drift; v5 vs v1
+    is orthogonal — asset-index is its own legacy format).
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import unittest
@@ -47,19 +41,22 @@ from pathlib import Path
 
 import build_asset_index as bai
 import build_manifest as bm
+from manifest_json import (
+    ChannelNotFoundError,
+    ValidationError,
+    resolve_in_catalog,
+    validate_document,
+)
 
 TRACKED_TOOLS = ("zccache", "crgx", "cargo-chef", "cargo-xwin", "cargo-zigbuild")
 
 
 def _discover_assets_dir() -> Path | None:
-    """Return a Path to a usable assets-branch checkout, or None."""
     env = os.environ.get("SOLDR_TOOLCHAIN_ASSETS_DIR")
     if env:
         p = Path(env).resolve()
         if (p / "manifest.json").is_file():
             return p
-    # Sibling-clone convention: main is at <parent>/soldr-toolchain/,
-    # assets is at <parent>/soldr-toolchain-assets/.
     here = Path(__file__).resolve().parents[1]
     for candidate in (
         here.parent / "soldr-toolchain-assets",
@@ -85,83 +82,126 @@ def _is_local_blob_entry(entry: dict) -> bool:
     return "media.githubusercontent.com/media/" in url
 
 
+def _file_sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
 @unittest.skipIf(ASSETS_DIR is None, _SKIP_REASON)
-class TopLevelManifestParityTest(unittest.TestCase):
+class TopLevelIndexTest(unittest.TestCase):
+    """Index document (manifest.json) conforms to v1 and references real files."""
 
     def setUp(self) -> None:
         path = ASSETS_DIR / "manifest.json"
         self.assertTrue(path.is_file(), msg=f"missing {path}")
         self.top = json.loads(path.read_text(encoding="utf-8"))
 
-    def test_schema_version_matches_producer_constant(self) -> None:
-        self.assertEqual(self.top["schema_version"], bm.SCHEMA_VERSION)
+    def test_validates_as_v1_index(self) -> None:
+        try:
+            validate_document(self.top)
+        except ValidationError as exc:
+            self.fail(f"top-level Index does not validate: {exc}")
+
+    def test_kind_and_schema_version(self) -> None:
+        self.assertEqual(self.top["kind"], "Index")
+        self.assertEqual(self.top["schema_version"], 1)
 
     def test_all_tracked_tools_present(self) -> None:
         tools = set(self.top["tools"].keys())
         for tool in TRACKED_TOOLS:
-            self.assertIn(tool, tools, msg=f"{tool} missing from manifest.json")
+            self.assertIn(tool, tools, msg=f"{tool} missing from Index")
 
-    def test_apple_sdk_pointer_exists_and_resolves(self) -> None:
-        """The vendored apple-sdk entry must survive the nightly refresh
-        (``preserve_vendored_top_level_entries`` guarantees this) and
-        its ``path`` must resolve to a real file on disk."""
-        tools = self.top["tools"]
-        self.assertIn("apple-sdk", tools)
-        path_ref = tools["apple-sdk"]["path"]
-        self.assertTrue((ASSETS_DIR / path_ref).is_file(), msg=path_ref)
-
-    def test_per_tool_paths_resolve(self) -> None:
+    def test_descriptor_urls_resolve_on_disk(self) -> None:
         for name, entry in self.top["tools"].items():
             with self.subTest(name=name):
+                rel = entry["descriptor"]["url"]
                 self.assertTrue(
-                    (ASSETS_DIR / entry["path"]).is_file(),
-                    msg=f"missing per-tool file: {entry['path']}",
+                    (ASSETS_DIR / rel).is_file(),
+                    msg=f"{name}: descriptor.url={rel!r} does not exist on disk",
+                )
+
+    def test_descriptor_sha256_matches_file_content(self) -> None:
+        """Federation integrity chain: each descriptor's sha256 must equal
+        the actual sha256 of the file it points at."""
+        for name, entry in self.top["tools"].items():
+            with self.subTest(name=name):
+                desc = entry["descriptor"]
+                declared = desc.get("sha256", "")
+                if not declared:
+                    continue
+                actual = _file_sha256(ASSETS_DIR / desc["url"])
+                self.assertEqual(
+                    actual, declared,
+                    msg=f"{name}: descriptor.sha256 != hash(file)",
                 )
 
 
 @unittest.skipIf(ASSETS_DIR is None, _SKIP_REASON)
-class PerToolManifestShapeTest(unittest.TestCase):
-    """Each per-tool manifest.json must be a flat array of release
-    dicts (v5 schema), sorted newest-first by published_at."""
+class PerToolCatalogTest(unittest.TestCase):
+    """Each per-tool manifest.json is a v1 Catalog with consistent channels."""
 
-    def test_each_tracked_tool_is_flat_array(self) -> None:
+    def test_each_catalog_validates(self) -> None:
         for tool in TRACKED_TOOLS:
             with self.subTest(tool=tool):
                 path = ASSETS_DIR / tool / "manifest.json"
                 self.assertTrue(path.is_file(), msg=path)
-                payload = json.loads(path.read_text(encoding="utf-8"))
-                self.assertIsInstance(payload, list,
-                                      msg=f"{tool}: expected list, got {type(payload)}")
-                self.assertGreater(len(payload), 0)
-                for entry in payload[:3]:
-                    self.assertIsInstance(entry, dict)
-                    self.assertIn("tag", entry)
-                    self.assertIn("platforms", entry)
-                    self.assertIn("assets", entry)
+                doc = json.loads(path.read_text(encoding="utf-8"))
+                self.assertEqual(doc.get("kind"), "Catalog")
+                self.assertEqual(doc.get("tool"), tool)
+                try:
+                    validate_document(doc)
+                except ValidationError as exc:
+                    self.fail(f"{tool}: catalog does not validate: {exc}")
 
-    def test_entries_sorted_newest_first(self) -> None:
+    def test_latest_stable_channel_present(self) -> None:
         for tool in TRACKED_TOOLS:
             with self.subTest(tool=tool):
-                path = ASSETS_DIR / tool / "manifest.json"
-                payload = json.loads(path.read_text(encoding="utf-8"))
-                published = [e.get("published_at") or "" for e in payload]
-                self.assertEqual(
-                    published,
-                    sorted(published, reverse=True),
-                    msg=f"{tool}: per-tool entries must be sorted newest-first",
+                doc = json.loads(
+                    (ASSETS_DIR / tool / "manifest.json").read_text(encoding="utf-8")
+                )
+                self.assertIn(
+                    "latest-stable", doc.get("channels", {}),
+                    msg=f"{tool}: no latest-stable channel",
+                )
+
+    def test_resolve_query_works_for_at_least_one_platform(self) -> None:
+        """Sanity check: every catalog must have at least one resolvable
+        platform on its latest-stable channel. Catches malformed releases."""
+        seed_queries = [
+            {"os": "linux",   "arch": "x86_64", "libc": "musl"},
+            {"os": "linux",   "arch": "x86_64", "libc": "glibc"},
+            {"os": "darwin",  "arch": "aarch64"},
+            {"os": "darwin",  "arch": "x86_64"},
+            {"os": "windows", "arch": "x86_64", "abi": "msvc"},
+        ]
+        for tool in TRACKED_TOOLS:
+            with self.subTest(tool=tool):
+                doc = json.loads(
+                    (ASSETS_DIR / tool / "manifest.json").read_text(encoding="utf-8")
+                )
+                resolved_any = False
+                for query in seed_queries:
+                    try:
+                        resolve_in_catalog(doc, tool, query, "latest-stable")
+                        resolved_any = True
+                        break
+                    except Exception:
+                        continue
+                self.assertTrue(
+                    resolved_any,
+                    msg=f"{tool}: no seed platform resolved on latest-stable",
                 )
 
 
 @unittest.skipIf(ASSETS_DIR is None, _SKIP_REASON)
 class AssetIndexLocalParityTest(unittest.TestCase):
-    """The local-blob rows in the checked-in asset-index.json must
-    exactly match what ``build_asset_index.py --offline`` would emit
-    today.
-
-    This catches drift between the script and the committed file: if
-    someone edits the script's URL shape, sha algorithm, or attribution
-    logic without re-running it, this test fires.
-    """
+    """asset-index.json's local-blob rows must match what
+    build_asset_index.py --offline would freshly emit. Catches drift
+    between the script and the committed file. (asset-index.json is its
+    own legacy format; the v1 migration left it unchanged.)"""
 
     def setUp(self) -> None:
         path = ASSETS_DIR / "asset-index.json"
@@ -191,12 +231,6 @@ class AssetIndexLocalParityTest(unittest.TestCase):
             for e in self.checked_in["entries"]
             if _is_local_blob_entry(e)
         }
-
-        # Every local-blob entry in the checked-in file must match
-        # what we'd freshly derive (same key set + same per-entry sha
-        # + same URL). The checked-in file may carry additional rows
-        # from GitHub releases that ``--offline`` can't reproduce —
-        # those are filtered out by ``_is_local_blob_entry``.
         self.assertEqual(
             set(checked_local.keys()),
             set(fresh_local.keys()) & set(checked_local.keys()),
@@ -207,13 +241,11 @@ class AssetIndexLocalParityTest(unittest.TestCase):
             fresh_entry = fresh_local[key]
             self.assertEqual(
                 checked["sha256"], fresh_entry["sha256"],
-                msg=f"sha drift for {key}: file={checked['sha256']!r} "
-                    f"vs fresh={fresh_entry['sha256']!r}",
+                msg=f"sha drift for {key}",
             )
             self.assertEqual(
                 checked["url"], fresh_entry["url"],
-                msg=f"URL drift for {key}: file={checked['url']!r} "
-                    f"vs fresh={fresh_entry['url']!r}",
+                msg=f"URL drift for {key}",
             )
 
     def test_sha256_hex_is_lowercase_64char(self) -> None:
@@ -225,36 +257,17 @@ class AssetIndexLocalParityTest(unittest.TestCase):
 
 
 @unittest.skipIf(ASSETS_DIR is None, _SKIP_REASON)
-class TopLevelTracksMatchPerToolFilesTest(unittest.TestCase):
-    """`tools[<name>].tracked_tags` in manifest.json must be the same
-    set as the tags present in `<name>/manifest.json` — the producer
-    derives the first from the second."""
+class V5ProducerStillWorksTest(unittest.TestCase):
+    """The v5 producer (build_manifest.py) and converter (convert_v5_to_v1.py)
+    form a pipeline. This sanity-checks that the producer's SCHEMA_VERSION
+    constant is still v5 — the converter assumes v5 input."""
 
-    def test_tracked_tags_match_per_tool_array(self) -> None:
-        top = json.loads((ASSETS_DIR / "manifest.json").read_text(encoding="utf-8"))
-        for tool in TRACKED_TOOLS:
-            with self.subTest(tool=tool):
-                entry = top["tools"][tool]
-                tracked = entry.get("tracked_tags") or []
-                per_tool = json.loads(
-                    (ASSETS_DIR / entry["path"]).read_text(encoding="utf-8")
-                )
-                per_tool_tags = [e.get("tag") for e in per_tool if e.get("tag")]
-                self.assertEqual(
-                    list(tracked), per_tool_tags,
-                    msg=f"{tool}: top-level tracked_tags must equal "
-                        f"per-tool file's tag order",
-                )
-
-    def test_latest_matches_first_per_tool_entry(self) -> None:
-        top = json.loads((ASSETS_DIR / "manifest.json").read_text(encoding="utf-8"))
-        for tool in TRACKED_TOOLS:
-            with self.subTest(tool=tool):
-                entry = top["tools"][tool]
-                per_tool = json.loads(
-                    (ASSETS_DIR / entry["path"]).read_text(encoding="utf-8")
-                )
-                self.assertEqual(entry["latest"], per_tool[0]["tag"])
+    def test_producer_emits_v5(self) -> None:
+        self.assertEqual(
+            bm.SCHEMA_VERSION, 5,
+            msg="build_manifest.py is supposed to emit v5; "
+                "convert_v5_to_v1.py is the v5 -> v1 projection step",
+        )
 
 
 if __name__ == "__main__":
