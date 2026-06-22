@@ -25,8 +25,7 @@
             "size_bytes": 6943459,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.23.0/cargo-xwin-v0.23.0.universal2-apple-darwin.tar.gz"
-            ],
-            "sha256": "d78a88f43247a6298d8888dc4c44a8af92801fdf4e5374cc5a359a1e53770993"
+            ]
           }
         },
         {
@@ -40,8 +39,7 @@
             "size_bytes": 3604961,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.23.0/cargo-xwin-v0.23.0.aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "6f6e76a680db31556f00f50a6e5741e1cce8704ead943b05b92f78a5c1c2674b"
+            ]
           }
         },
         {
@@ -55,8 +53,7 @@
             "size_bytes": 3831263,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.23.0/cargo-xwin-v0.23.0.x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "74a216f64f10ea81c909f02d6b1a84cd0fda8de4c87ee52fe63ba76ab2392b75"
+            ]
           }
         },
         {
@@ -70,8 +67,7 @@
             "size_bytes": 3378452,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.23.0/cargo-xwin-v0.23.0.windows-x64.zip"
-            ],
-            "sha256": "af084297230d9d4d6b933471d544289c09ab40906ca8acf6ca2a5a643117fff3"
+            ]
           }
         }
       ],
@@ -98,8 +94,7 @@
             "size_bytes": 6904334,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.22.0/cargo-xwin-v0.22.0.universal2-apple-darwin.tar.gz"
-            ],
-            "sha256": "6a0ba0734f9c8af3c98338be34ad70a3010d1014b5e551134d3e087d46192ffd"
+            ]
           }
         },
         {
@@ -113,8 +108,7 @@
             "size_bytes": 3582533,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.22.0/cargo-xwin-v0.22.0.aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "f4ec28c33817623c2f2638c11fc7f011d7ea2468d8b56ef590daa4032ee2e256"
+            ]
           }
         },
         {
@@ -128,8 +122,7 @@
             "size_bytes": 3817617,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.22.0/cargo-xwin-v0.22.0.x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "a883bdc833df614978514485d00e6174fcc3a229bf0edc07bbea8762a0405e0b"
+            ]
           }
         },
         {
@@ -143,8 +136,7 @@
             "size_bytes": 3353517,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.22.0/cargo-xwin-v0.22.0.windows-x64.zip"
-            ],
-            "sha256": "2d0e46a28b2919e92f6952dcd88c9a8f9a1e6426a6ef1319ff3a6ccaef264774"
+            ]
           }
         }
       ],
@@ -171,8 +163,7 @@
             "size_bytes": 6983574,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.5/cargo-xwin-v0.21.5.universal2-apple-darwin.tar.gz"
-            ],
-            "sha256": "68824cbab61a1f16b9648eb82637de2ecb4b1e7b590e10808b7f11fb60c5a5b0"
+            ]
           }
         },
         {
@@ -186,8 +177,7 @@
             "size_bytes": 3604521,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.5/cargo-xwin-v0.21.5.aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "5af6421d4970a0c289d60f5cd79023cade9a83ba25a8495e8d401a45095ffcc1"
+            ]
           }
         },
         {
@@ -201,8 +191,7 @@
             "size_bytes": 3844502,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.5/cargo-xwin-v0.21.5.x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "42928296cfaaede33b85cc1b96c0db424070f32dfbd5c0a2abbd6d0d64f05334"
+            ]
           }
         },
         {
@@ -216,8 +205,7 @@
             "size_bytes": 3389675,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.5/cargo-xwin-v0.21.5.windows-x64.zip"
-            ],
-            "sha256": "05664cc1dcebb2529a26c876957738abc7bf9e5bad53c8de82e0696bb68cacd5"
+            ]
           }
         }
       ],
@@ -244,8 +232,7 @@
             "size_bytes": 6914453,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.4/cargo-xwin-v0.21.4.universal2-apple-darwin.tar.gz"
-            ],
-            "sha256": "ddaeb84691027edd7b5012f617ac59d5dedf8b2d3472798c1e4521808cf1be78"
+            ]
           }
         },
         {
@@ -259,8 +246,7 @@
             "size_bytes": 3567670,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.4/cargo-xwin-v0.21.4.aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "c5f125e9da3ac89ec1e2fa6888afedff2b75b8c025c381150c3676817762f7cf"
+            ]
           }
         },
         {
@@ -274,8 +260,7 @@
             "size_bytes": 3798798,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.4/cargo-xwin-v0.21.4.x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "fe3e4afd02c24f90da1333fc9a5896813d3daee3bd0e5c5d89a4800eb58b9687"
+            ]
           }
         },
         {
@@ -289,8 +274,7 @@
             "size_bytes": 3344891,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.4/cargo-xwin-v0.21.4.windows-x64.zip"
-            ],
-            "sha256": "6136ba7c320265a8ee6c663fad9c84bbe55185d9f6bccec8f61ae7f5798400e8"
+            ]
           }
         }
       ],
@@ -317,8 +301,7 @@
             "size_bytes": 6900394,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.3/cargo-xwin-v0.21.3.universal2-apple-darwin.tar.gz"
-            ],
-            "sha256": "6e96509d70fe79224d79505e9e9467137a3f299acc57ecaafa8c701af855b537"
+            ]
           }
         },
         {
@@ -332,8 +315,7 @@
             "size_bytes": 3566753,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.3/cargo-xwin-v0.21.3.aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "885554586b7976de6d497be4230a22e8905d6d975b6275650a81461ee6b2fd41"
+            ]
           }
         },
         {
@@ -347,8 +329,7 @@
             "size_bytes": 3792130,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.3/cargo-xwin-v0.21.3.x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "cc4c322d4dfd5480bb4e39efa80fc51b08a65af5105d2d4f6607e9dc58ae72e2"
+            ]
           }
         },
         {
@@ -362,8 +343,7 @@
             "size_bytes": 3337258,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.3/cargo-xwin-v0.21.3.windows-x64.zip"
-            ],
-            "sha256": "53284aec3e9a012712123b9c155145891dcd457aad63408b5557d82281cc172e"
+            ]
           }
         }
       ],
@@ -390,8 +370,7 @@
             "size_bytes": 7028830,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.2/cargo-xwin-v0.21.2.universal2-apple-darwin.tar.gz"
-            ],
-            "sha256": "e5668a9c89f631485a56f259671a102501854e049f48dc554d47d65ad0d64d81"
+            ]
           }
         },
         {
@@ -405,8 +384,7 @@
             "size_bytes": 3636366,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.2/cargo-xwin-v0.21.2.aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "551e0fb484ebdb2528cda57982e2862ed6dc401fa94b03e6a448dc784b4a70bc"
+            ]
           }
         },
         {
@@ -420,8 +398,7 @@
             "size_bytes": 3862436,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.2/cargo-xwin-v0.21.2.x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "b4f6305c9e9277a017caf229be21ee3a9eabafb569e48fb94bd19462374d5a0d"
+            ]
           }
         },
         {
@@ -435,8 +412,7 @@
             "size_bytes": 3396358,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.2/cargo-xwin-v0.21.2.windows-x64.zip"
-            ],
-            "sha256": "e4397af02b47c11fd2dd4ef6837350c9aa85fd1ec2707cbc616f9938f48b0c1b"
+            ]
           }
         }
       ],
@@ -464,8 +440,7 @@
             "size_bytes": 3636779,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.1/cargo-xwin-v0.21.1.aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "fd7fc2dbc3a25d29855a16c0229e2faf8b7813e3583803664219a1976a8149fe"
+            ]
           }
         },
         {
@@ -479,8 +454,7 @@
             "size_bytes": 3863699,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.1/cargo-xwin-v0.21.1.x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "a2854076543226e3fe7cd13b8fe3944a86aa1ec786bca2a17050fd5f10679f9e"
+            ]
           }
         }
       ],
@@ -507,8 +481,7 @@
             "size_bytes": 7029419,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.0/cargo-xwin-v0.21.0.universal2-apple-darwin.tar.gz"
-            ],
-            "sha256": "804cb91204ca021916de2dc74861ec977656b850ac1cc1dd8c1c465eb15e9d21"
+            ]
           }
         },
         {
@@ -522,8 +495,7 @@
             "size_bytes": 3636769,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.0/cargo-xwin-v0.21.0.aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "b4deede6f6ab774cd508e8892eb68926542e4cd19d9329a79dbb084921fecc17"
+            ]
           }
         },
         {
@@ -537,8 +509,7 @@
             "size_bytes": 3862426,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.0/cargo-xwin-v0.21.0.x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "3a6cf133224c7892f3ce9a759def219a9da9b91828a1ff4c014b050f612dab40"
+            ]
           }
         },
         {
@@ -552,8 +523,7 @@
             "size_bytes": 3397204,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.21.0/cargo-xwin-v0.21.0.windows-x64.zip"
-            ],
-            "sha256": "d7116616379104c0a152c570750e54a62621062f64aedc82ff8dc849b87e879a"
+            ]
           }
         }
       ],
@@ -580,8 +550,7 @@
             "size_bytes": 6985839,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.20.2/cargo-xwin-v0.20.2.universal2-apple-darwin.tar.gz"
-            ],
-            "sha256": "94c9249218c0c8595d265ec0ba3780954f1ff7799fd3ab2c773669ced39ad514"
+            ]
           }
         },
         {
@@ -595,8 +564,7 @@
             "size_bytes": 3604603,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.20.2/cargo-xwin-v0.20.2.aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "71420b6949774eb75fc89704191b5e858146645083ef7ffba11cd008030a9a0f"
+            ]
           }
         },
         {
@@ -610,8 +578,7 @@
             "size_bytes": 3843254,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.20.2/cargo-xwin-v0.20.2.x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "81eb698b63fc196ad0601167dbc4bd191fdf7543b48ff1ab6cded6eb354f92bd"
+            ]
           }
         },
         {
@@ -625,8 +592,7 @@
             "size_bytes": 3384456,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.20.2/cargo-xwin-v0.20.2.windows-x64.zip"
-            ],
-            "sha256": "02ce726fc1a89054e86eaae28315715f41e920ac8b24ae9da2c733ca5b6bae71"
+            ]
           }
         }
       ],
@@ -653,8 +619,7 @@
             "size_bytes": 7040045,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.20.1/cargo-xwin-v0.20.1.universal2-apple-darwin.tar.gz"
-            ],
-            "sha256": "7e2ef1b2eae202957babc595d7bc2be1f09fe8757e27ce8f3ecffac14936783a"
+            ]
           }
         },
         {
@@ -668,8 +633,7 @@
             "size_bytes": 3616494,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.20.1/cargo-xwin-v0.20.1.aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "b7dc2239f051675e96240b1b617b2a3bcc94b58d20ee3dde329f272a8c876dfa"
+            ]
           }
         },
         {
@@ -683,8 +647,7 @@
             "size_bytes": 3855649,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.20.1/cargo-xwin-v0.20.1.x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "779286435b8cfe24069ce7d21c7953d8cc1b297110b2cfc645234b511ad150f2"
+            ]
           }
         },
         {
@@ -698,8 +661,7 @@
             "size_bytes": 3410999,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.20.1/cargo-xwin-v0.20.1.windows-x64.zip"
-            ],
-            "sha256": "51545a33e45c7b4c26feb6fae9eeb35ab9d936bbe4ee1c15bbb6e1a06c99a91e"
+            ]
           }
         }
       ],
@@ -726,8 +688,7 @@
             "size_bytes": 7039232,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.20.0/cargo-xwin-v0.20.0.universal2-apple-darwin.tar.gz"
-            ],
-            "sha256": "025ac0e6b5e5d8f7a5364e97bbe23a49297437aa4063c4cef608b5689b547293"
+            ]
           }
         },
         {
@@ -741,8 +702,7 @@
             "size_bytes": 3614906,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.20.0/cargo-xwin-v0.20.0.aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "4b35a5e69347fa29b8b051a4ece87cb74129d2bbdfcecaf35f18f6025d9cb0ce"
+            ]
           }
         },
         {
@@ -756,8 +716,7 @@
             "size_bytes": 3855441,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.20.0/cargo-xwin-v0.20.0.x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "083fdc00067f69eed2ddd2b40b37436b55d417104101b4f618157c35e4125d49"
+            ]
           }
         },
         {
@@ -771,8 +730,7 @@
             "size_bytes": 3409977,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.20.0/cargo-xwin-v0.20.0.windows-x64.zip"
-            ],
-            "sha256": "6f450cf62ec8e1dece73eea487174d83311762122a1a8196f5b229a5fb109904"
+            ]
           }
         }
       ],
@@ -799,8 +757,7 @@
             "size_bytes": 7270033,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.19.2/cargo-xwin-v0.19.2.universal2-apple-darwin.tar.gz"
-            ],
-            "sha256": "65522dbb52ddc0c59d19c594c3993a1daa4345d8b526b938f7b2da3d65dde31e"
+            ]
           }
         },
         {
@@ -814,8 +771,7 @@
             "size_bytes": 3740466,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.19.2/cargo-xwin-v0.19.2.aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "5986e73691f67a8d97921ff0e4add4bd3c2c758867f0049e07d4468cd4f5e439"
+            ]
           }
         },
         {
@@ -829,8 +785,7 @@
             "size_bytes": 4023716,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.19.2/cargo-xwin-v0.19.2.x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "89af8a9cef823e01c0d2f612ade731b4b638b0d199dc1dc09957017ff53a39cb"
+            ]
           }
         },
         {
@@ -844,8 +799,7 @@
             "size_bytes": 3522794,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.19.2/cargo-xwin-v0.19.2.windows-x64.zip"
-            ],
-            "sha256": "860473eb378e6c146bcaef7ed84deff4b465602a9300cf39442c2f9bb1f35152"
+            ]
           }
         }
       ],
@@ -872,8 +826,7 @@
             "size_bytes": 7264970,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.19.1/cargo-xwin-v0.19.1.universal2-apple-darwin.tar.gz"
-            ],
-            "sha256": "67b2c2d4ffd1cbe926b805b8766346b2521250650eae5b93fc397efdbe69f322"
+            ]
           }
         },
         {
@@ -887,8 +840,7 @@
             "size_bytes": 3736105,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.19.1/cargo-xwin-v0.19.1.aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "85569f88ad728ae417c61350aadd4b71cc956d38f8f3eca1717cf98371d16642"
+            ]
           }
         },
         {
@@ -902,8 +854,7 @@
             "size_bytes": 4022236,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.19.1/cargo-xwin-v0.19.1.x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "baa5b908620ce60636a07b5cd54948f4466d6b1f4372bb17e371fa58bdfd7f95"
+            ]
           }
         },
         {
@@ -917,8 +868,7 @@
             "size_bytes": 3522307,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.19.1/cargo-xwin-v0.19.1.windows-x64.zip"
-            ],
-            "sha256": "e1e4bc3b9b52c026491a291125a7408bb74f2dd898d491b791b7a84a6753b4bd"
+            ]
           }
         }
       ],
@@ -945,8 +895,7 @@
             "size_bytes": 8671321,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.19.0/cargo-xwin-v0.19.0.universal2-apple-darwin.tar.gz"
-            ],
-            "sha256": "1c7f4f7a161e207b7173b2b569d198f64927ba2bffaa61812b7447aa3ab59bd4"
+            ]
           }
         },
         {
@@ -960,8 +909,7 @@
             "size_bytes": 4603995,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.19.0/cargo-xwin-v0.19.0.aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "b40cf06a0f84221b5a722a9490c2b95a37bb562a8a1c24375107f459894f6249"
+            ]
           }
         },
         {
@@ -975,8 +923,7 @@
             "size_bytes": 4860742,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.19.0/cargo-xwin-v0.19.0.x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "f5bc724b6fd5af8c294b2cc9890e0600a7de47137cd84f2f0835fd3ebc885581"
+            ]
           }
         },
         {
@@ -990,8 +937,7 @@
             "size_bytes": 3754164,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.19.0/cargo-xwin-v0.19.0.windows-x64.zip"
-            ],
-            "sha256": "ca1253ce4d4d287e8a03690fc644f986aef5bbdd6ed08f1438ac443c461b5d77"
+            ]
           }
         }
       ],
@@ -1018,8 +964,7 @@
             "size_bytes": 8358711,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.18.6/cargo-xwin-v0.18.6.universal2-apple-darwin.tar.gz"
-            ],
-            "sha256": "aa6cb652d108e87175b43be8941f2ac944498310cd8525be40de03a2707f1e77"
+            ]
           }
         },
         {
@@ -1033,8 +978,7 @@
             "size_bytes": 4392118,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.18.6/cargo-xwin-v0.18.6.aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "ffa3d74b644883988ee41597284925c97aad183dd77f5f29db64bb6d331f29f6"
+            ]
           }
         },
         {
@@ -1048,8 +992,7 @@
             "size_bytes": 4638488,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.18.6/cargo-xwin-v0.18.6.x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "5bf295561ae2fdb9aaba1a4d7b10acff125d657f0d356f20f46db788b05910d8"
+            ]
           }
         },
         {
@@ -1063,8 +1006,7 @@
             "size_bytes": 3636305,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.18.6/cargo-xwin-v0.18.6.windows-x64.zip"
-            ],
-            "sha256": "1e9cc537f098a32909242829d36c462c3e09c7f0238c80da375a8c511e071a06"
+            ]
           }
         }
       ],
@@ -1091,8 +1033,7 @@
             "size_bytes": 8352812,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.18.5/cargo-xwin-v0.18.5.universal2-apple-darwin.tar.gz"
-            ],
-            "sha256": "479013ccd59d69c3aa4b83a8f02da454b1c092f580d16757eb753194d145ae17"
+            ]
           }
         },
         {
@@ -1106,8 +1047,7 @@
             "size_bytes": 4391668,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.18.5/cargo-xwin-v0.18.5.aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "58151eac78e2bafc9600dadc2b77607bfc1f61b95efba8707824bff455aa9824"
+            ]
           }
         },
         {
@@ -1121,8 +1061,7 @@
             "size_bytes": 4639145,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.18.5/cargo-xwin-v0.18.5.x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "97470b43878dd14f3c9c08b5f3eb5fbd8b3111e36597ae62bbb50b636b36fc52"
+            ]
           }
         },
         {
@@ -1136,8 +1075,7 @@
             "size_bytes": 3633977,
             "urls": [
               "https://github.com/rust-cross/cargo-xwin/releases/download/v0.18.5/cargo-xwin-v0.18.5.windows-x64.zip"
-            ],
-            "sha256": "2deb364f2d894ea5b50a2e0f26e96410d7f12701e1ad3286108905e2b9b8ecdc"
+            ]
           }
         }
       ],

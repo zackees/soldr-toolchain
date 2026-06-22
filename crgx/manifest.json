@@ -25,8 +25,7 @@
             "size_bytes": 1723816,
             "urls": [
               "https://github.com/yfedoseev/crgx/releases/download/v0.1.0/crgx-macos-aarch64-0.1.0.tar.gz"
-            ],
-            "sha256": "0606292e1d7d175c47fa77e26878d265b85b3b646d600f102c1b36856bb57831"
+            ]
           }
         },
         {
@@ -39,8 +38,7 @@
             "size_bytes": 1872427,
             "urls": [
               "https://github.com/yfedoseev/crgx/releases/download/v0.1.0/crgx-macos-x86_64-0.1.0.tar.gz"
-            ],
-            "sha256": "c52ddb69ce94e016a2ed5c56b1081ce3152889d67e9decf7cb83876ec28487b2"
+            ]
           }
         },
         {
@@ -54,8 +52,7 @@
             "size_bytes": 1891997,
             "urls": [
               "https://github.com/yfedoseev/crgx/releases/download/v0.1.0/crgx-linux-aarch64-0.1.0.tar.gz"
-            ],
-            "sha256": "4b34e618c7362f3b6fbc8d36902e79f6e9d287940d4a1f6912def8241ea87a66"
+            ]
           }
         },
         {
@@ -69,8 +66,7 @@
             "size_bytes": 1971123,
             "urls": [
               "https://github.com/yfedoseev/crgx/releases/download/v0.1.0/crgx-linux-x86_64-0.1.0.tar.gz"
-            ],
-            "sha256": "f1339ea5acf4ce988dc5a53eaa31f33bb7e01acd74446ba13ab4bacac9ca1ffe"
+            ]
           }
         },
         {
@@ -84,8 +80,7 @@
             "size_bytes": 2067482,
             "urls": [
               "https://github.com/yfedoseev/crgx/releases/download/v0.1.0/crgx-linux-x86_64-musl-0.1.0.tar.gz"
-            ],
-            "sha256": "0a6497a31ddf4fd4e9fe1214bd87a784bec0632ab880833c814542ae61f4c096"
+            ]
           }
         },
         {
@@ -99,8 +94,7 @@
             "size_bytes": 1685362,
             "urls": [
               "https://github.com/yfedoseev/crgx/releases/download/v0.1.0/crgx-windows-x86_64-0.1.0.zip"
-            ],
-            "sha256": "78a6df645f5fa0ad57883aa4d570834bcc91e301177f859ecaed16676824d78f"
+            ]
           }
         }
       ],

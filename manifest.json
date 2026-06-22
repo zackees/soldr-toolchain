@@ -10,15 +10,15 @@
         "media_type": "application/vnd.manifest.v1+json",
         "sha256": "a6e9b95d73d85166c76a929e761c865bcb58f154603b8c747bf7132cbeab1a1d"
       },
-      "summary": "Apple macOS SDK 11.3 (cross-compile sysroot, vendored from messense/cargo-zigbuild)",
+      "summary": "messense/cargo-zigbuild",
       "kind_hint": "sysroot"
     },
     "cargo-chef": {
       "descriptor": {
         "url": "cargo-chef/manifest.json",
-        "size_bytes": 105303,
+        "size_bytes": 103593,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "5ecc473a4859661692af75977dd4f8bb9386851a6aa08881f4222b9fb1b1b713"
+        "sha256": "5c50b386910860d9f285bae4acee98026200ae280e59248d01ac0c075b34e533"
       },
       "summary": "LukeMathWalker/cargo-chef",
       "kind_hint": "tool"
@@ -26,9 +26,9 @@
     "cargo-xwin": {
       "descriptor": {
         "url": "cargo-xwin/manifest.json",
-        "size_bytes": 175358,
+        "size_bytes": 169778,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "d34133b7906e8c4f66a26002e341ef00ddd4f311407120099438baa82d969d26"
+        "sha256": "4d50ab4e8bb6b8f8e905175ccbcf2522e4e967095eebf120c5bc566612b6ee5f"
       },
       "summary": "rust-cross/cargo-xwin",
       "kind_hint": "tool"
@@ -36,9 +36,9 @@
     "cargo-zigbuild": {
       "descriptor": {
         "url": "cargo-zigbuild/manifest.json",
-        "size_bytes": 243802,
+        "size_bytes": 235972,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "0c8cc26770d9bf6df9b4ae43a69d19b8351ff244eafe4e4603733ee9f15305db"
+        "sha256": "c79e686bc99e83de9cbd7b318b33959e57b096992b9efb67eac2c064f31f9690"
       },
       "summary": "rust-cross/cargo-zigbuild",
       "kind_hint": "tool"
@@ -46,9 +46,9 @@
     "crgx": {
       "descriptor": {
         "url": "crgx/manifest.json",
-        "size_bytes": 3677,
+        "size_bytes": 3137,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "b338bb78d6b63b36a87f7d24e966f5673055c4cb67e4c318537c351ada6479e9"
+        "sha256": "0bdce03efd61ce0667da2242fc96a254cc565a364ff26de8d686acbd75ec0974"
       },
       "summary": "yfedoseev/crgx",
       "kind_hint": "tool"
@@ -66,9 +66,9 @@
     "zccache": {
       "descriptor": {
         "url": "zccache/manifest.json",
-        "size_bytes": 189523,
+        "size_bytes": 160903,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "824012ca093fc3c8791bea89bf790f6d01d553a7ac097a6e3dea8160315c5d57"
+        "sha256": "bf733f96f0ea95648f145c80c1964f801b843458c85807881d208332e7ec766d"
       },
       "summary": "zackees/zccache",
       "kind_hint": "tool"
