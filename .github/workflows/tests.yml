@@ -35,3 +35,8 @@ jobs:
         env:
           SOLDR_TOOLCHAIN_ASSETS_DIR: ${{ github.workspace }}/assets-checkout
         run: uv run --group dev pytest
+
+      - name: Lint asset catalog
+        # Enforces docs/ASSET_CATALOG.md: directory layout, URL conventions,
+        # every catalog entry matches a real on-disk file, no orphans.
+        run: uv run --group dev python scripts/lint_assets.py --assets-dir assets-checkout
