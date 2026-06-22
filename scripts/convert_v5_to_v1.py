@@ -177,6 +177,19 @@ def convert_tool_catalog(
     }
 
 
+def _kind_hint_for(tool_name: str, meta: dict[str, Any]) -> str:
+    """Map an entry to a coarse-grained category surfaced via the v1
+    ToolEntry.kind_hint field. Free-form; informational only.
+
+    apple-sdk is a cross-compile sysroot (a resource bundle, not an
+    invocable binary). Everything else we currently track is a tool the
+    consumer actually runs.
+    """
+    if meta.get("kind") == "vendored-sdk" or tool_name == "apple-sdk":
+        return "sysroot"
+    return "tool"
+
+
 def convert_index(
     v5_top_level: dict[str, Any],
     catalog_sha_lookup: dict[str, tuple[str, int]],
@@ -194,7 +207,11 @@ def convert_index(
         owner = meta.get("owner", "")
         repo = meta.get("repo", "")
         summary = f"{owner}/{repo}" if owner and owner != "vendored" else repo
-        tools_out[tool_name] = {"descriptor": descriptor, "summary": summary}
+        tools_out[tool_name] = {
+            "descriptor": descriptor,
+            "summary":    summary,
+            "kind_hint":  _kind_hint_for(tool_name, meta),
+        }
     return {
         "$schema":        SCHEMA_URL,
         "kind":           "Index",
