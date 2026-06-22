@@ -6,9 +6,9 @@
     "apple-sdk": {
       "descriptor": {
         "url": "apple-sdk/manifest.json",
-        "size_bytes": 1385,
+        "size_bytes": 943,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "be6985dbb3a67b4b8c25546dec7ab1acad2bef1d72e04d317887551b383f2d01"
+        "sha256": "a3a78a13373e4a1be1917884a2e3baab3a463df19b763ae83adbe0415ca558f0"
       },
       "summary": "messense/cargo-zigbuild",
       "kind_hint": "sysroot"

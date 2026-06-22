@@ -18,21 +18,7 @@
         {
           "platform": {
             "os": "darwin",
-            "arch": "x86_64"
-          },
-          "asset": {
-            "filename": "sdk.tar.zstd",
-            "size_bytes": 52644445,
-            "urls": [
-              "https://raw.githubusercontent.com/zackees/soldr/manifest/deps/mac/sdk.tar.zstd"
-            ],
-            "sha256": "053ac5617f5e6afd5218bec4e871cc55a6a9ab2c0b1f2f77e336dbdd48eabe56"
-          }
-        },
-        {
-          "platform": {
-            "os": "darwin",
-            "arch": "aarch64"
+            "arch": "universal2"
           },
           "asset": {
             "filename": "sdk.tar.zstd",
