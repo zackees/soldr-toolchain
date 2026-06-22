@@ -35,6 +35,9 @@ from typing import Any
 
 V1_SCHEMA_VERSION = 1
 ONLINE_BASE = "https://zackees.github.io/soldr-toolchain"
+# Canonical pointer for IDE auto-validation and document self-verification.
+# Pinned to /v1/ so consumers stay valid forever as the schema evolves.
+SCHEMA_URL = "https://zackees.github.io/manifest.json/v1/manifest.schema.json"
 
 # v5 short-arch -> v1 canonical arch
 ARCH_MAP: dict[str, str] = {
@@ -164,6 +167,7 @@ def convert_tool_catalog(
     if pinned and pinned not in channels.values():
         channels["pinned"] = pinned
     return {
+        "$schema":        SCHEMA_URL,
         "kind":           "Catalog",
         "schema_version": V1_SCHEMA_VERSION,
         "tool":           tool_name,
@@ -192,6 +196,7 @@ def convert_index(
         summary = f"{owner}/{repo}" if owner and owner != "vendored" else repo
         tools_out[tool_name] = {"descriptor": descriptor, "summary": summary}
     return {
+        "$schema":        SCHEMA_URL,
         "kind":           "Index",
         "schema_version": V1_SCHEMA_VERSION,
         "tools":          tools_out,
@@ -246,9 +251,11 @@ def main() -> int:
     print(f"  wrote manifest.json ({len(data)} bytes, {len(index['tools'])} tools)")
 
     # Copy asset-index.json verbatim for backward compat / debugging.
+    # Skip when src and dest point at the same file (in-place regeneration).
     src_asset_index = args.src / "asset-index.json"
-    if src_asset_index.exists():
-        shutil.copy2(src_asset_index, args.dest / "asset-index.json")
+    dst_asset_index = args.dest / "asset-index.json"
+    if src_asset_index.exists() and src_asset_index.resolve() != dst_asset_index.resolve():
+        shutil.copy2(src_asset_index, dst_asset_index)
 
     return 0
 
