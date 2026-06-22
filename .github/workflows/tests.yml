@@ -1,0 +1,37 @@
+name: tests
+
+# Unit tests for the producer scripts. Runs on every push + PR so a
+# regression in build_manifest.py / build_asset_index.py / tool_query.py
+# is caught before it hits the nightly refresh job.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout main (code)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Checkout assets branch (for parity tests)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: assets
+          path: assets-checkout
+          # LFS smudge so the SDK binary is real bytes — the parity
+          # test hashes file content and compares against the
+          # checked-in asset-index.json.
+          lfs: true
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Run pytest via uv
+        env:
+          SOLDR_TOOLCHAIN_ASSETS_DIR: ${{ github.workspace }}/assets-checkout
+        run: uv run --group dev pytest

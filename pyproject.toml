@@ -1,0 +1,21 @@
+[project]
+name = "soldr-toolchain"
+version = "0.0.1"
+description = "Producer scripts + tests for the soldr-toolchain release catalogue."
+requires-python = ">=3.10"
+# Runtime deps: deliberately none. Producer scripts use stdlib only
+# (urllib + hashlib + json + argparse) so the nightly refresh runs on
+# stock python3 with no install step.
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
+
+[tool.pytest.ini_options]
+# Add scripts/ to sys.path so tests can `import build_manifest` etc.
+# without per-file sys.path.insert hacks.
+pythonpath = ["scripts"]
+testpaths = ["tests"]
+addopts = "-v"
