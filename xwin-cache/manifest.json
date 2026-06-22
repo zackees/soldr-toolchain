@@ -1,0 +1,38 @@
+{
+  "$schema": "https://zackees.github.io/manifest.json/v1/manifest.schema.json",
+  "kind": "Catalog",
+  "schema_version": 1,
+  "tool": "xwin-cache",
+  "online_url": "https://zackees.github.io/soldr-toolchain/xwin-cache/manifest.json",
+  "channels": {
+    "latest-stable": "2026-06-22",
+    "stable": "2026-06-22"
+  },
+  "releases": [
+    {
+      "schema_version": 1,
+      "version": "2026-06-22",
+      "published_at": "2026-06-22T00:00:00Z",
+      "min_client_version": 1,
+      "platforms": [
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "x86_64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "xwin-cache.tar.zst",
+            "media_type": "application/zstd",
+            "size_bytes": 84664072,
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/xwin-cache/2026-06-22/windows-x86_64-msvc/xwin-cache.tar.zst",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/xwin-cache/2026-06-22/windows-x86_64-msvc/xwin-cache.tar.zst"
+            ],
+            "sha256": "33c04d8026d99dab4d66f39ddbd93d75f64c68063d4ba58e5450626524bf348d"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -24,7 +24,8 @@
             "filename": "sdk.tar.zstd",
             "size_bytes": 52644445,
             "urls": [
-              "https://raw.githubusercontent.com/zackees/soldr/manifest/deps/mac/sdk.tar.zstd"
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/MacOSX11.3/darwin-universal2/sdk.tar.zstd",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/apple-sdk/MacOSX11.3/darwin-universal2/sdk.tar.zstd"
             ],
             "sha256": "053ac5617f5e6afd5218bec4e871cc55a6a9ab2c0b1f2f77e336dbdd48eabe56"
           }

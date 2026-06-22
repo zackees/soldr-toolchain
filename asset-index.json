@@ -6,7 +6,7 @@
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "sdk.tar.zstd",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/MacOSX11.3/darwin/sdk.tar.zstd",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/MacOSX11.3/darwin-universal2/sdk.tar.zstd",
       "sha256": "053ac5617f5e6afd5218bec4e871cc55a6a9ab2c0b1f2f77e336dbdd48eabe56"
     }
   ]

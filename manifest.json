@@ -3,6 +3,16 @@
   "kind": "Index",
   "schema_version": 1,
   "tools": {
+    "apple-sdk": {
+      "descriptor": {
+        "url": "apple-sdk/manifest.json",
+        "size_bytes": 1123,
+        "media_type": "application/vnd.manifest.v1+json",
+        "sha256": "a6e9b95d73d85166c76a929e761c865bcb58f154603b8c747bf7132cbeab1a1d"
+      },
+      "summary": "Apple macOS SDK 11.3 (cross-compile sysroot, vendored from messense/cargo-zigbuild)",
+      "kind_hint": "sysroot"
+    },
     "cargo-chef": {
       "descriptor": {
         "url": "cargo-chef/manifest.json",
@@ -42,6 +52,16 @@
       },
       "summary": "yfedoseev/crgx",
       "kind_hint": "tool"
+    },
+    "xwin-cache": {
+      "descriptor": {
+        "url": "xwin-cache/manifest.json",
+        "size_bytes": 1239,
+        "media_type": "application/vnd.manifest.v1+json",
+        "sha256": "261651003fdbfa351f07d50445d89b745db6f6ecf2bc545cb32247f14f5b7518"
+      },
+      "summary": "Pre-extracted xwin cache (Windows SDK + CRT) for cross-compile to MSVC",
+      "kind_hint": "sysroot"
     },
     "zccache": {
       "descriptor": {
