@@ -1,0 +1,12 @@
+# Locally-hosted blobs anywhere in the assets-branch tree are tracked
+# via Git LFS. The branch holds catalogue metadata (small JSON) plus
+# binary download artifacts; everything binary goes to LFS so the
+# repo stays clone-friendly.
+**/*.tar.zst   filter=lfs diff=lfs merge=lfs -text
+**/*.tar.zstd  filter=lfs diff=lfs merge=lfs -text
+**/*.tar.xz    filter=lfs diff=lfs merge=lfs -text
+**/*.tar.gz    filter=lfs diff=lfs merge=lfs -text
+**/*.tgz       filter=lfs diff=lfs merge=lfs -text
+**/*.tar.bz2   filter=lfs diff=lfs merge=lfs -text
+**/*.txz       filter=lfs diff=lfs merge=lfs -text
+**/*.zip       filter=lfs diff=lfs merge=lfs -text
