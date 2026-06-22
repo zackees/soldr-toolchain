@@ -1,42 +1,48 @@
-[
-  {
-    "tool": "apple-sdk",
-    "kind": "vendored-sdk",
-    "owner": "vendored",
-    "repo": "messense/cargo-zigbuild",
-    "tag": "MacOSX11.3",
-    "version": "11.3",
-    "name": "Apple macOS SDK 11.3 (cross-compile)",
-    "source_image": "messense/cargo-zigbuild:0.20.0",
-    "source_path_in_image": "/opt/MacOSX11.3.sdk",
-    "is_pinned": true,
-    "platforms": {
-      "darwin-x64": {
-        "filename": "sdk.tar.zstd",
-        "url": "https://raw.githubusercontent.com/zackees/soldr/manifest/deps/mac/sdk.tar.zstd",
-        "size": 52644445,
-        "sha256": "053ac5617f5e6afd5218bec4e871cc55a6a9ab2c0b1f2f77e336dbdd48eabe56",
-        "archive": "tar.zst",
-        "compression_level": 19,
-        "extract_layout": "MacOSX11.3.sdk/"
-      },
-      "darwin-arm64": {
-        "filename": "sdk.tar.zstd",
-        "url": "https://raw.githubusercontent.com/zackees/soldr/manifest/deps/mac/sdk.tar.zstd",
-        "size": 52644445,
-        "sha256": "053ac5617f5e6afd5218bec4e871cc55a6a9ab2c0b1f2f77e336dbdd48eabe56",
-        "archive": "tar.zst",
-        "compression_level": 19,
-        "extract_layout": "MacOSX11.3.sdk/"
-      }
-    },
-    "assets": {
-      "sdk.tar.zstd": {
-        "url": "https://raw.githubusercontent.com/zackees/soldr/manifest/deps/mac/sdk.tar.zstd",
-        "size": 52644445,
-        "sha256": "053ac5617f5e6afd5218bec4e871cc55a6a9ab2c0b1f2f77e336dbdd48eabe56",
-        "content_type": "application/zstd"
-      }
+{
+  "kind": "Catalog",
+  "schema_version": 1,
+  "tool": "apple-sdk",
+  "online_url": "https://zackees.github.io/soldr-toolchain/apple-sdk/manifest.json",
+  "channels": {
+    "latest-stable": "MacOSX11.3",
+    "stable": "MacOSX11.3"
+  },
+  "releases": [
+    {
+      "schema_version": 1,
+      "version": "MacOSX11.3",
+      "published_at": "",
+      "min_client_version": 1,
+      "platforms": [
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "sdk.tar.zstd",
+            "size_bytes": 52644445,
+            "urls": [
+              "https://raw.githubusercontent.com/zackees/soldr/manifest/deps/mac/sdk.tar.zstd"
+            ],
+            "sha256": "053ac5617f5e6afd5218bec4e871cc55a6a9ab2c0b1f2f77e336dbdd48eabe56"
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "sdk.tar.zstd",
+            "size_bytes": 52644445,
+            "urls": [
+              "https://raw.githubusercontent.com/zackees/soldr/manifest/deps/mac/sdk.tar.zstd"
+            ],
+            "sha256": "053ac5617f5e6afd5218bec4e871cc55a6a9ab2c0b1f2f77e336dbdd48eabe56"
+          }
+        }
+      ]
     }
-  }
-]
+  ]
+}
