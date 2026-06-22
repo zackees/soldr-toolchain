@@ -27,7 +27,8 @@
             "size_bytes": 1483328,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.77/cargo-chef-aarch64-unknown-linux-gnu.tar.xz"
-            ]
+            ],
+            "sha256": "64cd1b405894f587a461a0dd0f60127330b1ebd204fd46b1a36fb0ff6da157e0"
           }
         },
         {
@@ -41,7 +42,8 @@
             "size_bytes": 1507764,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.77/cargo-chef-aarch64-unknown-linux-musl.tar.xz"
-            ]
+            ],
+            "sha256": "3bff2e7ff979db837c7e820dfd8d51d2d97b9c94283506c6e596ae4887ef178b"
           }
         },
         {
@@ -55,7 +57,8 @@
             "size_bytes": 1636924,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.77/cargo-chef-x86_64-unknown-linux-gnu.tar.xz"
-            ]
+            ],
+            "sha256": "ff390181459f53c787a496c4ee9a52d8c9c7975ab8d02c8dbd1a0fa1626171f4"
           }
         },
         {
@@ -69,7 +72,8 @@
             "size_bytes": 1709776,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.77/cargo-chef-x86_64-unknown-linux-musl.tar.xz"
-            ]
+            ],
+            "sha256": "a3733ab416c3ffddd37914cd13919ca05fee1a1cf654f3016dcfe7f399d89cd1"
           }
         }
       ],
@@ -97,7 +101,8 @@
             "size_bytes": 1482248,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.76/cargo-chef-aarch64-unknown-linux-gnu.tar.xz"
-            ]
+            ],
+            "sha256": "7de1a3122992f95086afee9c502914d1836acc954e788d37321c0fdbf78e7d23"
           }
         },
         {
@@ -111,7 +116,8 @@
             "size_bytes": 1506136,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.76/cargo-chef-aarch64-unknown-linux-musl.tar.xz"
-            ]
+            ],
+            "sha256": "98fc13bf770c8ac6a454ef2bc1c68b7ed64d2c9cd5a4e3f56d5406021b0cb811"
           }
         },
         {
@@ -125,7 +131,8 @@
             "size_bytes": 1635828,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.76/cargo-chef-x86_64-unknown-linux-gnu.tar.xz"
-            ]
+            ],
+            "sha256": "e408552689a96ff7b0e7e69c6f953752cfc89b10c28313881aa04499c0a30bd4"
           }
         },
         {
@@ -139,7 +146,8 @@
             "size_bytes": 1709164,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.76/cargo-chef-x86_64-unknown-linux-musl.tar.xz"
-            ]
+            ],
+            "sha256": "7be89ee98fc1f019f6f271a8e54ee7a792d40e5c3a20bf2213cbe9e00a679386"
           }
         }
       ],
@@ -167,7 +175,8 @@
             "size_bytes": 1326676,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.75/cargo-chef-aarch64-unknown-linux-gnu.tar.xz"
-            ]
+            ],
+            "sha256": "f76d3c015d60f274d464e535160aa72833b27fa47711fc9bd62b869d797538fc"
           }
         },
         {
@@ -181,7 +190,8 @@
             "size_bytes": 1352240,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.75/cargo-chef-aarch64-unknown-linux-musl.tar.xz"
-            ]
+            ],
+            "sha256": "c0d336c34b07b5d4d19db4149477b0b6bad5330d7c3f79aa271ebe940270456b"
           }
         },
         {
@@ -195,7 +205,8 @@
             "size_bytes": 1471716,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.75/cargo-chef-x86_64-unknown-linux-gnu.tar.xz"
-            ]
+            ],
+            "sha256": "247e4c3c7bbd4ddfb78d62c5f9cc20816c28eb52a108a77a1923e319e9f62267"
           }
         },
         {
@@ -209,7 +220,8 @@
             "size_bytes": 1538060,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.75/cargo-chef-x86_64-unknown-linux-musl.tar.xz"
-            ]
+            ],
+            "sha256": "b729f7b1c44ffedb0f63dfd16fb943a612254a0e13ec54f16861dfe9d0acd5e3"
           }
         }
       ],
@@ -236,7 +248,8 @@
             "size_bytes": 2039012,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.73/cargo-chef-x86_64-apple-darwin.tar.gz"
-            ]
+            ],
+            "sha256": "0d023e6c120dcf1c41ba0ec182607102cacb105c6931bdd60094a535339d15ab"
           }
         },
         {
@@ -250,7 +263,8 @@
             "size_bytes": 2062588,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.73/cargo-chef-aarch64-unknown-linux-gnu.tar.gz"
-            ]
+            ],
+            "sha256": "085d6e1136fb7f618867adabcfa537f0b382f1fed927a7d16537647318091941"
           }
         },
         {
@@ -264,7 +278,8 @@
             "size_bytes": 2244225,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.73/cargo-chef-x86_64-unknown-linux-musl.tar.gz"
-            ]
+            ],
+            "sha256": "893a5737c9de98e18a001476d9900f916565088201b2f589b69ae51853c40445"
           }
         },
         {
@@ -278,7 +293,8 @@
             "size_bytes": 1735430,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.73/cargo-chef-x86_64-pc-windows-msvc.zip"
-            ]
+            ],
+            "sha256": "3bc5c58dec984063a09db35b5afe8736571d8f43bd768d5c8a625551e584e7b3"
           }
         }
       ],
@@ -305,7 +321,8 @@
             "size_bytes": 2061878,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.72/cargo-chef-x86_64-apple-darwin.tar.gz"
-            ]
+            ],
+            "sha256": "43177a6b8b9632dc4cc7889ed71e2a69482969c254d208cd287b87fe8e597b93"
           }
         },
         {
@@ -319,7 +336,8 @@
             "size_bytes": 2269976,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.72/cargo-chef-x86_64-unknown-linux-musl.tar.gz"
-            ]
+            ],
+            "sha256": "e87a8b3ea0e1804b6f019742892c0d9195728b6c16476e950b15504724d48fb4"
           }
         },
         {
@@ -333,7 +351,8 @@
             "size_bytes": 1755242,
             "urls": [
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.72/cargo-chef-x86_64-pc-windows-msvc.zip"
-            ]
+            ],
+            "sha256": "9110f90c551a87e1745308d4339ef02e0f6ff3eff5157b7f32503d2ee81c9d03"
           }
         }
       ],
