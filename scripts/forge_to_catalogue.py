@@ -226,16 +226,22 @@ def _extract_forge_payload(forge_artifact: Path) -> tuple[Path, dict[str, Any]]:
 
 
 def _repack_to_zstd(payload_root: Path, output_path: Path) -> None:
-    """Tar the payload tree + zstd-compress at level 19, long=27.
-    Matches the compression profile of the existing apple-sdk asset."""
+    """Tar the payload tree + zstd-compress at level 19, long=27,
+    streaming both halves so we don't buffer a multi-GB SDK in RAM.
+
+    Previous implementation tar'd into a `BytesIO` then `cctx.compress(raw)`
+    — both calls allocate the full payload (uncompressed Apple SDK is
+    ~1.5 GB), which on a Docker container with the default memory cap
+    swapped to disk and never finished. The streaming form holds at
+    most one tar block + zstd's working state in memory.
+    """
     import zstandard
 
-    buf = io.BytesIO()
-    with tarfile.open(fileobj=buf, mode="w") as tf:
-        tf.add(payload_root, arcname=".")
-    raw = buf.getvalue()
     cctx = zstandard.ZstdCompressor(level=19, write_checksum=True)
-    output_path.write_bytes(cctx.compress(raw))
+    with output_path.open("wb") as out:
+        with cctx.stream_writer(out) as zwriter:
+            with tarfile.open(fileobj=zwriter, mode="w|") as tf:
+                tf.add(payload_root, arcname=".")
 
 
 def _sha256_of(path: Path) -> str:
