@@ -1,0 +1,104 @@
+name: forge ingest
+
+# soldr-toolchain#14 Phase 3: pull a forge artifact from
+# zackees/forge, transcode to zstd, place under the catalogue path,
+# update catalogue.v1.json, open a PR against the assets branch.
+#
+# Triggered manually (or by forge-dispatch.yml) with the forge run id
+# and the (tool, version, shape) tuple identifying the artifact.
+
+on:
+  workflow_dispatch:
+    inputs:
+      forge_run_id:
+        description: "zackees/forge workflow run id (numeric)"
+        required: true
+        type: string
+      tool:
+        description: "Logical tool name (e.g. apple-sdk)"
+        required: true
+        type: string
+        default: apple-sdk
+      version:
+        description: "Tool/SDK version (e.g. 14.5)"
+        required: true
+        type: string
+      shape:
+        description: "Artifact shape"
+        required: true
+        type: choice
+        default: universal2
+        options:
+          - universal2
+          - thin-x86_64
+          - thin-aarch64
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  ingest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout main (for the ingest script + schema)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: main
+          path: main
+
+      - name: Checkout assets branch (LFS-smudged)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: assets
+          path: assets
+          lfs: true
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install --quiet zstandard jsonschema
+
+      - name: Download forge artifacts
+        env:
+          GH_TOKEN: ${{ secrets.FORGE_INGEST_TOKEN }}
+        run: |
+          mkdir -p forge-downloads
+          gh run download "${{ inputs.forge_run_id }}" \
+            --repo zackees/forge \
+            --dir forge-downloads
+
+      - name: Run ingest
+        run: |
+          python main/scripts/forge_to_catalogue.py \
+            --forge-dir forge-downloads \
+            --tool "${{ inputs.tool }}" \
+            --version "${{ inputs.version }}" \
+            --shape "${{ inputs.shape }}" \
+            --forge-run-id "${{ inputs.forge_run_id }}" \
+            --assets-root assets \
+            --schema main/schemas/catalogue.v1.schema.json
+
+      - name: Commit + open PR against assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd assets
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          branch="ingest/${{ inputs.tool }}-${{ inputs.version }}-${{ inputs.shape }}-run${{ inputs.forge_run_id }}"
+          git checkout -B "$branch"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "no diff; nothing to ingest"
+            exit 0
+          fi
+          git commit -m "ingest: ${{ inputs.tool }} ${{ inputs.version }} ${{ inputs.shape }} (forge run ${{ inputs.forge_run_id }})"
+          git push -u origin "$branch"
+          gh pr create --repo zackees/soldr-toolchain --base assets --head "$branch" \
+            --title "ingest: ${{ inputs.tool }} ${{ inputs.version }} ${{ inputs.shape }}" \
+            --body "Forge run [${{ inputs.forge_run_id }}](https://github.com/zackees/forge/actions/runs/${{ inputs.forge_run_id }}) → catalogue entry for \`apple-sdk/${{ inputs.version }}/${{ inputs.shape }}\`. See provenance log on the assets branch (\`.forge-ingest.log.jsonl\`)."
