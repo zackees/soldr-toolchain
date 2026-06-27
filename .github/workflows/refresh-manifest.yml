@@ -98,6 +98,19 @@ jobs:
               --output assets/asset-index.json \
               --branch assets
 
+      - name: Mirror v5 asset-index.json into v1 catalogue.v1.json
+        # soldr#988 Phase 1: re-emit the same flat entries under the
+        # `catalogue.v1.json` namespace defined in
+        # `schemas/catalogue.v1.schema.json`. soldr's Phase 2 resolver
+        # reads this file from
+        # `https://zackees.github.io/soldr-toolchain/catalogue.v1.json`.
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 main/scripts/build_catalogue_v1.py \
+              --asset-index assets/asset-index.json \
+              --output assets/catalogue.v1.json
+
       - name: Build index.html landing page
         shell: bash
         run: |
