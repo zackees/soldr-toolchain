@@ -127,17 +127,20 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"forge artifact: {forge_artifact}")
 
-    payload_root, provenance = _extract_forge_payload(forge_artifact)
-    print(f"payload root: {payload_root}")
-    print(f"provenance: {json.dumps(provenance, indent=2)}")
-
     platform = SHAPE_TO_PLATFORM[args.shape]
     asset_rel = Path(args.tool) / args.version / platform / args.asset_name
     asset_path = args.assets_root / asset_rel
     asset_path.parent.mkdir(parents=True, exist_ok=True)
 
-    _repack_to_zstd(payload_root, asset_path)
+    # Stream tar-to-tar — never materialize the SDK payload on the
+    # host filesystem. Critical on Windows hosts where SDK content
+    # like Tcl manpages (e.g. `ttk::progressbar.ntcl`) contains `:`,
+    # an NTFS-reserved character that `tarfile.extractall` cannot
+    # write to disk. The streaming form keeps the bad bytes inside
+    # tar archives end-to-end.
+    provenance = _stream_repack_to_zstd(forge_artifact, asset_path)
     print(f"wrote asset: {asset_path} ({asset_path.stat().st_size} bytes)")
+    print(f"provenance: {json.dumps(provenance, indent=2)}")
 
     sha256 = _sha256_of(asset_path)
     print(f"sha256: {sha256}")
@@ -225,23 +228,80 @@ def _extract_forge_payload(forge_artifact: Path) -> tuple[Path, dict[str, Any]]:
 # ----- repack ------------------------------------------------------
 
 
-def _repack_to_zstd(payload_root: Path, output_path: Path) -> None:
-    """Tar the payload tree + zstd-compress at level 19, long=27,
-    streaming both halves so we don't buffer a multi-GB SDK in RAM.
+def _stream_repack_to_zstd(
+    forge_artifact: Path, output_path: Path
+) -> dict[str, Any]:
+    """Read the forge .tar.gz one member at a time and emit each into
+    the new zstd-wrapped tar without ever extracting to the host
+    filesystem. Critical on Windows where SDK content contains paths
+    NTFS reserves (`ttk::progressbar.ntcl` & co); the bad bytes ride
+    the tar archive end-to-end and never touch the FS namespace.
 
-    Previous implementation tar'd into a `BytesIO` then `cctx.compress(raw)`
-    — both calls allocate the full payload (uncompressed Apple SDK is
-    ~1.5 GB), which on a Docker container with the default memory cap
-    swapped to disk and never finished. The streaming form holds at
-    most one tar block + zstd's working state in memory.
+    Returns the provenance dict harvested from the forge artifact's
+    `manifest.json` + the recipe's `package/meta.json`.
+
+    Peak RAM stays at ~one tar block + zstd's working state because
+    both ends use streaming mode (`r|gz` for read, `w|` for write,
+    `cctx.stream_writer` for zstd output).
     """
     import zstandard
+
+    manifest: dict[str, Any] = {}
+    recipe_meta: dict[str, Any] = {}
 
     cctx = zstandard.ZstdCompressor(level=19, write_checksum=True)
     with output_path.open("wb") as out:
         with cctx.stream_writer(out) as zwriter:
-            with tarfile.open(fileobj=zwriter, mode="w|") as tf:
-                tf.add(payload_root, arcname=".")
+            with tarfile.open(fileobj=zwriter, mode="w|") as tar_out:
+                with tarfile.open(forge_artifact, mode="r|gz") as tar_in:
+                    for member in tar_in:
+                        # Capture provenance fields without writing them
+                        # to disk. Both files are small (< 1 KB each)
+                        # so reading into RAM is harmless.
+                        if member.name in ("manifest.json", "./manifest.json"):
+                            buf = tar_in.extractfile(member)
+                            if buf is not None:
+                                manifest = json.loads(buf.read())
+                                # And forward the tar entry too so the
+                                # output catalogue blob still carries
+                                # the manifest for downstream consumers
+                                # (re-open file pointer at the start).
+                                payload = json.dumps(manifest).encode()
+                                info = tarfile.TarInfo(member.name)
+                                info.size = len(payload)
+                                tar_out.addfile(info, _io_bytes(payload))
+                            continue
+                        if member.name in ("package/meta.json", "./package/meta.json"):
+                            buf = tar_in.extractfile(member)
+                            if buf is not None:
+                                data = buf.read()
+                                recipe_meta = json.loads(data)
+                                info = tarfile.TarInfo(member.name)
+                                info.size = len(data)
+                                tar_out.addfile(info, _io_bytes(data))
+                            continue
+                        if member.isfile():
+                            buf = tar_in.extractfile(member)
+                            if buf is None:
+                                continue
+                            tar_out.addfile(member, buf)
+                        else:
+                            # Directories, symlinks, hard links, device
+                            # nodes: addfile with no data stream.
+                            tar_out.addfile(member)
+
+    return {
+        "recipe_ref": manifest.get("recipe_ref"),
+        "package_ref": manifest.get("package_ref"),
+        "recipe_meta": recipe_meta,
+    }
+
+
+def _io_bytes(payload: bytes):
+    """Tiny BytesIO wrapper isolating the `import io` from the hot path."""
+    import io as _io
+
+    return _io.BytesIO(payload)
 
 
 def _sha256_of(path: Path) -> str:
