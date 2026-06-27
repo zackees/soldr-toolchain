@@ -96,17 +96,44 @@ def test_extract_forge_payload_returns_package_and_provenance(tmp_path: Path) ->
     assert provenance["recipe_meta"]["captured_sdk_version"] == "14.5.0.21F77"
 
 
-def test_repack_to_zstd_is_zstd_magic(tmp_path: Path) -> None:
-    # Make a tiny payload + repack, then confirm zstd magic bytes lead the file.
-    payload = tmp_path / "payload"
-    payload.mkdir()
-    (payload / "hello.txt").write_text("hi from the recipe")
+def test_stream_repack_to_zstd_round_trip(tmp_path: Path) -> None:
+    # Build a fake forge artifact carrying a colon-bearing member, then
+    # stream-repack and confirm:
+    #   * zstd magic bytes lead the file
+    #   * provenance dict harvested from the manifest + meta
+    #   * the colon-bearing member rides end-to-end (would crash
+    #     tarfile.extractall on Windows but the streaming form never
+    #     touches the FS namespace)
+    artifact = _make_fake_forge_artifact(
+        tmp_path, "apple-sdk-universal2", "14.5", "macos-arm64",
+        payload_files={
+            "package/sdk/usr/lib/libobjc.tbd": b"--- !tapi-tbd\narchs: [ x86_64 ]\n",
+            "package/sdk/usr/share/man/mann/ttk::progressbar.ntcl": b".manpage\n",
+        },
+    )
     out = tmp_path / "asset.tar.zst"
-    fc._repack_to_zstd(payload, out)
+    provenance = fc._stream_repack_to_zstd(artifact, out)
     assert out.is_file()
     head = out.read_bytes()[:4]
-    # Zstandard frame magic number: 0xFD2FB528 little-endian
     assert head == b"\x28\xb5\x2f\xfd", f"expected zstd magic, got {head.hex()}"
+    assert provenance["recipe_ref"].startswith("soldr-toolchain@abc1234")
+    assert "captured_sdk_version" in provenance["recipe_meta"]
+
+    # Round-trip: re-open the tar.zst, confirm the colon-bearing member
+    # is still there.
+    import io as _io
+    import tarfile as _tarfile
+    import zstandard as _zstd
+    raw = out.read_bytes()
+    dctx = _zstd.ZstdDecompressor()
+    plain = dctx.decompress(raw, max_output_size=10 * 1024 * 1024)
+    names = []
+    with _tarfile.open(fileobj=_io.BytesIO(plain), mode="r") as tf:
+        for m in tf:
+            names.append(m.name)
+    assert any("ttk::progressbar" in n for n in names), (
+        f"colon-bearing member missing from output: {names}"
+    )
 
 
 def test_update_catalogue_idempotent_and_provenance_logged(tmp_path: Path) -> None:
