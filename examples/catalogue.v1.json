@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-27T00:00:00Z",
+  "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
+  "entries": [
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "sdk.tar.zstd",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/MacOSX11.3/darwin-universal2/sdk.tar.zstd",
+      "sha256": "053ac5617f5e6afd5218bec4e871cc55a6a9ab2c0b1f2f77e336dbdd48eabe56"
+    },
+    {
+      "owner": "zackees",
+      "repo": "zccache",
+      "tag": "1.12.11",
+      "asset": "zccache-v1.12.11-x86_64-pc-windows-msvc.zip",
+      "url": "https://github.com/zackees/zccache/releases/download/1.12.11/zccache-v1.12.11-x86_64-pc-windows-msvc.zip",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}

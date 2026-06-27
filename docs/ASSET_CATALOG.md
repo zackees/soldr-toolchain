@@ -86,6 +86,24 @@ this convention.
 Run `python scripts/lint_assets.py --assets-dir path/to/assets/` to check.
 The linter enforces every rule in this document. Exit code 0 = clean.
 
+## Schema: `catalogue.v1.json` (soldr#988 Phase 1)
+
+The flat `(owner, repo, tag, asset, url, sha256)` shape produced by
+`build_asset_index.py` is formalized under the v1 namespace at:
+
+- **Schema**: [`schemas/catalogue.v1.schema.json`](../schemas/catalogue.v1.schema.json) (JSON Schema Draft 2020-12)
+- **Sample**: [`examples/catalogue.v1.json`](../examples/catalogue.v1.json)
+- **Validator**: `python scripts/validate_catalogue.py <path>` (requires
+  `jsonschema`, installed in CI via `uv pip install jsonschema`)
+- **CI gate**: [`.github/workflows/catalogue-schema.yml`](../.github/workflows/catalogue-schema.yml)
+
+The legacy `asset-index.json` document on the `assets` branch carries
+`schema_version: 5` and a near-identical shape; the v1 catalogue starts
+fresh so the catalogue product can evolve independently of the
+asset-index legacy. The downstream soldr migration tracked in
+[zackees/soldr#988](https://github.com/zackees/soldr/issues/988) Phase 2
+flips soldr's resolver from `asset-index.json` over to `catalogue.v1.json`.
+
 ## Adding a new vendored asset
 
 1. Decide the canonical tool name, version, platform.
