@@ -1,0 +1,118 @@
+name: forge dispatch
+
+# soldr-toolchain#14 Phase 3: one-button forge dispatch + ingest.
+# Fires `zackees/forge`'s forge-conan.yml for the requested
+# (tool, version, shape) tuple, then triggers forge-ingest.yml once
+# the forge run finishes.
+#
+# Use `shape: all` to fire universal2 + thin-x86_64 + thin-aarch64 in
+# parallel.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tool:
+        description: "Tool name (currently only apple-sdk)"
+        required: true
+        type: choice
+        default: apple-sdk
+        options:
+          - apple-sdk
+      version:
+        description: "SDK / tool version (e.g. 14.5)"
+        required: true
+        type: string
+      shape:
+        description: "Artifact shape (or 'all' for the three apple-sdk shapes)"
+        required: true
+        type: choice
+        default: universal2
+        options:
+          - universal2
+          - thin-x86_64
+          - thin-aarch64
+          - all
+
+permissions:
+  contents: read
+  actions: write     # needed to trigger forge-ingest.yml after the run
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        shape: ${{ fromJson(inputs.shape == 'all' && '["universal2", "thin-x86_64", "thin-aarch64"]' || format('["{0}"]', inputs.shape)) }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Dispatch forge run
+        id: dispatch
+        env:
+          GH_TOKEN: ${{ secrets.FORGE_INGEST_TOKEN }}
+        run: |
+          set -euo pipefail
+          recipe_path="recipes/${{ inputs.tool }}-${{ matrix.shape }}"
+          name="${{ inputs.tool }}-${{ matrix.shape }}"
+          echo "dispatching forge: recipe=$recipe_path name=$name version=${{ inputs.version }}"
+          gh workflow run forge-conan.yml \
+            --repo zackees/forge \
+            -f recipe_repo=zackees/soldr-toolchain \
+            -f recipe_ref=main \
+            -f recipe_path="$recipe_path" \
+            -f name="$name" \
+            -f version="${{ inputs.version }}" \
+            -f macos_arm64=true \
+            -f windows_x64=false \
+            -f linux_x64=false
+          echo "waiting for the new run to appear..."
+          run_id=""
+          for _ in $(seq 1 30); do
+            sleep 5
+            run_id=$(gh run list --repo zackees/forge \
+              --workflow forge-conan.yml \
+              --json databaseId,headBranch,createdAt,status \
+              --jq '.[] | select(.status == "queued" or .status == "in_progress") | .databaseId' \
+              | head -1)
+            [ -n "$run_id" ] && break
+          done
+          if [ -z "$run_id" ]; then
+            echo "::error::could not discover dispatched forge run id"
+            exit 1
+          fi
+          echo "forge_run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "forge run id: $run_id"
+
+      - name: Wait for forge run completion
+        env:
+          GH_TOKEN: ${{ secrets.FORGE_INGEST_TOKEN }}
+        run: |
+          set -euo pipefail
+          run_id="${{ steps.dispatch.outputs.forge_run_id }}"
+          for _ in $(seq 1 60); do
+            status=$(gh run view "$run_id" --repo zackees/forge --json status,conclusion --jq '.status')
+            if [ "$status" = "completed" ]; then
+              conclusion=$(gh run view "$run_id" --repo zackees/forge --json conclusion --jq '.conclusion')
+              if [ "$conclusion" = "success" ]; then
+                echo "forge run $run_id completed successfully"
+                break
+              else
+                echo "::error::forge run $run_id concluded $conclusion"
+                exit 1
+              fi
+            fi
+            sleep 30
+          done
+
+      - name: Trigger ingest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run forge-ingest.yml \
+            --repo zackees/soldr-toolchain \
+            -f forge_run_id="${{ steps.dispatch.outputs.forge_run_id }}" \
+            -f tool="${{ inputs.tool }}" \
+            -f version="${{ inputs.version }}" \
+            -f shape="${{ matrix.shape }}"
