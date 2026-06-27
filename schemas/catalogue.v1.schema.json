@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zackees.github.io/soldr-toolchain/schemas/catalogue.v1.schema.json",
+  "title": "soldr-toolchain catalogue v1",
+  "description": "Flat sha-bearing asset catalogue consumed by soldr's runtime resolver (crates/soldr-cli/src/fetch/manifest_lookup.rs in zackees/soldr). One row per (owner, repo, tag, asset) tuple. Mirrors the shape of the legacy asset-index.json schema_version=5 produced on the assets branch by scripts/build_asset_index.py, with a fresh v1 namespace so the catalogue can evolve independently of the v5 asset-index. See docs/ASSET_CATALOG.md for the directory + URL convention this catalogue references.",
+  "type": "object",
+  "required": ["schema_version", "entries"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Hard-pinned to 1. Bump for breaking changes; consumers MUST refuse unknown versions."
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp the producer wrote the document. Diagnostic only — consumers ignore it for routing decisions."
+    },
+    "origin": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional self-URL of the catalogue (e.g. https://zackees.github.io/soldr-toolchain/catalogue.v1.json). Lets cached copies prove what origin they came from."
+    },
+    "entries": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/Entry"},
+      "description": "Flat list of asset rows. Order is producer-controlled; consumers MUST treat the array as an unordered set keyed by (owner, repo, tag, asset)."
+    }
+  },
+  "$defs": {
+    "Entry": {
+      "type": "object",
+      "required": ["owner", "repo", "tag", "asset", "url", "sha256"],
+      "additionalProperties": false,
+      "properties": {
+        "owner": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,38}$",
+          "description": "GitHub owner (user or org) — follows GitHub's account-name rules: 1-39 chars, alphanumeric + hyphen/underscore, no leading hyphen."
+        },
+        "repo": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9._-]{1,100}$",
+          "description": "GitHub repo name. For locally-hosted vendored blobs the owner+repo is the toolchain repo itself (zackees/soldr-toolchain)."
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Upstream release tag (e.g. v1.12.11) OR the literal string 'assets' for blobs hosted on the soldr-toolchain assets branch."
+        },
+        "asset": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Asset filename byte-for-byte as the upstream / vendor stored it. Used as the lookup key in soldr's resolver."
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://(github\\.com|.*\\.githubusercontent\\.com|zackees\\.github\\.io)/",
+          "description": "Direct download URL. MUST be on a github.com / *.githubusercontent.com / zackees.github.io origin. The producer (scripts/build_asset_index.py) emits one of three URL shapes — see docs/ASSET_CATALOG.md 'URL convention'."
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Lowercase hex sha256 of the asset bytes. Consumers MUST verify this on download. Producers compute it locally for vendored blobs and accept upstream-provided values for GitHub-release assets (verified at first-fetch and cached)."
+        }
+      }
+    }
+  }
+}
