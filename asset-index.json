@@ -5,6 +5,14 @@
       "owner": "zackees",
       "repo": "soldr-toolchain",
       "tag": "assets",
+      "asset": "sdk.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/14.5/darwin-aarch64/sdk.tar.zst",
+      "sha256": "ffd6ecf192c7c0a93d09b74bfd1c7c5b4ffd3f28da32a8852714fb8f6abbbc5c"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
       "asset": "sdk.tar.zstd",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/MacOSX11.3/darwin-universal2/sdk.tar.zstd",
       "sha256": "053ac5617f5e6afd5218bec4e871cc55a6a9ab2c0b1f2f77e336dbdd48eabe56"
