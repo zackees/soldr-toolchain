@@ -99,55 +99,55 @@ class LlvmToolsLinuxX64(ConanFile):
             f"llvmorg-{ver}/{archive_name}"
         )
         self.output.info(f"fetching {url}")
-        with urllib.request.urlopen(url, timeout=300) as resp:
-            xz_bytes = resp.read()
-        self.output.info(f"downloaded {len(xz_bytes)} bytes; decompressing")
-        raw_bytes = lzma.decompress(xz_bytes)
-        self.output.info("extracting whitelisted bin/ + lib/ + include/")
-
+        # Stream the download → xz decompressor → tarfile reader. The
+        # LLVM 22.x Linux X64 archive is ~1.9 GB compressed, ~6 GB
+        # decompressed; holding either fully in memory OOM-killed the
+        # forge runner. Stream-mode tarfile iterates once front-to-back
+        # which is enough for our whitelist filter.
         out_root = Path(self.build_folder) / "package"
         out_root.mkdir(parents=True, exist_ok=True)
-
-        # LLVM archive's top-level dir is `clang+llvm-<ver>-<host>/`.
-        with tarfile.open(fileobj=io.BytesIO(raw_bytes), mode="r:") as tf:
-            for member in tf:
-                parts = member.name.split("/", 1)
-                if len(parts) < 2:
-                    continue
-                rel = parts[1]
-                keep = False
-                if rel.startswith("bin/") and Path(rel).name in self.WHITELIST_BIN:
-                    keep = True
-                elif rel.startswith("lib/") and (
-                    Path(rel).name.startswith("libLLVM")
-                    or Path(rel).name.startswith("libclang")
-                    or Path(rel).name.startswith("liblldb")
-                ):
-                    keep = True
-                elif rel.startswith("lib/clang/") and (
-                    rel.endswith(".h") or "lib/" in rel
-                ):
-                    # The `lib/clang/<ver>/include/` headers are needed
-                    # by clang-cl when compiling C/C++ deps.
-                    keep = True
-                if not keep:
-                    continue
-                target = out_root / rel
-                if member.isdir():
-                    target.mkdir(parents=True, exist_ok=True)
-                    continue
-                target.parent.mkdir(parents=True, exist_ok=True)
-                buf = tf.extractfile(member)
-                if buf is None:
-                    continue
-                target.write_bytes(buf.read())
-                # Preserve executable mode.
-                if member.mode & 0o111:
-                    target.chmod(0o755)
+        self.output.info("streaming tar.xz → whitelist filter → package/")
+        with urllib.request.urlopen(url, timeout=600) as resp:
+            xz_reader = lzma.LZMAFile(resp, mode="rb")
+            with tarfile.open(fileobj=xz_reader, mode="r|") as tf:
+                for member in tf:
+                    parts = member.name.split("/", 1)
+                    if len(parts) < 2:
+                        continue
+                    rel = parts[1]
+                    keep = False
+                    if rel.startswith("bin/") and Path(rel).name in self.WHITELIST_BIN:
+                        keep = True
+                    elif rel.startswith("lib/") and (
+                        Path(rel).name.startswith("libLLVM")
+                        or Path(rel).name.startswith("libclang")
+                        or Path(rel).name.startswith("liblldb")
+                    ):
+                        keep = True
+                    elif rel.startswith("lib/clang/") and (
+                        rel.endswith(".h") or "lib/" in rel
+                    ):
+                        # The `lib/clang/<ver>/include/` headers are needed
+                        # by clang-cl when compiling C/C++ deps.
+                        keep = True
+                    if not keep:
+                        continue
+                    target = out_root / rel
+                    if member.isdir():
+                        target.mkdir(parents=True, exist_ok=True)
+                        continue
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    buf = tf.extractfile(member)
+                    if buf is None:
+                        continue
+                    target.write_bytes(buf.read())
+                    # Preserve executable mode.
+                    if member.mode & 0o111:
+                        target.chmod(0o755)
 
         meta = {
             "llvm_version": ver,
-            "host_triple": HOST_TRIPLE,
+            "asset_name": archive_name,
             "source_url": url,
         }
         (Path(self.build_folder) / "meta.json").write_text(
