@@ -48,7 +48,10 @@ class OpensslWindowsX64(ConanFile):
         "Source: FireDaemon's openssl-<ver>.zip mirror of upstream OpenSSL."
     )
     license = "Apache-2.0"
-    package_type = "library"
+    # `header-library` chosen over `library` so conan doesn't require us
+    # to declare `shared`/`fPIC` options — we ship pre-built artifacts
+    # for a single target triple, no source build to configure.
+    package_type = "header-library"
     no_copy_source = True
     settings = "os", "arch"
 
