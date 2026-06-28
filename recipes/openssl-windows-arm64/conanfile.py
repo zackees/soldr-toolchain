@@ -39,7 +39,7 @@ class OpensslWindowsArm64(ConanFile):
         "Source: FireDaemon's openssl-<ver>.zip mirror of upstream OpenSSL."
     )
     license = "Apache-2.0"
-    package_type = "library"
+    package_type = "header-library"
     no_copy_source = True
     settings = "os", "arch"
 

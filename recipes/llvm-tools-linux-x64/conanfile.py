@@ -54,9 +54,12 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.files import copy
 
 
-LLVM_VERSION_DEFAULT = "18.1.8"
-HOST_TRIPLE = "x86_64-linux-gnu-ubuntu-22.04"
-# LLVM's prebuilt archive naming: clang+llvm-<ver>-<host>.tar.xz
+LLVM_VERSION_DEFAULT = "22.1.8"
+# LLVM upstream renamed the linux archives in the 21.x cycle:
+#   old (≤ 20.x): clang+llvm-<ver>-x86_64-linux-gnu-ubuntu-<distro>.tar.xz
+#   new (≥ 21.x): LLVM-<ver>-Linux-X64.tar.xz
+# Recipe targets the new format; pin a ≥21 release at dispatch time.
+ASSET_NAME_TPL = "LLVM-{ver}-Linux-X64.tar.xz"
 
 
 class LlvmToolsLinuxX64(ConanFile):
@@ -90,7 +93,7 @@ class LlvmToolsLinuxX64(ConanFile):
 
     def build(self):
         ver = str(self.version)
-        archive_name = f"clang+llvm-{ver}-{HOST_TRIPLE}.tar.xz"
+        archive_name = ASSET_NAME_TPL.format(ver=ver)
         url = (
             f"https://github.com/llvm/llvm-project/releases/download/"
             f"llvmorg-{ver}/{archive_name}"
