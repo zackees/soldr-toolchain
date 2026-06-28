@@ -56,9 +56,13 @@ from typing import Any
 
 # Map shape → catalogue platform string.
 SHAPE_TO_PLATFORM = {
+    # apple-sdk shapes (existing)
     "universal2": "darwin-universal2",
     "thin-x86_64": "darwin-x86_64",
     "thin-aarch64": "darwin-aarch64",
+    # xwin-cache shapes (soldr#1012 PR 3)
+    "xwin-windows-x64": "windows-x86_64-msvc",
+    "xwin-windows-arm64": "windows-aarch64-msvc",
 }
 
 # Map tool → recipe name prefix (forge artifact name embeds this).
@@ -67,6 +71,10 @@ TOOL_RECIPE_NAME = {
         "universal2": "apple-sdk-universal2",
         "thin-x86_64": "apple-sdk-thin-x86_64",
         "thin-aarch64": "apple-sdk-thin-aarch64",
+    },
+    "xwin-cache": {
+        "xwin-windows-x64": "xwin-cache-windows-x64",
+        "xwin-windows-arm64": "xwin-cache-windows-arm64",
     },
 }
 
