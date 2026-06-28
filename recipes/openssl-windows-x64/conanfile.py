@@ -52,7 +52,13 @@ FIREDAEMON_URL_TPL = (
 def _extract_arch(*, version, arch_dir, target_triple, build_folder, output):
     url = FIREDAEMON_URL_TPL.format(version=version)
     output.info(f"fetching {url}")
-    with urllib.request.urlopen(url, timeout=300) as resp:
+    # FireDaemon's CDN returns 403 to requests without a recognized
+    # User-Agent. Use a vanilla curl-shaped UA to satisfy the gate.
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "curl/8.5.0"},
+    )
+    with urllib.request.urlopen(req, timeout=300) as resp:
         data = resp.read()
     output.info(f"downloaded {len(data)} bytes; extracting {arch_dir}/")
 
