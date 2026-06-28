@@ -60,6 +60,11 @@ from conan.tools.files import copy
 # Update when a new PBS release ships and we want to pin to it.
 # https://github.com/astral-sh/python-build-standalone/releases
 PBS_TAGS = {
+    # Mirror of _python_pbs.PBS_TAGS — keep in sync.
+    "3.13.14": "20260623",
+    "3.12.13": "20260623",
+    "3.11.15": "20260623",
+    "3.10.20": "20260623",
     "3.13.0": "20241016",
     "3.12.7": "20241016",
     "3.11.10": "20241016",
