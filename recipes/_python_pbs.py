@@ -46,6 +46,18 @@ from pathlib import Path
 
 
 PBS_TAGS = {
+    # 20260623 is the first PBS release that ships
+    # aarch64-pc-windows-msvc + aarch64-unknown-linux-musl, both of
+    # which the soldr#1006 Lane 1/2 win + arm64 musl recipes need.
+    # 3.13.14 is the most-recent 3.13.x in that release; new
+    # dispatches should prefer these entries.
+    "3.13.14": "20260623",
+    "3.12.13": "20260623",
+    "3.11.15": "20260623",
+    "3.10.20": "20260623",
+    # Legacy 20241016 entries kept for backwards-compat with any
+    # external dispatch still pinned to the older versions. These
+    # tags don't ship win-arm64 / linux-arm64-musl.
     "3.13.0": "20241016",
     "3.12.7": "20241016",
     "3.11.10": "20241016",
