@@ -15,17 +15,25 @@ The PBS naming convention is:
 
     cpython-<py_version>+<pbs_tag>-<triple>-install_only.tar.gz
 
-Inside the tarball:
+Inside the tarball (verified 2026-06-28 against PBS 20241016 archives):
 
-    python/install/include/...           Python.h + CAPI headers (all platforms)
-    python/install/libs/python3.lib      Windows (with `s`) — stable ABI import
-    python/install/libs/python313.lib    Windows — versioned import
-    python/install/lib/libpython3.13.so  Linux gnu
-    python/install/lib/libpython3.13.dylib  Darwin
+    python/include/...                 Python.h + CAPI headers (all platforms)
+    python/libs/python3.lib            Windows (with `s`) — stable ABI import
+    python/libs/python313.lib          Windows — versioned import
+    python/lib/libpython3.13.so        Linux gnu
+    python/lib/libpython3.13.dylib     Darwin
 
-The extractor whitelists just `include/` + the per-platform `lib/`-style
-directory, dropping the interpreter binary + the `Lib/` (stdlib Python
-source) tree so the resulting catalogue blob is small.
+Important: top-level prefix is `python/`, **not** `python/install/`.
+Earlier versions of this helper assumed a `python/install/<...>` layout
+which was wrong for `install_only.tar.gz` archives — that path is only
+present in the `full` archive variants. With the wrong prefix the
+recipe silently extracted nothing and forge's "package payload below
+10240 bytes" gate caught it. Fixed by dropping the bogus `install/`
+component.
+
+The extractor whitelists `include/` + the per-platform `lib/`-style
+directory (filtered to keep only `libpython*` libs on Unix, dropping
+the stdlib tree), so the resulting catalogue blob is small.
 """
 
 from __future__ import annotations
@@ -79,23 +87,41 @@ def extract_sysroot(
     out_root = build_folder / "package"
     out_root.mkdir(parents=True, exist_ok=True)
 
-    # Whitelist the dirs we care about. Windows libs/ → lib/ (for
-    # consistent soldr-side ergonomics — the consumer always looks
-    # under `lib/`).
-    whitelist = ("libs/", "lib/", "include/")
-    prefix = "python/install/"
+    # Whitelist the dirs we care about. The PBS `install_only`
+    # archives have `python/` as the top-level prefix (NOT
+    # `python/install/` — that's the `full` archive variant).
+    # We keep:
+    #   include/  (all platforms)
+    #   libs/     (Windows-only — the MSVC import libs)
+    #   lib/libpython*  (Unix — explicitly excludes the python3.13/
+    #                    stdlib tree which lives under `lib/` too)
+    # Everything else (bin/, DLLs/, Lib/, share/, the interpreter
+    # itself, the full stdlib tree) is dropped.
+    prefix = "python/"
 
+    def _keep(rel: str) -> str | None:
+        """Return the destination relative path, or None to skip."""
+        if rel.startswith("include/"):
+            return rel
+        if rel.startswith("libs/"):
+            # libs/ → lib/ for soldr-side ergonomics (consumer always
+            # looks under `lib/`).
+            return "lib/" + rel[len("libs/"):]
+        if rel.startswith("lib/lib"):
+            return rel
+        return None
+
+    extracted_count = 0
     with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tf:
         for member in tf:
             name = member.name
             if not name.startswith(prefix):
                 continue
             rel = name[len(prefix):]
-            if not any(rel.startswith(p) for p in whitelist):
+            dest_rel = _keep(rel)
+            if dest_rel is None:
                 continue
-            if rel.startswith("libs/"):
-                rel = "lib/" + rel[len("libs/"):]
-            target = out_root / rel
+            target = out_root / dest_rel
             if member.isdir():
                 target.mkdir(parents=True, exist_ok=True)
                 continue
@@ -104,6 +130,15 @@ def extract_sysroot(
             if buf is None:
                 continue
             target.write_bytes(buf.read())
+            extracted_count += 1
+
+    output.info(f"extracted {extracted_count} files into package/")
+    if extracted_count == 0:
+        raise RuntimeError(
+            f"no files extracted from PBS archive for triple={target_triple}; "
+            "tarball layout may have changed (expected `python/include/` + "
+            "`python/libs/` on Windows or `python/lib/libpython*` on Unix)."
+        )
 
     meta = {
         "python_version": py_version,
