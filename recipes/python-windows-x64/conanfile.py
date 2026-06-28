@@ -100,29 +100,32 @@ class PythonWindowsX64(ConanFile):
             data = resp.read()
         self.output.info(f"downloaded {len(data)} bytes; extracting sysroot subset")
 
-        # python-build-standalone archives have a `python/` top-level
-        # directory containing `install/` (the actual prefix) +
-        # `PYTHON.json` (metadata). We pull just `install/Lib/`
-        # equivalents — for Windows, `install/libs/` and
-        # `install/include/`.
+        # PBS `install_only.tar.gz` archives use `python/` as the
+        # top-level prefix (NOT `python/install/` — that was a
+        # pre-2026-06-28 misreading; the `install/` subdir is only in
+        # the `full` archive variants). We keep just:
+        #   include/  → Python.h + CAPI headers
+        #   libs/     → python3.lib + python313.lib (renamed to lib/
+        #              for soldr-side ergonomics — consumer always
+        #              looks under lib/)
+        # Drops the interpreter binary + DLLs + Lib/ stdlib.
         out_root = Path(self.build_folder) / "package"
         out_root.mkdir(parents=True, exist_ok=True)
+        extracted_count = 0
         with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tf:
             for member in tf:
                 name = member.name
-                # Strip the leading `python/install/` prefix.
-                prefix = "python/install/"
+                prefix = "python/"
                 if not name.startswith(prefix):
                     continue
                 rel = name[len(prefix):]
-                # Whitelist: libs (.lib / .dll import stubs) +
-                # include/ (Python.h + CAPI headers).
-                if not (rel.startswith("libs/") or rel.startswith("include/")):
+                if rel.startswith("include/"):
+                    dest_rel = rel
+                elif rel.startswith("libs/"):
+                    dest_rel = "lib/" + rel[len("libs/"):]
+                else:
                     continue
-                # libs/ → lib/ for soldr-side ergonomics
-                if rel.startswith("libs/"):
-                    rel = "lib/" + rel[len("libs/"):]
-                target = out_root / rel
+                target = out_root / dest_rel
                 if member.isdir():
                     target.mkdir(parents=True, exist_ok=True)
                     continue
@@ -131,6 +134,13 @@ class PythonWindowsX64(ConanFile):
                 if buf is None:
                     continue
                 target.write_bytes(buf.read())
+                extracted_count += 1
+        self.output.info(f"extracted {extracted_count} files into package/")
+        if extracted_count == 0:
+            raise RuntimeError(
+                "no files extracted from PBS Windows archive — tarball layout "
+                "may have changed (expected `python/include/` + `python/libs/`)."
+            )
 
         meta = {
             "python_version": str(self.version),
