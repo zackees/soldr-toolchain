@@ -137,6 +137,22 @@ class LlvmToolsLinuxX64(ConanFile):
                         target.mkdir(parents=True, exist_ok=True)
                         continue
                     target.parent.mkdir(parents=True, exist_ok=True)
+                    # Streaming tar mode (`r|`) cannot extract symlinks
+                    # via `extractfile()` — calling it raises
+                    # `StreamError: cannot extract (sym)link as file
+                    # object`. LLVM's archive uses lots of symlinks
+                    # (e.g. clang++ → clang). Materialize symlinks
+                    # directly via os.symlink instead of trying to read
+                    # them as files. Hardlinks get the same treatment.
+                    if member.issym() or member.islnk():
+                        link_target = member.linkname
+                        try:
+                            if target.exists() or target.is_symlink():
+                                target.unlink()
+                            target.symlink_to(link_target)
+                        except OSError:
+                            pass
+                        continue
                     buf = tf.extractfile(member)
                     if buf is None:
                         continue
