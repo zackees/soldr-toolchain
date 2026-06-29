@@ -1,0 +1,139 @@
+{
+  "$schema": "https://zackees.github.io/manifest.json/v1/manifest.schema.json",
+  "kind": "Catalog",
+  "schema_version": 1,
+  "tool": "zig",
+  "online_url": "https://zackees.github.io/soldr-toolchain/zig/manifest.json",
+  "channels": {
+    "latest-stable": "0.15.2",
+    "stable": "0.15.2"
+  },
+  "releases": [
+    {
+      "schema_version": 1,
+      "version": "0.15.2",
+      "published_at": "2026-06-12T00:00:00Z",
+      "min_client_version": 1,
+      "platforms": [
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "zig-x86_64-linux-0.15.2.tar.xz",
+            "size_bytes": 53733924,
+            "urls": [
+              "https://ziglang.org/download/0.15.2/zig-x86_64-linux-0.15.2.tar.xz"
+            ],
+            "sha256": "02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "zig-aarch64-linux-0.15.2.tar.xz",
+            "size_bytes": 49471996,
+            "urls": [
+              "https://ziglang.org/download/0.15.2/zig-aarch64-linux-0.15.2.tar.xz"
+            ],
+            "sha256": "958ed7d1e00d0ea76590d27666efbf7a932281b3d7ba0c6b01b0ff26498f667f"
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "zig-x86_64-macos-0.15.2.tar.xz",
+            "size_bytes": 55800460,
+            "urls": [
+              "https://ziglang.org/download/0.15.2/zig-x86_64-macos-0.15.2.tar.xz"
+            ],
+            "sha256": "375b6909fc1495d16fc2c7db9538f707456bfc3373b14ee83fdd3e22b3d43f7f"
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "zig-aarch64-macos-0.15.2.tar.xz",
+            "size_bytes": 50635984,
+            "urls": [
+              "https://ziglang.org/download/0.15.2/zig-aarch64-macos-0.15.2.tar.xz"
+            ],
+            "sha256": "3cc2bab367e185cdfb27501c4b30b1b0653c28d9f73df8dc91488e66ece5fa6b"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "zig-x86_64-windows-0.15.2.zip",
+            "size_bytes": 92614574,
+            "urls": [
+              "https://ziglang.org/download/0.15.2/zig-x86_64-windows-0.15.2.zip"
+            ],
+            "sha256": "3a0ed1e8799a2f8ce2a6e6290a9ff22e6906f8227865911fb7ddedc3cc14cb0c"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "zig-aarch64-windows-0.15.2.zip",
+            "size_bytes": 88464585,
+            "urls": [
+              "https://ziglang.org/download/0.15.2/zig-aarch64-windows-0.15.2.zip"
+            ],
+            "sha256": "b926465f8872bf983422257cd9ec248bb2b270996fbe8d57872cca13b56fc370"
+          }
+        }
+      ],
+      "source": {
+        "kind": "upstream-direct",
+        "vendor": "ziglang.org",
+        "index_url": "https://ziglang.org/download/index.json",
+        "notes": "Vendored entry (not GitHub Releases). Zig is distributed via ziglang.org's own infrastructure with a public JSON index at /download/index.json that pins SHA256 + size per platform. Producer side: scripts/build_zig_manifest.py refreshes this file from the index. Consumer side: same shape as the GitHub-tracked tools so soldr can consume both interchangeably."
+      }
+    },
+    {
+      "schema_version": 1,
+      "version": "0.13.0",
+      "published_at": "2025-06-07T00:00:00Z",
+      "min_client_version": 1,
+      "platforms": [
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "zig-linux-x86_64-0.13.0.tar.xz",
+            "size_bytes": 47082308,
+            "urls": [
+              "https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz"
+            ],
+            "sha256": "d45312e61ebcc48032b77bc4cf7fd6915c11fa16e4aad116b66c9468211230ea"
+          }
+        }
+      ],
+      "source": {
+        "kind": "upstream-direct",
+        "vendor": "ziglang.org",
+        "index_url": "https://ziglang.org/download/index.json",
+        "notes": "Kept as a fallback / known-working pin. Soldr's `ci/docker-aarch64-musl-cross/` used this version for the initial pivot from musl.cc to cargo-zigbuild."
+      }
+    }
+  ]
+}

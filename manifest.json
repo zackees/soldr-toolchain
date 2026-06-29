@@ -72,6 +72,16 @@
       },
       "summary": "zackees/zccache",
       "kind_hint": "tool"
+    },
+    "zig": {
+      "descriptor": {
+        "url": "zig/manifest.json",
+        "size_bytes": 4690,
+        "media_type": "application/vnd.manifest.v1+json",
+        "sha256": "16efa8cb9ea2fc1c62f7b4c6527c2fed2407f089af609ead55d261a6d233bbcb"
+      },
+      "summary": "ziglang/zig (vendored from ziglang.org/download/index.json)",
+      "kind_hint": "tool"
     }
   }
 }
