@@ -77,6 +77,20 @@ jobs:
               --output v5-scratch/asset-index.json \
               --branch assets
 
+      # Vendored producer for zig. zig isn't on GitHub Releases — it's
+      # distributed via ziglang.org/download/index.json — so build_manifest.py
+      # can't track it. This producer writes assets/zig/manifest.json
+      # directly in v1 format; convert_v5_to_v1.py's
+      # _preserve_vendored_entries pass below will re-hash the descriptor
+      # in the top-level manifest.json from the on-disk content.
+      # See soldr-toolchain#32.
+      - name: Refresh assets/zig/manifest.json from ziglang.org
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 main/scripts/build_zig_manifest.py \
+              --output-dir assets
+
       - name: Convert v5 -> manifest.json v1 (Index + Catalogs)
         shell: bash
         run: |
