@@ -35,12 +35,33 @@ HERE = Path(__file__).resolve().parent
 #   forge-<lib>-<shape>-<version>-<conan-os-arch>
 # We can pull <lib> and <shape> from the artifact name; the
 # version is also embedded.
+#
+# Long-form shapes (linux-x64-gnu / linux-arm64-musl / etc.) come
+# first in the alternation so the regex prefers them over the
+# bare `linux-x64` / `linux-arm64` forms that llvm-tools uses
+# (recipe `recipes/llvm-tools-linux-x64` ships without a `-gnu`
+# suffix). Regex alternation is left-to-right first-match, so this
+# order is load-bearing for correctness on the musl/gnu shapes.
 _ARTIFACT_RE = re.compile(
     r"^forge-(?P<tool>[a-z0-9-]+?)-(?P<shape>"
     r"windows-x64|windows-arm64|darwin-x64|darwin-arm64|"
-    r"linux-x64-gnu|linux-arm64-gnu|linux-x64-musl|linux-arm64-musl"
+    r"linux-x64-gnu|linux-arm64-gnu|linux-x64-musl|linux-arm64-musl|"
+    r"linux-x64|linux-arm64"
     r")-(?P<version>[0-9.]+)-"
 )
+
+
+# soldr#1010 phase 3: tools whose `--shape <value>` differs from the
+# shape captured by the artifact-name regex. llvm-tools ships under
+# the bare `linux-x64` shape in the recipe directory, but the
+# `forge_to_catalogue.py` TOOL_RECIPE_NAME table keys it as
+# `linux-x64-gnu` for consistency with the other Linux x86_64
+# entries. Re-key here before dispatching to forge_to_catalogue.py.
+_TOOL_SHAPE_REMAP = {
+    "llvm-tools": {
+        "linux-x64": "linux-x64-gnu",
+    },
+}
 
 
 def parse_artifact_name(name: str) -> dict | None:
@@ -133,6 +154,7 @@ def main() -> int:
             continue
         parsed = parse_artifact_name(artifacts[0]["name"])
         if not parsed or parsed["tool"] not in {
+            # syslibs (soldr#1064)
             "zstd",
             "sqlite",
             "jemalloc",
@@ -140,12 +162,27 @@ def main() -> int:
             "zlib-ng",
             "lzma",
             "bzip2",
+            # blessed-build tool families (soldr#1010 phase 2-3)
+            "python",
+            "nodelib",
+            "openssl",
+            "llvm-tools",
         }:
             print(
-                f"run {run_id}: artifact {artifacts[0]['name']!r} doesn't match a syslib; skip"
+                f"run {run_id}: artifact {artifacts[0]['name']!r} not in the known tool set; skip"
             )
             skipped += 1
             continue
+
+        # Re-key the shape if the tool has a recipe-name vs --shape
+        # mismatch (llvm-tools is the only known case today).
+        remap = _TOOL_SHAPE_REMAP.get(parsed["tool"], {})
+        if parsed["shape"] in remap:
+            print(
+                f"run {run_id}: remapping shape {parsed['shape']!r} → "
+                f"{remap[parsed['shape']]!r} for tool {parsed['tool']!r}"
+            )
+            parsed["shape"] = remap[parsed["shape"]]
 
         with tempfile.TemporaryDirectory() as td:
             tmp = Path(td)
