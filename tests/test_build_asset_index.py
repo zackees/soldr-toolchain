@@ -41,6 +41,18 @@ class Sha256OfFileTest(unittest.TestCase):
                 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
             )
 
+    def test_git_lfs_pointer_sha_uses_object_oid(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp) / "bundle.tar.zst"
+            oid = "a" * 64
+            f.write_text(
+                "version https://git-lfs.github.com/spec/v1\n"
+                f"oid sha256:{oid}\n"
+                "size 123456\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(bai.sha256_of_file(f), oid)
+
     def test_large_file_streamed_correctly(self) -> None:
         """Multi-chunk read must produce the same hash as a one-shot read."""
         with tempfile.TemporaryDirectory() as tmp:
@@ -285,6 +297,47 @@ class BuildAssetIndexTest(unittest.TestCase):
             for entry in zccache_entries:
                 self.assertIn("/zccache/1.12.9/linux-x64/", entry["url"])
 
+    def test_same_local_filename_survives_across_platform_dirs(self) -> None:
+        """Forge-ingested catalogue bundles use stable filenames like
+        bundle.tar.zst or sdk.tar.zst. Distinct platform directories must
+        survive refresh even when owner/repo/tag/asset are identical."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for platform, payload in {
+                "darwin-aarch64": b"arm64-sdk",
+                "darwin-x86_64": b"x64-sdk",
+                "darwin-universal2": b"fat-sdk",
+            }.items():
+                blob_dir = root / "apple-sdk" / "14.5" / platform
+                blob_dir.mkdir(parents=True, exist_ok=True)
+                (blob_dir / "sdk.tar.zst").write_bytes(payload)
+
+            index = bai.build_asset_index(
+                root,
+                repo_owner="zackees",
+                repo_name="soldr-toolchain",
+                branch="assets",
+                offline=True,
+            )
+
+            sdk_entries = [
+                e for e in index["entries"]
+                if e["asset"] == "sdk.tar.zst"
+            ]
+            self.assertEqual(len(sdk_entries), 3, msg=index)
+            self.assertEqual(
+                {
+                    e["url"].rsplit("/14.5/", 1)[1].rsplit("/", 1)[0]
+                    for e in sdk_entries
+                },
+                {"darwin-aarch64", "darwin-x86_64", "darwin-universal2"},
+            )
+            self.assertEqual(
+                len({e["sha256"] for e in sdk_entries}),
+                3,
+                msg="each platform payload must keep its own sha",
+            )
+
     def test_offline_skips_release_entries(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -345,7 +398,7 @@ class BuildAssetIndexTest(unittest.TestCase):
                 offline=True,
             )
             keys = [
-                (e["owner"], e["repo"], e["tag"], e["asset"])
+                (e["owner"], e["repo"], e["tag"], e["asset"], e["url"])
                 for e in index["entries"]
             ]
             self.assertEqual(keys, sorted(keys))

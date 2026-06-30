@@ -252,14 +252,14 @@ class AssetIndexLocalParityTest(unittest.TestCase):
             offline=True,
         )
         fresh_local = {
-            (e["owner"], e["repo"], e["tag"], e["asset"]): e
+            (e["owner"], e["repo"], e["tag"], e["asset"], e["url"]): e
             for e in fresh["entries"]
         }
         skipped: list[str] = []
         for e in self.checked_in["entries"]:
             if not _is_local_blob_entry(e):
                 continue
-            key = (e["owner"], e["repo"], e["tag"], e["asset"])
+            key = (e["owner"], e["repo"], e["tag"], e["asset"], e["url"])
             fresh_entry = fresh_local.get(key)
             if fresh_entry is None:
                 self.fail(f"checked-in row {key} has no on-disk counterpart")

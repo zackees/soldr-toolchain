@@ -32,6 +32,14 @@ on:
           - universal2
           - thin-x86_64
           - thin-aarch64
+          - windows-x64
+          - windows-arm64
+          - darwin-x64
+          - darwin-arm64
+          - linux-x64-gnu
+          - linux-arm64-gnu
+          - linux-x64-musl
+          - linux-arm64-musl
 
 permissions:
   contents: write
@@ -101,4 +109,4 @@ jobs:
           git push -u origin "$branch"
           gh pr create --repo zackees/soldr-toolchain --base assets --head "$branch" \
             --title "ingest: ${{ inputs.tool }} ${{ inputs.version }} ${{ inputs.shape }}" \
-            --body "Forge run [${{ inputs.forge_run_id }}](https://github.com/zackees/forge/actions/runs/${{ inputs.forge_run_id }}) → catalogue entry for \`apple-sdk/${{ inputs.version }}/${{ inputs.shape }}\`. See provenance log on the assets branch (\`.forge-ingest.log.jsonl\`)."
+            --body "Forge run [${{ inputs.forge_run_id }}](https://github.com/zackees/forge/actions/runs/${{ inputs.forge_run_id }}) -> catalogue entry for \`${{ inputs.tool }}/${{ inputs.version }}/${{ inputs.shape }}\`. See provenance log on the assets branch (\`.forge-ingest.log.jsonl\`)."

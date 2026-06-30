@@ -85,6 +85,23 @@ def test_find_forge_artifact_matches_name_and_version(tmp_path: Path) -> None:
     assert miss is None  # no matching recipe name
 
 
+def test_syslib_recipe_mapping_and_default_asset_names() -> None:
+    assert fc._resolve_recipe_name("zstd", "linux-x64-musl") == "zstd-linux-x64-musl"
+    assert fc._resolve_recipe_name("sqlite", "windows-arm64") == "sqlite-windows-arm64"
+    assert fc.SHAPE_TO_PLATFORM["linux-arm64-gnu"] == "linux-arm64-gnu"
+    assert fc.DEFAULT_ASSET_NAME["zstd"] == "bundle.tar.zst"
+    assert fc.DEFAULT_ASSET_NAME["apple-sdk"] == "sdk.tar.zst"
+
+
+def test_jemalloc_windows_shapes_are_not_mapped() -> None:
+    try:
+        fc._resolve_recipe_name("jemalloc", "windows-x64")
+    except SystemExit as exc:
+        assert "no recipe mapping" in str(exc)
+    else:
+        raise AssertionError("jemalloc Windows shapes should stay unsupported")
+
+
 def test_extract_forge_payload_returns_package_and_provenance(tmp_path: Path) -> None:
     artifact = _make_fake_forge_artifact(
         tmp_path, "apple-sdk-universal2", "14.5", "macos-arm64",

@@ -32,11 +32,12 @@ Rules checked:
   R7.  Every Asset.urls[] that points at the soldr-toolchain Pages or
        raw-media CDN must resolve to a real file on disk at the path
        implied by its (tool, version, platform, filename).
-  R8.  asset-index.json local-blob entries (URLs pointing at our CDN)
-       must have matching files on disk.
+  R8.  asset-index.json and catalogue.v1.json local-blob entries (URLs
+       pointing at our CDN) must have matching files on disk.
   R9.  Reverse check: every on-disk file under `<tool>/<version>/`
-       must be referenced by at least one Asset.urls[] OR an
-       asset-index entry. Orphaned files become silent dead weight.
+       must be referenced by at least one Asset.urls[] OR a flat
+       asset-index/catalogue entry. Orphaned files become silent dead
+       weight.
   R10. No backslashes in any path field (forward slashes only).
 
 Exit code 0 = clean. Non-zero = at least one rule violated.
@@ -63,6 +64,8 @@ CDN_HOSTS = (
 RESERVED_TOP_LEVEL = {
     "manifest.json",
     "asset-index.json",
+    "catalogue.v1.json",
+    ".forge-ingest.log.jsonl",
     "README.md",
     ".nojekyll",
     ".gitattributes",
@@ -127,6 +130,58 @@ def _expected_rel_for_asset(tool: str, version: str, platform_key: str, filename
     return f"{tool}/{version}/{platform_key}/{filename}"
 
 
+def _file_rels_under(root: Path, assets_root: Path) -> list[str]:
+    return [
+        f.relative_to(assets_root).as_posix()
+        for f in root.rglob("*")
+        if f.is_file() and f.name != "manifest.json"
+    ]
+
+
+def _all_files_referenced(root: Path, assets_root: Path, referenced_files: set[str]) -> bool:
+    rels = _file_rels_under(root, assets_root)
+    return bool(rels) and all(rel in referenced_files for rel in rels)
+
+
+def _collect_flat_index_refs(
+    assets_root: Path,
+    doc_name: str,
+    referenced_files: set[str],
+    issues: list[LintIssue],
+) -> None:
+    path = assets_root / doc_name
+    if not path.is_file():
+        return
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        issues.append(LintIssue("R8", "ERROR", doc_name, f"unparseable: {exc}"))
+        return
+
+    entries = doc.get("entries", []) or []
+    if not isinstance(entries, list):
+        issues.append(LintIssue("R8", "ERROR", doc_name, "`entries` is not a list"))
+        return
+
+    for i, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            issues.append(LintIssue("R8", "ERROR", f"{doc_name} entries[{i}]", "entry is not an object"))
+            continue
+        url = entry.get("url", "")
+        if "\\" in url:
+            issues.append(LintIssue("R10", "ERROR", f"{doc_name} entries[{i}]", f"url contains backslash: {url!r}"))
+        rel = _url_to_rel(url)
+        if rel is None:
+            continue
+        referenced_files.add(rel)
+        disk = assets_root / rel
+        if not disk.is_file():
+            issues.append(LintIssue(
+                "R8", "ERROR", rel,
+                f"{doc_name} references URL -> rel={rel!r} but not on disk",
+            ))
+
+
 def lint(assets_root: Path) -> list[LintIssue]:
     issues: list[LintIssue] = []
 
@@ -177,7 +232,9 @@ def lint(assets_root: Path) -> list[LintIssue]:
         tools_by_name[tool_name] = cat
 
     # --- R4-R6: Per-tool directory tree matches catalog ----------------------
-    referenced_files: set[str] = set()  # relative paths (forward-slashed) referenced by URLs or asset-index
+    referenced_files: set[str] = set()  # relative paths (forward-slashed)
+    _collect_flat_index_refs(assets_root, "asset-index.json", referenced_files, issues)
+    _collect_flat_index_refs(assets_root, "catalogue.v1.json", referenced_files, issues)
 
     for tool_name, cat in tools_by_name.items():
         tool_dir = assets_root / tool_name
@@ -215,6 +272,8 @@ def lint(assets_root: Path) -> list[LintIssue]:
         for version_dir in sorted(p for p in tool_dir.iterdir() if p.is_dir()):
             version = version_dir.name
             if version not in versions_in_catalog:
+                if _all_files_referenced(version_dir, assets_root, referenced_files):
+                    continue
                 issues.append(LintIssue(
                     "R4", "ERROR", f"{tool_name}/{version}/",
                     "on-disk version directory has no matching Release in catalog",
@@ -223,6 +282,8 @@ def lint(assets_root: Path) -> list[LintIssue]:
             for platform_dir in sorted(p for p in version_dir.iterdir() if p.is_dir()):
                 pkey = platform_dir.name
                 if pkey not in versions_in_catalog[version]:
+                    if _all_files_referenced(platform_dir, assets_root, referenced_files):
+                        continue
                     issues.append(LintIssue(
                         "R5", "ERROR", f"{tool_name}/{version}/{pkey}/",
                         f"on-disk platform directory has no matching ReleasePlatform "
@@ -236,6 +297,8 @@ def lint(assets_root: Path) -> list[LintIssue]:
                     rp = versions_in_catalog[version][pkey].get(fn)
                     rel = f"{tool_name}/{version}/{pkey}/{fn}"
                     if rp is None:
+                        if rel in referenced_files:
+                            continue
                         issues.append(LintIssue(
                             "R6", "ERROR", rel,
                             f"on-disk file has no matching Asset.filename in catalog "
@@ -278,6 +341,8 @@ def lint(assets_root: Path) -> list[LintIssue]:
             ))
             continue
         if entry.name not in tools_by_name:
+            if _all_files_referenced(entry, assets_root, referenced_files):
+                continue
             issues.append(LintIssue(
                 "R9", "ERROR", entry.name + "/",
                 "on-disk tool directory has no entry in Index.tools",
@@ -290,7 +355,7 @@ def lint(assets_root: Path) -> list[LintIssue]:
             if rel not in referenced_files:
                 issues.append(LintIssue(
                     "R9", "WARN", rel,
-                    "on-disk file is not referenced by any catalog or asset-index entry",
+                    "on-disk file is not referenced by any catalog, asset-index, or catalogue entry",
                 ))
 
     return issues
