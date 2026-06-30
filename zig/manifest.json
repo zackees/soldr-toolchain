@@ -99,12 +99,7 @@
             "sha256": "aee38316ee4111717900f45dd3130145c39289e105541d737eb8c5ed653c78ef"
           }
         }
-      ],
-      "source": {
-        "kind": "upstream-direct",
-        "vendor": "ziglang.org",
-        "index_url": "https://ziglang.org/download/index.json"
-      }
+      ]
     },
     {
       "schema_version": 1,
@@ -196,12 +191,7 @@
             "sha256": "b926465f8872bf983422257cd9ec248bb2b270996fbe8d57872cca13b56fc370"
           }
         }
-      ],
-      "source": {
-        "kind": "upstream-direct",
-        "vendor": "ziglang.org",
-        "index_url": "https://ziglang.org/download/index.json"
-      }
+      ]
     },
     {
       "schema_version": 1,
@@ -293,12 +283,7 @@
             "sha256": "1f1bf16228b0ffcc882b713dc5e11a6db4219cb30997e13c72e8e723c2104ec6"
           }
         }
-      ],
-      "source": {
-        "kind": "upstream-direct",
-        "vendor": "ziglang.org",
-        "index_url": "https://ziglang.org/download/index.json"
-      }
+      ]
     },
     {
       "schema_version": 1,
@@ -390,12 +375,7 @@
             "sha256": "b5aac0ccc40dd91e8311b1f257717d8e3903b5fefb8f659de6d65a840ad1d0e7"
           }
         }
-      ],
-      "source": {
-        "kind": "upstream-direct",
-        "vendor": "ziglang.org",
-        "index_url": "https://ziglang.org/download/index.json"
-      }
+      ]
     },
     {
       "schema_version": 1,
@@ -487,12 +467,7 @@
             "sha256": "03e984383ebb8f85293557cfa9f48ee8698e7c400239570c9ff1aef3bffaf046"
           }
         }
-      ],
-      "source": {
-        "kind": "upstream-direct",
-        "vendor": "ziglang.org",
-        "index_url": "https://ziglang.org/download/index.json"
-      }
+      ]
     }
   ]
 }

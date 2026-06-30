@@ -76,9 +76,9 @@
     "zig": {
       "descriptor": {
         "url": "zig/manifest.json",
-        "size_bytes": 15523,
+        "size_bytes": 14733,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "85459c78188fd846f3caec2d0831883fb8df72595bb373df2bd8cc03c7ec122e"
+        "sha256": "1d92b61fd674425b4d57ce7e42910bf5fae4f26c1c6217606740d5975356e95b"
       },
       "summary": "ziglang/zig (vendored from ziglang.org/download/index.json)",
       "kind_hint": "tool"
