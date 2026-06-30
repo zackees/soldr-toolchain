@@ -107,6 +107,37 @@ for _tool in ("zstd", "sqlite", "jemalloc", "mimalloc", "zlib-ng", "lzma", "bzip
 TOOL_RECIPE_NAME["jemalloc"].pop("windows-x64")
 TOOL_RECIPE_NAME["jemalloc"].pop("windows-arm64")
 
+# soldr#1010 phase 2-3: python ships all eight shapes — PyO3 needs
+# headers and a libpython per target triple to cross-compile.
+TOOL_RECIPE_NAME["python"] = {
+    shape: f"python-{shape}"
+    for shape in (
+        "windows-x64",
+        "windows-arm64",
+        "darwin-x64",
+        "darwin-arm64",
+        "linux-x64-gnu",
+        "linux-arm64-gnu",
+        "linux-x64-musl",
+        "linux-arm64-musl",
+    )
+}
+
+# nodelib + openssl + llvm-tools are Windows-MSVC- and Linux-host-
+# centric. Don't widen to shapes we don't actually build today: each
+# recipe family ships only the shapes we have producers for.
+TOOL_RECIPE_NAME["nodelib"] = {
+    "windows-x64": "nodelib-windows-x64",
+    "windows-arm64": "nodelib-windows-arm64",
+}
+TOOL_RECIPE_NAME["openssl"] = {
+    "windows-x64": "openssl-windows-x64",
+    "windows-arm64": "openssl-windows-arm64",
+}
+TOOL_RECIPE_NAME["llvm-tools"] = {
+    "linux-x64-gnu": "llvm-tools-linux-x64",
+}
+
 
 DEFAULT_ASSET_NAME = {
     "apple-sdk": "sdk.tar.zst",
@@ -118,6 +149,12 @@ DEFAULT_ASSET_NAME = {
     "zlib-ng": "bundle.tar.zst",
     "lzma": "bundle.tar.zst",
     "bzip2": "bundle.tar.zst",
+    # soldr#1010 phase 2 — new tools all ship a single bundle.tar.zst
+    # per (tool, version, shape) tuple, same shape as the syslibs.
+    "python": "bundle.tar.zst",
+    "nodelib": "bundle.tar.zst",
+    "openssl": "bundle.tar.zst",
+    "llvm-tools": "bundle.tar.zst",
 }
 
 
