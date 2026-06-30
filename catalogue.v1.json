@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-06-30T17:00:27Z",
+  "generated_at": "2026-06-30T18:01:46Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -88,72 +88,232 @@
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/zstd/1.5.7/linux-arm64-gnu/bundle.tar.zst",
-      "sha256": "732ef91d180c9f0ba267b2f9ca23f605b70d79ca70fbda93e311b479eded0135"
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/jemalloc/5.3.0/linux-arm64-gnu/bundle.tar.zst",
+      "sha256": "b2fbcd4d4bc843afba0c31a6342d84443326bb1813791b4a7a980e48b39aba37"
     },
     {
       "owner": "zackees",
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/zstd/1.5.7/linux-x64-musl/bundle.tar.zst",
-      "sha256": "7674b04d99a3fc077ee70cda6175fd82d2ac957def9fa157699b1c0645f2c9ec"
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/jemalloc/5.3.0/linux-x64-gnu/bundle.tar.zst",
+      "sha256": "e9d581db185aec58a9bfc490ba0b058506a15debd732b18284afc72f613136e3"
     },
     {
       "owner": "zackees",
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/zstd/1.5.7/linux-arm64-musl/bundle.tar.zst",
-      "sha256": "9144763a3b400822c49b2de46070321391cb2d6b4354d1f754405c1a880137cf"
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/jemalloc/5.3.0/darwin-arm64/bundle.tar.zst",
+      "sha256": "30aaf9945c962ff7fb367a83a5b79be2b66116673c546f4701cf51b3ae5f353b"
     },
     {
       "owner": "zackees",
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/sqlite/3.46.0/windows-x64/bundle.tar.zst",
-      "sha256": "d5e5fd2b789304a6fcace32dbab100939b1b9c5796d1e373da2384a8a369dc17"
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/jemalloc/5.3.0/darwin-x64/bundle.tar.zst",
+      "sha256": "898ae286b9f4686cf0696e21c37443f52e033127df3e41b09b67f3145cc5377d"
     },
     {
       "owner": "zackees",
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/sqlite/3.46.0/windows-arm64/bundle.tar.zst",
-      "sha256": "613ee0924a6cc28e77a5bee3e1f23bdfc0e5211d6e51d0c3fea130cfc0e9b669"
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/bzip2/1.0.8/linux-arm64-musl/bundle.tar.zst",
+      "sha256": "66f27f18ad94c208bbe27d9824406d18c8a2683765651ffb753e4f10291c22d8"
     },
     {
       "owner": "zackees",
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/sqlite/3.46.0/darwin-x64/bundle.tar.zst",
-      "sha256": "10cef74522eb7678d3121d72a9cfba10a41d03d5e6e7b22cc40be28adfc55934"
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/bzip2/1.0.8/linux-x64-musl/bundle.tar.zst",
+      "sha256": "e149b4de46e62ba155187f858026854caa7bb1587cb278d3065dc359436a4920"
     },
     {
       "owner": "zackees",
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/sqlite/3.46.0/darwin-arm64/bundle.tar.zst",
-      "sha256": "e1ca03983690e442482801f3d729c9e2577164770a15f57bc52c525c55834ad9"
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/bzip2/1.0.8/linux-arm64-gnu/bundle.tar.zst",
+      "sha256": "4ab453a1ab8bf7909fb485fe815c0273e2a9a10efbf39204ab3041d333b9f7fd"
     },
     {
       "owner": "zackees",
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/sqlite/3.46.0/linux-x64-gnu/bundle.tar.zst",
-      "sha256": "62752f870bd2da328812e550d29a508777b0076fd792cc76be28363c2a91727a"
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/bzip2/1.0.8/darwin-arm64/bundle.tar.zst",
+      "sha256": "ff5da921c503b803b9f79b03b22350646a597d5170e814f4def6f176c555ac93"
     },
     {
       "owner": "zackees",
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/sqlite/3.46.0/linux-arm64-gnu/bundle.tar.zst",
-      "sha256": "199234bad7faa11ec56d5fd2eff41d0321ca7b82b012477a7d23af0b65cbbdf6"
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/bzip2/1.0.8/darwin-x64/bundle.tar.zst",
+      "sha256": "73cc051eaa9fa79021738cced75f8fc9e31867e0a6edaabb411117e995530fbe"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/bzip2/1.0.8/windows-arm64/bundle.tar.zst",
+      "sha256": "70ab41f58b7ac0446f13293acbcc625041b17202a0691f60eca4aad467beee72"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/bzip2/1.0.8/windows-x64/bundle.tar.zst",
+      "sha256": "8bb33e760e535ce95399aca59aa68dbfb4fb818be6fc1ea0f7c53a9e6a24b67d"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/zlib-ng/2.2.5/linux-arm64-musl/bundle.tar.zst",
+      "sha256": "163a2d3921f26fae3a8ed8465c03ae253a6c161f0d6fcbeb5fd17a7a9ffe0294"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/zlib-ng/2.2.5/linux-x64-musl/bundle.tar.zst",
+      "sha256": "ff898930bd2751e311403df0eefef975a6be8ee71e9c16a1ab393198594fc434"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/zlib-ng/2.2.5/linux-arm64-gnu/bundle.tar.zst",
+      "sha256": "69da3edfdf88bfa57a0a8f1436127a64641470f762788e7f1d1f2ed0fa4b8492"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/zlib-ng/2.2.5/linux-x64-gnu/bundle.tar.zst",
+      "sha256": "26613cab25c74461ba6039ba60b6178188fd5f00fcbf4a8c89519b70c31084f5"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/zlib-ng/2.2.5/darwin-arm64/bundle.tar.zst",
+      "sha256": "a42d26502c6fd4613e0c57f5761a948e9b56267bd90f7bc7face1e07ef5d3b5e"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/zlib-ng/2.2.5/darwin-x64/bundle.tar.zst",
+      "sha256": "6904ffec2e1f07f1e7613ce94d68f730089a7f7e8a4ea1b654ed2017f29fcb62"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/zlib-ng/2.2.5/windows-arm64/bundle.tar.zst",
+      "sha256": "60c4b31dc56865db33b491d44282e59ba50d78194c7c47c0244c3e1941d8664f"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/zlib-ng/2.2.5/windows-x64/bundle.tar.zst",
+      "sha256": "cd9f1dcadf5273550d74ab20634e09a57c351c9a616bfe863bb14f2b1a2b3e36"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/lzma/5.6.3/linux-arm64-musl/bundle.tar.zst",
+      "sha256": "5156cd1874dba5a3629bfb3cbf026c62fb184845c21bbcf4797ed21e2e108dec"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/lzma/5.6.3/linux-x64-musl/bundle.tar.zst",
+      "sha256": "2dabea530fc4564741ae86c979665c6ed19057c8ec8dae920310b918820e7e3b"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/lzma/5.6.3/linux-arm64-gnu/bundle.tar.zst",
+      "sha256": "3255fcb7ed357f78038d0b5377ec33eca2b04670f347bc213c62c1307e883750"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/lzma/5.6.3/linux-x64-gnu/bundle.tar.zst",
+      "sha256": "ecaaf452ab637ac61e9850eddea62ab47bf9b6fa69a407b4923d3d333b70bb8d"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/lzma/5.6.3/darwin-arm64/bundle.tar.zst",
+      "sha256": "5dcdd2fc5e16ac3c8dff6633828987512337dc7ee70a736301f5099b5192a4de"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/lzma/5.6.3/darwin-x64/bundle.tar.zst",
+      "sha256": "d72ee67e5a45417c6648d1e27775d34a54c24663ef6f308fe6ffc8fb33b7dde2"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/lzma/5.6.3/windows-arm64/bundle.tar.zst",
+      "sha256": "ff098a6f0f68737e784a40b0acf6235b7f48926ac4c45fa2236a3dd469b97ea2"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/lzma/5.6.3/windows-x64/bundle.tar.zst",
+      "sha256": "fd7fa753dbd926e20711e55d0434fe1b44b1cc074e01ebbec3fef3b4e3445dec"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/bzip2/1.0.8/linux-x64-gnu/bundle.tar.zst",
+      "sha256": "0da2115811f27ca29a5e908061180d0f61afe0b166261286a5a62f910e6404b3"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/sqlite/3.46.0/linux-arm64-musl/bundle.tar.zst",
+      "sha256": "10810016e0a3caacd93d45c677e4adaa91990ab31282e93d852f731364b4d2df"
     },
     {
       "owner": "zackees",
@@ -168,8 +328,72 @@
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/sqlite/3.46.0/linux-arm64-musl/bundle.tar.zst",
-      "sha256": "10810016e0a3caacd93d45c677e4adaa91990ab31282e93d852f731364b4d2df"
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/sqlite/3.46.0/linux-arm64-gnu/bundle.tar.zst",
+      "sha256": "199234bad7faa11ec56d5fd2eff41d0321ca7b82b012477a7d23af0b65cbbdf6"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/sqlite/3.46.0/linux-x64-gnu/bundle.tar.zst",
+      "sha256": "62752f870bd2da328812e550d29a508777b0076fd792cc76be28363c2a91727a"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/sqlite/3.46.0/darwin-arm64/bundle.tar.zst",
+      "sha256": "e1ca03983690e442482801f3d729c9e2577164770a15f57bc52c525c55834ad9"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/sqlite/3.46.0/darwin-x64/bundle.tar.zst",
+      "sha256": "10cef74522eb7678d3121d72a9cfba10a41d03d5e6e7b22cc40be28adfc55934"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/sqlite/3.46.0/windows-arm64/bundle.tar.zst",
+      "sha256": "613ee0924a6cc28e77a5bee3e1f23bdfc0e5211d6e51d0c3fea130cfc0e9b669"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/sqlite/3.46.0/windows-x64/bundle.tar.zst",
+      "sha256": "d5e5fd2b789304a6fcace32dbab100939b1b9c5796d1e373da2384a8a369dc17"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/zstd/1.5.7/linux-arm64-musl/bundle.tar.zst",
+      "sha256": "9144763a3b400822c49b2de46070321391cb2d6b4354d1f754405c1a880137cf"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/zstd/1.5.7/linux-x64-musl/bundle.tar.zst",
+      "sha256": "7674b04d99a3fc077ee70cda6175fd82d2ac957def9fa157699b1c0645f2c9ec"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/zstd/1.5.7/linux-arm64-gnu/bundle.tar.zst",
+      "sha256": "732ef91d180c9f0ba267b2f9ca23f605b70d79ca70fbda93e311b479eded0135"
     }
   ]
 }
