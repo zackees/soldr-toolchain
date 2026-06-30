@@ -63,6 +63,16 @@ SHAPE_TO_PLATFORM = {
     # xwin-cache shapes (soldr#1012 PR 3)
     "xwin-windows-x64": "windows-x86_64-msvc",
     "xwin-windows-arm64": "windows-aarch64-msvc",
+    # soldr#1064 syslib shapes. These intentionally match the
+    # runtime slug tables in soldr's *_sysroot.rs modules.
+    "windows-x64": "windows-x64",
+    "windows-arm64": "windows-arm64",
+    "darwin-x64": "darwin-x64",
+    "darwin-arm64": "darwin-arm64",
+    "linux-x64-gnu": "linux-x64-gnu",
+    "linux-arm64-gnu": "linux-arm64-gnu",
+    "linux-x64-musl": "linux-x64-musl",
+    "linux-arm64-musl": "linux-arm64-musl",
 }
 
 # Map tool → recipe name prefix (forge artifact name embeds this).
@@ -76,6 +86,38 @@ TOOL_RECIPE_NAME = {
         "xwin-windows-x64": "xwin-cache-windows-x64",
         "xwin-windows-arm64": "xwin-cache-windows-arm64",
     },
+}
+
+for _tool in ("zstd", "sqlite", "jemalloc", "mimalloc", "zlib-ng", "lzma", "bzip2"):
+    TOOL_RECIPE_NAME[_tool] = {
+        shape: f"{_tool}-{shape}"
+        for shape in (
+            "windows-x64",
+            "windows-arm64",
+            "darwin-x64",
+            "darwin-arm64",
+            "linux-x64-gnu",
+            "linux-arm64-gnu",
+            "linux-x64-musl",
+            "linux-arm64-musl",
+        )
+    }
+
+# jemalloc is not buildable for Windows MSVC in the current upstream.
+TOOL_RECIPE_NAME["jemalloc"].pop("windows-x64")
+TOOL_RECIPE_NAME["jemalloc"].pop("windows-arm64")
+
+
+DEFAULT_ASSET_NAME = {
+    "apple-sdk": "sdk.tar.zst",
+    "xwin-cache": "xwin-cache.tar.zst",
+    "zstd": "bundle.tar.zst",
+    "sqlite": "bundle.tar.zst",
+    "jemalloc": "bundle.tar.zst",
+    "mimalloc": "bundle.tar.zst",
+    "zlib-ng": "bundle.tar.zst",
+    "lzma": "bundle.tar.zst",
+    "bzip2": "bundle.tar.zst",
 }
 
 
@@ -102,8 +144,7 @@ def main(argv: list[str] | None = None) -> int:
                         help="Path to catalogue.v1.json on the assets root "
                              "(default: <assets-root>/catalogue.v1.json).")
     parser.add_argument("--asset-name",
-                        default="sdk.tar.zst",
-                        help="Filename for the placed asset (default: sdk.tar.zst).")
+                        help="Filename for the placed asset (default: per-tool).")
     args = parser.parse_args(argv)
 
     try:
@@ -136,7 +177,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"forge artifact: {forge_artifact}")
 
     platform = SHAPE_TO_PLATFORM[args.shape]
-    asset_rel = Path(args.tool) / args.version / platform / args.asset_name
+    asset_name = args.asset_name or DEFAULT_ASSET_NAME.get(args.tool, "bundle.tar.zst")
+    asset_rel = Path(args.tool) / args.version / platform / asset_name
     asset_path = args.assets_root / asset_rel
     asset_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -159,7 +201,7 @@ def main(argv: list[str] | None = None) -> int:
         catalogue_path,
         schema_path,
         asset_rel=asset_rel,
-        asset_name=args.asset_name,
+        asset_name=asset_name,
         sha256=sha256,
         forge_run_id=args.forge_run_id,
         provenance=provenance,

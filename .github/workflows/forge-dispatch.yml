@@ -5,25 +5,36 @@ name: forge dispatch
 # (tool, version, shape) tuple, then triggers forge-ingest.yml once
 # the forge run finishes.
 #
-# Use `shape: all` to fire universal2 + thin-x86_64 + thin-aarch64 in
-# parallel.
+# Use `shape: all` to fire every supported shape for the selected tool.
 
 on:
   workflow_dispatch:
     inputs:
       tool:
-        description: "Tool name (currently only apple-sdk)"
+        description: "Tool name"
         required: true
         type: choice
         default: apple-sdk
         options:
           - apple-sdk
+          - zstd
+          - sqlite
+          - jemalloc
+          - mimalloc
+          - zlib-ng
+          - lzma
+          - bzip2
       version:
-        description: "SDK / tool version (e.g. 14.5)"
+        description: "SDK / tool/library version (e.g. 14.5, 1.5.7)"
         required: true
         type: string
+      recipe_ref:
+        description: "soldr-toolchain git ref containing the recipe"
+        required: true
+        type: string
+        default: main
       shape:
-        description: "Artifact shape (or 'all' for the three apple-sdk shapes)"
+        description: "Artifact shape, or 'all' for every supported shape"
         required: true
         type: choice
         default: universal2
@@ -31,6 +42,14 @@ on:
           - universal2
           - thin-x86_64
           - thin-aarch64
+          - windows-x64
+          - windows-arm64
+          - darwin-x64
+          - darwin-arm64
+          - linux-x64-gnu
+          - linux-arm64-gnu
+          - linux-x64-musl
+          - linux-arm64-musl
           - all
 
 permissions:
@@ -38,13 +57,63 @@ permissions:
   actions: write     # needed to trigger forge-ingest.yml after the run
 
 jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      shapes: ${{ steps.plan.outputs.shapes }}
+    steps:
+      - name: Plan shape matrix
+        id: plan
+        shell: python
+        env:
+          TOOL: ${{ inputs.tool }}
+          SHAPE: ${{ inputs.shape }}
+        run: |
+          import json
+          import os
+
+          apple_shapes = ["universal2", "thin-x86_64", "thin-aarch64"]
+          syslib_shapes = [
+              "windows-x64",
+              "windows-arm64",
+              "darwin-x64",
+              "darwin-arm64",
+              "linux-x64-gnu",
+              "linux-arm64-gnu",
+              "linux-x64-musl",
+              "linux-arm64-musl",
+          ]
+          supported = {
+              "apple-sdk": apple_shapes,
+              "zstd": syslib_shapes,
+              "sqlite": syslib_shapes,
+              "jemalloc": syslib_shapes[2:],
+              "mimalloc": syslib_shapes,
+              "zlib-ng": syslib_shapes,
+              "lzma": syslib_shapes,
+              "bzip2": syslib_shapes,
+          }
+
+          tool = os.environ["TOOL"]
+          shape = os.environ["SHAPE"]
+          allowed = supported[tool]
+          shapes = allowed if shape == "all" else [shape]
+          invalid = [candidate for candidate in shapes if candidate not in allowed]
+          if invalid:
+              raise SystemExit(
+                  f"{tool} does not support shape(s): {', '.join(invalid)}"
+              )
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              fh.write(f"shapes={json.dumps(shapes)}\n")
+
   dispatch:
+    needs: plan
     runs-on: ubuntu-24.04
     timeout-minutes: 360
     strategy:
       fail-fast: false
       matrix:
-        shape: ${{ fromJson(inputs.shape == 'all' && '["universal2", "thin-x86_64", "thin-aarch64"]' || format('["{0}"]', inputs.shape)) }}
+        shape: ${{ fromJson(needs.plan.outputs.shapes) }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
@@ -57,16 +126,42 @@ jobs:
           recipe_path="recipes/${{ inputs.tool }}-${{ matrix.shape }}"
           name="${{ inputs.tool }}-${{ matrix.shape }}"
           echo "dispatching forge: recipe=$recipe_path name=$name version=${{ inputs.version }}"
+
+          windows_x64=false
+          windows_arm64=false
+          linux_x64=false
+          linux_arm64=false
+          linux_x64_musl=false
+          linux_arm64_musl=false
+          macos_x64=false
+          macos_arm64=false
+          case "${{ matrix.shape }}" in
+            universal2|thin-x86_64|thin-aarch64|darwin-arm64) macos_arm64=true ;;
+            darwin-x64) macos_x64=true ;;
+            windows-x64) windows_x64=true ;;
+            windows-arm64) windows_arm64=true ;;
+            linux-x64-gnu) linux_x64=true ;;
+            linux-arm64-gnu) linux_arm64=true ;;
+            linux-x64-musl) linux_x64_musl=true ;;
+            linux-arm64-musl) linux_arm64_musl=true ;;
+            *) echo "::error::unknown shape ${{ matrix.shape }}"; exit 1 ;;
+          esac
+
           gh workflow run forge-conan.yml \
             --repo zackees/forge \
             -f recipe_repo=zackees/soldr-toolchain \
-            -f recipe_ref=main \
+            -f recipe_ref="${{ inputs.recipe_ref }}" \
             -f recipe_path="$recipe_path" \
             -f name="$name" \
             -f version="${{ inputs.version }}" \
-            -f macos_arm64=true \
-            -f windows_x64=false \
-            -f linux_x64=false
+            -f windows_x64="$windows_x64" \
+            -f windows_arm64="$windows_arm64" \
+            -f linux_x64="$linux_x64" \
+            -f linux_arm64="$linux_arm64" \
+            -f linux_x64_musl="$linux_x64_musl" \
+            -f linux_arm64_musl="$linux_arm64_musl" \
+            -f macos_x64="$macos_x64" \
+            -f macos_arm64="$macos_arm64"
           echo "waiting for the new run to appear..."
           run_id=""
           for _ in $(seq 1 30); do
