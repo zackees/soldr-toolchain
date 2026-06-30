@@ -15,10 +15,12 @@ Differences from the legacy v5 shape:
 - adds top-level ``origin`` self-URL so cached copies prove what
   catalogue they came from
 - entries field set is identical: ``owner, repo, tag, asset, url, sha256``
+  (locally hosted platform bundles may repeat the four attribution fields;
+  their URL is the unique identity)
 
 Determinism: entries are emitted in the same order they appear in the
 input asset-index. The producer (``build_asset_index.py``) sorts them
-by ``(owner, repo, tag, asset)`` so the catalogue diff is reviewable.
+by ``(owner, repo, tag, asset, url)`` so the catalogue diff is reviewable.
 
 The companion CI gate (``.github/workflows/catalogue-schema.yml``)
 validates the output against ``schemas/catalogue.v1.schema.json``.

@@ -181,11 +181,6 @@ def build_release_entry(
         "published_at":       derive_published_at(entry),
         "min_client_version": 1,
         "platforms":          platforms,
-        "source": {
-            "kind":      "upstream-direct",
-            "vendor":    "ziglang.org",
-            "index_url": ZIG_INDEX_URL,
-        },
     }
 
 

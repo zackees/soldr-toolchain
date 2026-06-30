@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://zackees.github.io/soldr-toolchain/schemas/catalogue.v1.schema.json",
   "title": "soldr-toolchain catalogue v1",
-  "description": "Flat sha-bearing asset catalogue consumed by soldr's runtime resolver (crates/soldr-cli/src/fetch/manifest_lookup.rs in zackees/soldr). One row per (owner, repo, tag, asset) tuple. Mirrors the shape of the legacy asset-index.json schema_version=5 produced on the assets branch by scripts/build_asset_index.py, with a fresh v1 namespace so the catalogue can evolve independently of the v5 asset-index. See docs/ASSET_CATALOG.md for the directory + URL convention this catalogue references.",
+  "description": "Flat sha-bearing asset catalogue consumed by soldr's runtime resolver (crates/soldr-cli/src/fetch/manifest_lookup.rs in zackees/soldr). One row per downloadable URL. The legacy (owner, repo, tag, asset) attribution fields are retained for GitHub-release lookups, but locally hosted platform bundles may repeat the same asset filename under different URLs. Mirrors the shape of the legacy asset-index.json schema_version=5 produced on the assets branch by scripts/build_asset_index.py, with a fresh v1 namespace so the catalogue can evolve independently of the v5 asset-index. See docs/ASSET_CATALOG.md for the directory + URL convention this catalogue references.",
   "type": "object",
   "required": ["schema_version", "entries"],
   "additionalProperties": false,
@@ -25,7 +25,7 @@
     "entries": {
       "type": "array",
       "items": {"$ref": "#/$defs/Entry"},
-      "description": "Flat list of asset rows. Order is producer-controlled; consumers MUST treat the array as an unordered set keyed by (owner, repo, tag, asset)."
+      "description": "Flat list of asset rows. Order is producer-controlled; consumers MUST treat GitHub-release rows as keyed by (owner, repo, tag, asset), and locally hosted rows as keyed by URL."
     }
   },
   "$defs": {

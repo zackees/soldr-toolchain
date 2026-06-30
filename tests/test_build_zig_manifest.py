@@ -17,6 +17,7 @@ import unittest
 from pathlib import Path
 
 import build_zig_manifest as bzm
+from manifest_json import validate_document
 
 
 # Minimal but realistic index — two stable versions, one pre-release,
@@ -79,7 +80,7 @@ FIXTURE_INDEX: dict = {
     },
     "0.15.2": {
         "version": "0.15.2",
-        "date":    "2026-06-12",
+        "date":    "2025-10-11",
         "x86_64-linux": {
             "tarball": "https://ziglang.org/download/0.15.2/zig-x86_64-linux-0.15.2.tar.xz",
             "shasum":  "02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239",
@@ -90,7 +91,7 @@ FIXTURE_INDEX: dict = {
     },
     "0.15.1": {
         "version": "0.15.1",
-        "date":    "2026-05-01",
+        "date":    "2025-08-19",
         "x86_64-linux": {
             "tarball": "https://ziglang.org/download/0.15.1/zig-x86_64-linux-0.15.1.tar.xz",
             "shasum":  "3" * 64,
@@ -183,7 +184,6 @@ class BuildReleaseEntryTest(unittest.TestCase):
         self.assertEqual(entry["schema_version"], 1)
         self.assertEqual(entry["min_client_version"], 1)
         self.assertEqual(entry["published_at"], "2026-04-13T00:00:00Z")
-        self.assertEqual(entry["source"]["vendor"], "ziglang.org")
         # 6 surfaced platforms, the unsurfaced x86-linux + riscv64-linux skipped.
         plat_keys = {
             (p["platform"]["os"], p["platform"]["arch"])
@@ -251,6 +251,7 @@ class BuildCatalogTest(unittest.TestCase):
         # Newest-first; 0.13.0 is included but no master / no src.
         versions = [r["version"] for r in cat["releases"]]
         self.assertEqual(versions, ["0.16.0", "0.15.2", "0.15.1", "0.13.0"])
+        validate_document(cat)
 
     def test_keep_caps(self) -> None:
         cat = bzm.build_catalog(FIXTURE_INDEX, keep_n=2)

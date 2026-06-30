@@ -23,6 +23,10 @@ deliberately FLAT shape — one row per ``(owner, repo, tag, asset)``::
       ]
     }
 
+GitHub-release rows are looked up by that four-field tuple. Locally
+hosted platform bundles are distinguished by URL because they often
+reuse filenames like ``bundle.tar.zst`` across platform directories.
+
 This script walks the assets-branch tree and emits that JSON. Two
 data sources contribute entries:
 
@@ -44,8 +48,10 @@ data sources contribute entries:
    GitHub Releases API fallback.
 
 Determinism: entries are sorted ascending by
-``(owner, repo, tag, asset)`` so the diff of ``asset-index.json``
-between refreshes is reviewable.
+``(owner, repo, tag, asset, url)`` so the diff of ``asset-index.json``
+between refreshes is reviewable. Locally-hosted bundles may legitimately
+share the same filename under different platform directories, so the URL
+is part of the identity for de-duplication.
 
 Refreshed nightly in lockstep with ``build_manifest.py`` from
 ``.github/workflows/refresh-manifest.yml``.
@@ -56,6 +62,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -66,6 +73,7 @@ ASSET_INDEX_SCHEMA_VERSION = 5
 
 SHA256SUMS_ASSET_NAME = "SHA256SUMS"
 SHA256SUMS_SKIP_LINES = {"SHA256SUMS", "install.sh", "install.ps1"}
+_LFS_POINTER_SHA_RE = re.compile(r"^oid sha256:([0-9a-f]{64})$", re.MULTILINE)
 
 
 def sha256_of_file(path: Path) -> str:
@@ -73,8 +81,20 @@ def sha256_of_file(path: Path) -> str:
 
     Matches soldr's ``crates/soldr-cli/src/fetch/trust.rs::sha256_of``
     exactly: raw bytes through SHA-256, no header, no length prefix,
-    hex-encoded in lowercase.
+    hex-encoded in lowercase. If the checkout contains a Git LFS pointer
+    instead of the materialized blob, return the pointer's object id; LFS
+    object ids are SHA-256 hashes of the real blob bytes.
     """
+    if path.stat().st_size <= 1024:
+        try:
+            head = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            head = ""
+        if head.startswith("version https://git-lfs.github.com/spec/"):
+            match = _LFS_POINTER_SHA_RE.search(head)
+            if match:
+                return match.group(1)
+
     hasher = hashlib.sha256()
     with path.open("rb") as fh:
         for chunk in iter(lambda: fh.read(1024 * 1024), b""):
@@ -149,12 +169,13 @@ def iter_local_blobs(manifest_root: Path) -> Iterable[Path]:
                     yield path
 
 
-def _entry_sort_key(entry: dict[str, Any]) -> tuple[str, str, str, str]:
+def _entry_sort_key(entry: dict[str, Any]) -> tuple[str, str, str, str, str]:
     return (
         entry.get("owner", ""),
         entry.get("repo", ""),
         entry.get("tag", ""),
         entry.get("asset", ""),
+        entry.get("url", ""),
     )
 
 
@@ -340,9 +361,11 @@ def build_asset_index(
         )
 
     entries.sort(key=_entry_sort_key)
-    # De-duplicate; if two sources collide, the first (local-blob)
-    # entry wins because it carries the on-disk sha.
-    seen: set[tuple[str, str, str, str]] = set()
+    # De-duplicate exact logical URLs; if two sources collide, the first
+    # (local-blob) entry wins because it carries the on-disk sha. The URL is
+    # part of the key because local catalogue bundles reuse filenames such as
+    # bundle.tar.zst across platform directories.
+    seen: set[tuple[str, str, str, str, str]] = set()
     deduped: list[dict[str, Any]] = []
     for entry in entries:
         key = _entry_sort_key(entry)

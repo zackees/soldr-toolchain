@@ -89,7 +89,10 @@ The linter enforces every rule in this document. Exit code 0 = clean.
 ## Schema: `catalogue.v1.json` (soldr#988 Phase 1)
 
 The flat `(owner, repo, tag, asset, url, sha256)` shape produced by
-`build_asset_index.py` is formalized under the v1 namespace at:
+`build_asset_index.py` is formalized under the v1 namespace. GitHub
+release rows are looked up by `(owner, repo, tag, asset)`; locally hosted
+platform bundles may reuse a stable filename like `bundle.tar.zst`, so
+their unique identity is the URL:
 
 - **Schema**: [`schemas/catalogue.v1.schema.json`](../schemas/catalogue.v1.schema.json) (JSON Schema Draft 2020-12)
 - **Sample**: [`examples/catalogue.v1.json`](../examples/catalogue.v1.json)
