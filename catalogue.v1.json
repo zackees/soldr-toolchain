@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-01T00:23:55Z",
+  "generated_at": "2026-07-01T01:04:42Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -490,6 +490,14 @@
       "asset": "bundle.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/python/3.13.14/windows-x64/bundle.tar.zst",
       "sha256": "156824b25151f2bb248f54b169d262d6b5414a651931d95f47f8a95102771cbc"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/llvm-tools/20.1.7/linux-x64-gnu/bundle.tar.zst",
+      "sha256": "7e68dfc7261b81126e4b24e35dc17317d239238bfec29e8977daef3542403b08"
     }
   ]
 }
