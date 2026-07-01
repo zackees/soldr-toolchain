@@ -17,7 +17,7 @@ declare -A VERSIONS=(
     [openssl]=3.5.0
     [llvm-tools]=20.1.7
     [xwin-cache]=2026-06-22
-    [mimalloc]=3.0.4
+    [mimalloc]=3.3.2
 )
 
 # Which shapes each tool builds. xwin-cache is special: x64 was

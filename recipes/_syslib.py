@@ -123,8 +123,8 @@ LIBRARIES: dict[str, Library] = {
     ),
     "mimalloc": Library(
         tool="mimalloc",
-        version="3.0.4",
-        source_url="https://github.com/microsoft/mimalloc/archive/refs/tags/v3.0.4.tar.gz",
+        version="3.3.2",
+        source_url="https://github.com/microsoft/mimalloc/archive/refs/tags/v3.3.2.tar.gz",
         license="MIT",
         description="mimalloc static library and headers",
         cmake_defs={

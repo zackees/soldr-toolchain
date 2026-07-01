@@ -1,6 +1,6 @@
 # `mimalloc-darwin-x64`
 
-Forge-built Conan recipe for `mimalloc` `3.0.4` targeting
+Forge-built Conan recipe for `mimalloc` `3.3.2` targeting
 `x86_64-apple-darwin`.
 
 The shared implementation is in `recipes/_syslib.py`; this directory is
@@ -9,7 +9,7 @@ kept as a thin wrapper so forge can dispatch and cache one package per
 
 ## Source
 
-https://github.com/microsoft/mimalloc/archive/refs/tags/v3.0.4.tar.gz
+https://github.com/microsoft/mimalloc/archive/refs/tags/v3.3.2.tar.gz
 
 ## Dispatch
 
@@ -19,7 +19,7 @@ gh workflow run forge-conan.yml --repo zackees/forge \
     -f recipe_ref=main \
     -f recipe_path=recipes/mimalloc-darwin-x64 \
     -f name=mimalloc-darwin-x64 \
-    -f version=3.0.4 \
+    -f version=3.3.2 \
     -f windows_x64=false \
     -f windows_arm64=false \
     -f linux_x64=false \
@@ -31,4 +31,4 @@ gh workflow run forge-conan.yml --repo zackees/forge \
 ```
 
 Ingested catalogue path:
-`mimalloc/3.0.4/darwin-x64/bundle.tar.zst`
+`mimalloc/3.3.2/darwin-x64/bundle.tar.zst`
