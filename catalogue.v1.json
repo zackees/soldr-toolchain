@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-01T00:03:04Z",
+  "generated_at": "2026-07-01T00:23:55Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -400,6 +400,30 @@
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/python/3.13.14/linux-arm64-musl/bundle.tar.zst",
+      "sha256": "df1d66ca28d14090fc20880bb6917edbec482786a6580959c40aec828c81bc45"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/python/3.13.14/linux-x64-musl/bundle.tar.zst",
+      "sha256": "948e49340a6acc79dd45ac9e3364551ca79c29ded09114c42eec213cca19ac29"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/python/3.13.14/linux-arm64-gnu/bundle.tar.zst",
+      "sha256": "d4bac4d20bc067b4d952b4507ef9919afe0a42bd5b63a98890cc7e64901ba0a0"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/openssl/3.5.0/windows-arm64/bundle.tar.zst",
       "sha256": "27c11efc76e285bc012ec60f0575d2ef10b3fb0f8147945aabc4fbaf9bda1b92"
     },
@@ -432,24 +456,40 @@
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/python/3.13.14/linux-arm64-musl/bundle.tar.zst",
-      "sha256": "df1d66ca28d14090fc20880bb6917edbec482786a6580959c40aec828c81bc45"
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/python/3.13.14/linux-x64-gnu/bundle.tar.zst",
+      "sha256": "12aa62df7cad969956876dc0bd0f77417c173ae13abb5574eb02f808f6ee0500"
     },
     {
       "owner": "zackees",
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/python/3.13.14/linux-x64-musl/bundle.tar.zst",
-      "sha256": "948e49340a6acc79dd45ac9e3364551ca79c29ded09114c42eec213cca19ac29"
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/python/3.13.14/darwin-arm64/bundle.tar.zst",
+      "sha256": "0b5a1e9f3e878ef6b54b8c186d2748957e4508293018dd042fe0a46443b52d9f"
     },
     {
       "owner": "zackees",
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/python/3.13.14/linux-arm64-gnu/bundle.tar.zst",
-      "sha256": "d4bac4d20bc067b4d952b4507ef9919afe0a42bd5b63a98890cc7e64901ba0a0"
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/python/3.13.14/darwin-x64/bundle.tar.zst",
+      "sha256": "3532502a81894c5e35cda98883a0c462de65485beba88b671ebf499258d654ba"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/python/3.13.14/windows-arm64/bundle.tar.zst",
+      "sha256": "a8b052fd837361bebbebc225ae00b46552d918821667cc5a3288587335ca3f21"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/python/3.13.14/windows-x64/bundle.tar.zst",
+      "sha256": "156824b25151f2bb248f54b169d262d6b5414a651931d95f47f8a95102771cbc"
     }
   ]
 }
