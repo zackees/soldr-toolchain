@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-01T01:04:42Z",
+  "generated_at": "2026-07-01T02:24:12Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -498,6 +498,70 @@
       "asset": "bundle.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/llvm-tools/20.1.7/linux-x64-gnu/bundle.tar.zst",
       "sha256": "7e68dfc7261b81126e4b24e35dc17317d239238bfec29e8977daef3542403b08"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/mimalloc/3.3.2/windows-x64/bundle.tar.zst",
+      "sha256": "8f5df50c17ec4baf5d18e5722ce5d1af9731771e720a04f68de24f875d46dbf4"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/mimalloc/3.3.2/windows-arm64/bundle.tar.zst",
+      "sha256": "f1b016d2b2230260df022842ce62a142dea348190340358d424164edecded95c"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/mimalloc/3.3.2/darwin-x64/bundle.tar.zst",
+      "sha256": "e639ec354e3385c042e7d69954f1f1812f2afc34acc5e9820f5793bfeced1131"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/mimalloc/3.3.2/darwin-arm64/bundle.tar.zst",
+      "sha256": "d61e73e61f2dfcafbb7dbbf90dea7b8f0d05477c6a76dcee0c16e2d6895059e1"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/mimalloc/3.3.2/linux-x64-gnu/bundle.tar.zst",
+      "sha256": "e3bf063a69d86b3045b6536defc495d7efd1bd8ba850134bebc04ce5555d355d"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/mimalloc/3.3.2/linux-arm64-gnu/bundle.tar.zst",
+      "sha256": "31e11fb85b91f2c47a0c796ad06968b6a37760aa651073833fa43eabd7927844"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/mimalloc/3.3.2/linux-x64-musl/bundle.tar.zst",
+      "sha256": "c7fef7951e3c426893427e7b75099a1c4c5b6d75a170e8682367dabb85075b32"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/mimalloc/3.3.2/linux-arm64-musl/bundle.tar.zst",
+      "sha256": "7afe8d4eff9dbe6d3e957c380399de97b9e09d6e3dd3cbafccdcc7c2d10db26b"
     }
   ]
 }
