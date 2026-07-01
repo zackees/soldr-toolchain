@@ -50,7 +50,7 @@ JEMALLOC_SHAPES=(
 
 declare -A VERSIONS=(
     [jemalloc]=5.3.0
-    [mimalloc]=3.0.4
+    [mimalloc]=3.3.2
     [zlib-ng]=2.2.5
     [lzma]=5.6.3
     [bzip2]=1.0.8

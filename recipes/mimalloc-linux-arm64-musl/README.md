@@ -1,6 +1,6 @@
 # `mimalloc-linux-arm64-musl`
 
-Forge-built Conan recipe for `mimalloc` `3.0.4` targeting
+Forge-built Conan recipe for `mimalloc` `3.3.2` targeting
 `aarch64-unknown-linux-musl`.
 
 The shared implementation is in `recipes/_syslib.py`; this directory is
@@ -9,7 +9,7 @@ kept as a thin wrapper so forge can dispatch and cache one package per
 
 ## Source
 
-https://github.com/microsoft/mimalloc/archive/refs/tags/v3.0.4.tar.gz
+https://github.com/microsoft/mimalloc/archive/refs/tags/v3.3.2.tar.gz
 
 ## Dispatch
 
@@ -19,7 +19,7 @@ gh workflow run forge-conan.yml --repo zackees/forge \
     -f recipe_ref=main \
     -f recipe_path=recipes/mimalloc-linux-arm64-musl \
     -f name=mimalloc-linux-arm64-musl \
-    -f version=3.0.4 \
+    -f version=3.3.2 \
     -f windows_x64=false \
     -f windows_arm64=false \
     -f linux_x64=false \
@@ -31,4 +31,4 @@ gh workflow run forge-conan.yml --repo zackees/forge \
 ```
 
 Ingested catalogue path:
-`mimalloc/3.0.4/linux-arm64-musl/bundle.tar.zst`
+`mimalloc/3.3.2/linux-arm64-musl/bundle.tar.zst`
