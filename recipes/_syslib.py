@@ -226,6 +226,9 @@ def build(conanfile) -> None:
     else:
         _build_cmake(conanfile, source_root / lib.cmake_subdir, package_root, shape, lib)
 
+    if lib.tool == "mimalloc":
+        _flatten_mimalloc_install_layout(package_root)
+
     if lib.pkg_config_name and lib.pkg_config_lib:
         _write_pkg_config(package_root, lib, shape, lib.pkg_config_name, lib.pkg_config_lib)
 
@@ -384,6 +387,28 @@ def _build_jemalloc(conanfile, source_root: Path, package_root: Path, shape: Sha
     )
     _run(["make", "-j2"], cwd=source_root, env=env)
     _run(["make", "install"], cwd=source_root, env=env)
+
+
+def _flatten_mimalloc_install_layout(package_root: Path) -> None:
+    for parent_name in ("lib", "include"):
+        parent = package_root / parent_name
+        if not parent.is_dir():
+            continue
+        for child in parent.glob("mimalloc-*"):
+            if not child.is_dir():
+                continue
+            for item in child.iterdir():
+                target = parent / item.name
+                if target.exists():
+                    if target.is_dir():
+                        shutil.rmtree(target)
+                    else:
+                        target.unlink()
+                shutil.move(str(item), str(target))
+            try:
+                child.rmdir()
+            except OSError:
+                pass
 
 
 def _write_pkg_config(package_root: Path, lib: Library, shape: Shape, pc_name: str, link_lib: str) -> None:
