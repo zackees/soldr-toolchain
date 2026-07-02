@@ -18,6 +18,8 @@ declare -A VERSIONS=(
     [llvm-tools]=20.1.7
     [xwin-cache]=2026-06-22
     [mimalloc]=3.3.2
+    [cmake]=4.3.4
+    [ninja]=1.13.2
 )
 
 # Which shapes each tool builds. xwin-cache is special: x64 was
@@ -30,6 +32,10 @@ OPENSSL_SHAPES=( windows-x64 windows-arm64 )
 LLVM_TOOLS_SHAPES=( linux-x64-gnu )
 XWIN_CACHE_SHAPES=( windows-arm64 )
 MIMALLOC_SHAPES=( windows-x64 windows-arm64 darwin-x64 darwin-arm64 linux-x64-gnu linux-arm64-gnu linux-x64-musl linux-arm64-musl )
+# cmake + ninja repackage upstream prebuilts that only ship glibc
+# Linux binaries — no musl shapes.
+CMAKE_SHAPES=( windows-x64 windows-arm64 darwin-x64 darwin-arm64 linux-x64-gnu linux-arm64-gnu )
+NINJA_SHAPES=( windows-x64 windows-arm64 darwin-x64 darwin-arm64 linux-x64-gnu linux-arm64-gnu )
 
 dry_run=0
 selected_lib=""
@@ -56,6 +62,8 @@ shapes_for() {
         llvm-tools) printf '%s\n' "${LLVM_TOOLS_SHAPES[@]}" ;;
         xwin-cache) printf '%s\n' "${XWIN_CACHE_SHAPES[@]}" ;;
         mimalloc) printf '%s\n' "${MIMALLOC_SHAPES[@]}" ;;
+        cmake) printf '%s\n' "${CMAKE_SHAPES[@]}" ;;
+        ninja) printf '%s\n' "${NINJA_SHAPES[@]}" ;;
         *) echo "unknown tool: $1" >&2; return 1 ;;
     esac
 }
@@ -115,7 +123,17 @@ dispatch_one() {
         name="xwin-cache-${shape}"
     fi
     local flags
-    flags=$(shape_to_flags "$shape")
+    case "$tool" in
+        cmake|ninja)
+            # Pure download+repackage — the artifact is identical no
+            # matter which runner builds it, so every shape dispatches
+            # on the cheap Linux x64 runner (python-* recipe trick).
+            flags=$(shape_to_flags "linux-x64-gnu")
+            ;;
+        *)
+            flags=$(shape_to_flags "$shape")
+            ;;
+    esac
     local cmd="gh workflow run forge-conan.yml --repo zackees/forge \
         -f recipe_repo=zackees/soldr-toolchain \
         -f recipe_ref=main \
