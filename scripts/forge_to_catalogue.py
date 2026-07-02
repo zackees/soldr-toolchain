@@ -138,6 +138,22 @@ TOOL_RECIPE_NAME["llvm-tools"] = {
     "linux-x64-gnu": "llvm-tools-linux-x64",
 }
 
+# cmake + ninja are pure prebuilt-repackage recipes (official
+# Kitware/CMake and ninja-build/ninja release binaries). Six shapes —
+# no musl: the upstream Linux binaries require glibc.
+for _tool in ("cmake", "ninja"):
+    TOOL_RECIPE_NAME[_tool] = {
+        shape: f"{_tool}-{shape}"
+        for shape in (
+            "windows-x64",
+            "windows-arm64",
+            "darwin-x64",
+            "darwin-arm64",
+            "linux-x64-gnu",
+            "linux-arm64-gnu",
+        )
+    }
+
 
 DEFAULT_ASSET_NAME = {
     "apple-sdk": "sdk.tar.zst",
@@ -155,6 +171,9 @@ DEFAULT_ASSET_NAME = {
     "nodelib": "bundle.tar.zst",
     "openssl": "bundle.tar.zst",
     "llvm-tools": "bundle.tar.zst",
+    # cmake + ninja prebuilt-repackage bundles.
+    "cmake": "bundle.tar.zst",
+    "ninja": "bundle.tar.zst",
 }
 
 

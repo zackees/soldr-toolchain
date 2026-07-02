@@ -167,6 +167,9 @@ def main() -> int:
             "nodelib",
             "openssl",
             "llvm-tools",
+            # prebuilt-repackage tools (cmake 4.3.4 + ninja 1.13.2)
+            "cmake",
+            "ninja",
         }:
             print(
                 f"run {run_id}: artifact {artifacts[0]['name']!r} not in the known tool set; skip"

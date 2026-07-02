@@ -24,6 +24,8 @@ on:
           - zlib-ng
           - lzma
           - bzip2
+          - cmake
+          - ninja
       version:
         description: "SDK / tool/library version (e.g. 14.5, 1.5.7)"
         required: true
@@ -83,6 +85,9 @@ jobs:
               "linux-x64-musl",
               "linux-arm64-musl",
           ]
+          # cmake + ninja repackage upstream prebuilts that only ship
+          # glibc Linux binaries — no musl shapes.
+          prebuilt_shapes = syslib_shapes[:6]
           supported = {
               "apple-sdk": apple_shapes,
               "zstd": syslib_shapes,
@@ -92,6 +97,8 @@ jobs:
               "zlib-ng": syslib_shapes,
               "lzma": syslib_shapes,
               "bzip2": syslib_shapes,
+              "cmake": prebuilt_shapes,
+              "ninja": prebuilt_shapes,
           }
 
           tool = os.environ["TOOL"]
@@ -135,16 +142,27 @@ jobs:
           linux_arm64_musl=false
           macos_x64=false
           macos_arm64=false
-          case "${{ matrix.shape }}" in
-            universal2|thin-x86_64|thin-aarch64|darwin-arm64) macos_arm64=true ;;
-            darwin-x64) macos_x64=true ;;
-            windows-x64) windows_x64=true ;;
-            windows-arm64) windows_arm64=true ;;
-            linux-x64-gnu) linux_x64=true ;;
-            linux-arm64-gnu) linux_arm64=true ;;
-            linux-x64-musl) linux_x64_musl=true ;;
-            linux-arm64-musl) linux_arm64_musl=true ;;
-            *) echo "::error::unknown shape ${{ matrix.shape }}"; exit 1 ;;
+          case "${{ inputs.tool }}" in
+            cmake|ninja)
+              # Pure download+repackage recipes: the artifact is
+              # identical no matter which runner builds it, so every
+              # shape runs on the cheap Linux x64 runner (same trick
+              # as the python-* recipe READMEs document).
+              linux_x64=true
+              ;;
+            *)
+              case "${{ matrix.shape }}" in
+                universal2|thin-x86_64|thin-aarch64|darwin-arm64) macos_arm64=true ;;
+                darwin-x64) macos_x64=true ;;
+                windows-x64) windows_x64=true ;;
+                windows-arm64) windows_arm64=true ;;
+                linux-x64-gnu) linux_x64=true ;;
+                linux-arm64-gnu) linux_arm64=true ;;
+                linux-x64-musl) linux_x64_musl=true ;;
+                linux-arm64-musl) linux_arm64_musl=true ;;
+                *) echo "::error::unknown shape ${{ matrix.shape }}"; exit 1 ;;
+              esac
+              ;;
           esac
 
           gh workflow run forge-conan.yml \
