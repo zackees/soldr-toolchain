@@ -26,6 +26,7 @@ on:
           - bzip2
           - cmake
           - ninja
+          - uv
       version:
         description: "SDK / tool/library version (e.g. 14.5, 1.5.7)"
         required: true
@@ -86,7 +87,8 @@ jobs:
               "linux-arm64-musl",
           ]
           # cmake + ninja repackage upstream prebuilts that only ship
-          # glibc Linux binaries — no musl shapes.
+          # glibc Linux binaries — no musl shapes. uv ships musl builds
+          # upstream, so it covers all eight.
           prebuilt_shapes = syslib_shapes[:6]
           supported = {
               "apple-sdk": apple_shapes,
@@ -99,6 +101,7 @@ jobs:
               "bzip2": syslib_shapes,
               "cmake": prebuilt_shapes,
               "ninja": prebuilt_shapes,
+              "uv": syslib_shapes,
           }
 
           tool = os.environ["TOOL"]
@@ -143,7 +146,7 @@ jobs:
           macos_x64=false
           macos_arm64=false
           case "${{ inputs.tool }}" in
-            cmake|ninja)
+            cmake|ninja|uv)
               # Pure download+repackage recipes: the artifact is
               # identical no matter which runner builds it, so every
               # shape runs on the cheap Linux x64 runner (same trick

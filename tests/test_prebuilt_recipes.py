@@ -1,11 +1,14 @@
-"""Structural tests for the cmake-* / ninja-* prebuilt-repackage recipes.
+"""Structural tests for the cmake-* / ninja-* / uv-* prebuilt-repackage
+recipes.
 
 The recipes are pure download+repackage (no live dispatch here); these
 tests pin the wiring invariants instead:
 
-  * the shared helpers (`recipes/_cmake.py`, `recipes/_ninja.py`) cover
-    exactly the six glibc/msvc/darwin shapes — no musl (Kitware/ninja
-    upstream binaries require glibc);
+  * the shared helpers (`recipes/_cmake.py`, `recipes/_ninja.py`,
+    `recipes/_uv.py`) cover exactly the expected shapes — six
+    glibc/msvc/darwin shapes for cmake/ninja (no musl, Kitware/ninja
+    upstream binaries require glibc), all eight for uv (upstream ships
+    musl builds);
   * every shape in the helper table has a matching thin recipe dir with
     a conanfile.py + README.md;
   * `scripts/forge_to_catalogue.py` knows how to ingest every shape and
@@ -29,6 +32,15 @@ EXPECTED_SHAPES = {
     "darwin-arm64",
     "linux-x64-gnu",
     "linux-arm64-gnu",
+}
+
+# uv ships musl Linux builds upstream — all eight shapes.
+UV_EXPECTED_SHAPES = EXPECTED_SHAPES | {"linux-x64-musl", "linux-arm64-musl"}
+
+TOOL_SHAPES = {
+    "cmake": EXPECTED_SHAPES,
+    "ninja": EXPECTED_SHAPES,
+    "uv": UV_EXPECTED_SHAPES,
 }
 
 
@@ -60,9 +72,25 @@ def test_ninja_helper_shapes_no_musl():
     )
 
 
+def test_uv_helper_shapes_all_eight():
+    uv = _load_helper("_uv")
+    assert set(uv.SHAPE_ASSETS) == UV_EXPECTED_SHAPES
+    assert uv.PINNED_VERSIONS == ("0.11.26",)
+    # Every shape repackages a distinct upstream asset (no universal
+    # binaries in uv's release matrix).
+    assets = list(uv.SHAPE_ASSETS.values())
+    assert len(assets) == len(set(assets))
+    # Windows shapes are zips; everything else is tar.gz.
+    for shape, asset in uv.SHAPE_ASSETS.items():
+        if shape.startswith("windows-"):
+            assert asset.endswith(".zip"), (shape, asset)
+        else:
+            assert asset.endswith(".tar.gz"), (shape, asset)
+
+
 def test_recipe_dirs_exist_per_shape():
-    for tool in ("cmake", "ninja"):
-        for shape in EXPECTED_SHAPES:
+    for tool, shapes in TOOL_SHAPES.items():
+        for shape in shapes:
             recipe_dir = RECIPES_DIR / f"{tool}-{shape}"
             assert (recipe_dir / "conanfile.py").is_file(), recipe_dir
             assert (recipe_dir / "README.md").is_file(), recipe_dir
@@ -72,8 +100,8 @@ def test_recipe_dirs_exist_per_shape():
 
 
 def test_forge_to_catalogue_wiring():
-    for tool in ("cmake", "ninja"):
-        assert set(fc.TOOL_RECIPE_NAME[tool]) == EXPECTED_SHAPES
+    for tool, shapes in TOOL_SHAPES.items():
+        assert set(fc.TOOL_RECIPE_NAME[tool]) == shapes
         for shape, recipe_name in fc.TOOL_RECIPE_NAME[tool].items():
             assert recipe_name == f"{tool}-{shape}"
             # Every ingest shape must resolve to a catalogue platform.

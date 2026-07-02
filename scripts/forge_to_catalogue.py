@@ -154,6 +154,23 @@ for _tool in ("cmake", "ninja"):
         )
     }
 
+# uv is a pure prebuilt-repackage recipe (official astral-sh/uv
+# release binaries). All eight shapes — unlike cmake/ninja, upstream
+# ships musl Linux builds.
+TOOL_RECIPE_NAME["uv"] = {
+    shape: f"uv-{shape}"
+    for shape in (
+        "windows-x64",
+        "windows-arm64",
+        "darwin-x64",
+        "darwin-arm64",
+        "linux-x64-gnu",
+        "linux-arm64-gnu",
+        "linux-x64-musl",
+        "linux-arm64-musl",
+    )
+}
+
 
 DEFAULT_ASSET_NAME = {
     "apple-sdk": "sdk.tar.zst",
@@ -171,9 +188,10 @@ DEFAULT_ASSET_NAME = {
     "nodelib": "bundle.tar.zst",
     "openssl": "bundle.tar.zst",
     "llvm-tools": "bundle.tar.zst",
-    # cmake + ninja prebuilt-repackage bundles.
+    # cmake + ninja + uv prebuilt-repackage bundles.
     "cmake": "bundle.tar.zst",
     "ninja": "bundle.tar.zst",
+    "uv": "bundle.tar.zst",
 }
 
 
