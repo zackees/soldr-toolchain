@@ -241,6 +241,21 @@
         {
           "platform": {
             "os": "darwin",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "bundle.tar.zst",
+            "size_bytes": 1340570,
+            "sha256": "e50297cb70c30d5ab965b21f375367d22a69d5ae56c2f85ba82c21d21b4bfd52",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/darwin-aarch64/bundle.tar.zst",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/darwin-aarch64/bundle.tar.zst"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
             "arch": "x86_64"
           },
           "asset": {
@@ -270,6 +285,38 @@
         {
           "platform": {
             "os": "linux",
+            "arch": "aarch64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "bundle.tar.zst",
+            "size_bytes": 1470150,
+            "sha256": "623406d098c57a69e9fd882f382f4842471e156846bf69550aabcb24f8b30397",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/linux-aarch64-musl/bundle.tar.zst",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/linux-aarch64-musl/bundle.tar.zst"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "bundle.tar.zst",
+            "size_bytes": 1500180,
+            "sha256": "5d3f0f713ca77c4fa58f10180c69295318b07a4cb94ee705ecd9e75178c478f7",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/linux-x86_64-glibc/bundle.tar.zst",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/linux-x86_64-glibc/bundle.tar.zst"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
             "arch": "x86_64",
             "libc": "musl"
           },
@@ -280,6 +327,22 @@
               "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.73/cargo-chef-x86_64-unknown-linux-musl.tar.gz"
             ],
             "sha256": "893a5737c9de98e18a001476d9900f916565088201b2f589b69ae51853c40445"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "aarch64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "bundle.tar.zst",
+            "size_bytes": 1191972,
+            "sha256": "163a4d767a826d1e1a0272b58276a4fde900c97642c8fc91f9e6af581ac8b66f",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/windows-aarch64-msvc/bundle.tar.zst",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/windows-aarch64-msvc/bundle.tar.zst"
+            ]
           }
         },
         {

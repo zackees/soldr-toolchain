@@ -6,7 +6,8 @@
   "online_url": "https://zackees.github.io/soldr-toolchain/crgx/manifest.json",
   "channels": {
     "latest-stable": "v0.1.0",
-    "stable": "v0.1.0"
+    "stable": "v0.1.0",
+    "pinned": "v0.1.0"
   },
   "releases": [
     {
@@ -61,6 +62,22 @@
         {
           "platform": {
             "os": "linux",
+            "arch": "aarch64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "bundle.tar.zst",
+            "size_bytes": 1650527,
+            "sha256": "60416a877c7c6940ae11ac64407999d5245cfba5f43f964c342cc94db09cbee5",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/crgx/v0.1.0/linux-aarch64-musl/bundle.tar.zst",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/crgx/v0.1.0/linux-aarch64-musl/bundle.tar.zst"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
             "arch": "x86_64",
             "libc": "glibc"
           },
@@ -86,6 +103,22 @@
               "https://github.com/yfedoseev/crgx/releases/download/v0.1.0/crgx-linux-x86_64-musl-0.1.0.tar.gz"
             ],
             "sha256": "0a6497a31ddf4fd4e9fe1214bd87a784bec0632ab880833c814542ae61f4c096"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "aarch64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "bundle.tar.zst",
+            "size_bytes": 1339731,
+            "sha256": "66a3d7de73fdcbc18c944c1fe6632ce99cb1698c5a41b499606ecf116b046b5b",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/crgx/v0.1.0/windows-aarch64-msvc/bundle.tar.zst",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/crgx/v0.1.0/windows-aarch64-msvc/bundle.tar.zst"
+            ]
           }
         },
         {

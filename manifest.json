@@ -16,9 +16,9 @@
     "cargo-chef": {
       "descriptor": {
         "url": "cargo-chef/manifest.json",
-        "size_bytes": 105303,
+        "size_bytes": 111280,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "5ecc473a4859661692af75977dd4f8bb9386851a6aa08881f4222b9fb1b1b713"
+        "sha256": "ed2ff5c5bb5c5ee52aea9623050a5f45266ab7f95954034162544292715e0f05"
       },
       "summary": "LukeMathWalker/cargo-chef",
       "kind_hint": "tool"
@@ -46,9 +46,9 @@
     "crgx": {
       "descriptor": {
         "url": "crgx/manifest.json",
-        "size_bytes": 3677,
+        "size_bytes": 5138,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "b338bb78d6b63b36a87f7d24e966f5673055c4cb67e4c318537c351ada6479e9"
+        "sha256": "b32773ef9b1b9f2cbdc41de3b513dadd10521d8000d78f7b9a06c50d0008e4b4"
       },
       "summary": "yfedoseev/crgx",
       "kind_hint": "tool"
