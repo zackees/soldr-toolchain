@@ -36,6 +36,15 @@ EXPECTED_SHAPES = {
 
 # uv ships musl Linux builds upstream — all eight shapes.
 UV_EXPECTED_SHAPES = EXPECTED_SHAPES | {"linux-x64-musl", "linux-arm64-musl"}
+RUST_CLI_EXPECTED_SHAPES = {
+    "windows-x64",
+    "windows-arm64",
+    "darwin-arm64",
+    "linux-x64-gnu",
+    "linux-arm64-gnu",
+    "linux-x64-musl",
+    "linux-arm64-musl",
+}
 
 TOOL_SHAPES = {
     "cmake": EXPECTED_SHAPES,
@@ -88,6 +97,21 @@ def test_uv_helper_shapes_all_eight():
             assert asset.endswith(".tar.gz"), (shape, asset)
 
 
+def test_rust_cli_helper_shapes_release_matrix():
+    rust_cli = _load_helper("_rust_cli")
+    assert set(rust_cli.RUST_CLI_SHAPES) == RUST_CLI_EXPECTED_SHAPES
+    assert rust_cli.TOOL_CONFIG["cargo-chef"]["versions"] == ("0.1.73",)
+    assert rust_cli.TOOL_CONFIG["crgx"]["versions"] == ("0.1.0",)
+    assert rust_cli.parse_package_name("cargo-chef-linux-arm64-musl") == (
+        "cargo-chef",
+        "linux-arm64-musl",
+    )
+    assert rust_cli.parse_package_name("crgx-windows-arm64") == (
+        "crgx",
+        "windows-arm64",
+    )
+
+
 def test_recipe_dirs_exist_per_shape():
     for tool, shapes in TOOL_SHAPES.items():
         for shape in shapes:
@@ -97,6 +121,9 @@ def test_recipe_dirs_exist_per_shape():
             conanfile = (recipe_dir / "conanfile.py").read_text(encoding="utf-8")
             assert f'name = "{tool}-{shape}"' in conanfile
             assert f'SHAPE = "{shape}"' in conanfile
+    rust_recipe = RECIPES_DIR / "rust-cli"
+    assert (rust_recipe / "conanfile.py").is_file()
+    assert (rust_recipe / "README.md").is_file()
 
 
 def test_forge_to_catalogue_wiring():
@@ -105,5 +132,11 @@ def test_forge_to_catalogue_wiring():
         for shape, recipe_name in fc.TOOL_RECIPE_NAME[tool].items():
             assert recipe_name == f"{tool}-{shape}"
             # Every ingest shape must resolve to a catalogue platform.
+            assert shape in fc.SHAPE_TO_PLATFORM
+        assert fc.DEFAULT_ASSET_NAME[tool] == "bundle.tar.zst"
+    for tool in ("cargo-chef", "crgx"):
+        assert set(fc.TOOL_RECIPE_NAME[tool]) == RUST_CLI_EXPECTED_SHAPES
+        for shape, recipe_name in fc.TOOL_RECIPE_NAME[tool].items():
+            assert recipe_name == f"{tool}-{shape}"
             assert shape in fc.SHAPE_TO_PLATFORM
         assert fc.DEFAULT_ASSET_NAME[tool] == "bundle.tar.zst"

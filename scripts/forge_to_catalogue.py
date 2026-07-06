@@ -171,6 +171,24 @@ TOOL_RECIPE_NAME["uv"] = {
     )
 }
 
+# Rust CLI support binaries that soldr bundles into release archives.
+# x86_64-apple-darwin is intentionally omitted because it is not in the
+# current soldr release matrix.
+RUST_CLI_SHAPES = (
+    "windows-x64",
+    "windows-arm64",
+    "darwin-arm64",
+    "linux-x64-gnu",
+    "linux-arm64-gnu",
+    "linux-x64-musl",
+    "linux-arm64-musl",
+)
+for _tool in ("cargo-chef", "crgx"):
+    TOOL_RECIPE_NAME[_tool] = {
+        shape: f"{_tool}-{shape}"
+        for shape in RUST_CLI_SHAPES
+    }
+
 
 DEFAULT_ASSET_NAME = {
     "apple-sdk": "sdk.tar.zst",
@@ -192,6 +210,27 @@ DEFAULT_ASSET_NAME = {
     "cmake": "bundle.tar.zst",
     "ninja": "bundle.tar.zst",
     "uv": "bundle.tar.zst",
+    # Rust CLI support bundles.
+    "cargo-chef": "bundle.tar.zst",
+    "crgx": "bundle.tar.zst",
+}
+
+V1_SCHEMA_URL = "https://zackees.github.io/manifest.json/v1/manifest.schema.json"
+ONLINE_BASE = "https://zackees.github.io/soldr-toolchain"
+TOOL_SUMMARY = {
+    "cargo-chef": "LukeMathWalker/cargo-chef",
+    "crgx": "yfedoseev/crgx",
+}
+
+SHAPE_TO_PLATFORM_TUPLE = {
+    "windows-x64": {"os": "windows", "arch": "x86_64", "abi": "msvc"},
+    "windows-arm64": {"os": "windows", "arch": "aarch64", "abi": "msvc"},
+    "darwin-x64": {"os": "darwin", "arch": "x86_64"},
+    "darwin-arm64": {"os": "darwin", "arch": "aarch64"},
+    "linux-x64-gnu": {"os": "linux", "arch": "x86_64", "libc": "glibc"},
+    "linux-arm64-gnu": {"os": "linux", "arch": "aarch64", "libc": "glibc"},
+    "linux-x64-musl": {"os": "linux", "arch": "x86_64", "libc": "musl"},
+    "linux-arm64-musl": {"os": "linux", "arch": "aarch64", "libc": "musl"},
 }
 
 
@@ -250,9 +289,9 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"forge artifact: {forge_artifact}")
 
-    platform = SHAPE_TO_PLATFORM[args.shape]
     asset_name = args.asset_name or DEFAULT_ASSET_NAME.get(args.tool, "bundle.tar.zst")
-    asset_rel = Path(args.tool) / args.version / platform / asset_name
+    asset_version = _catalog_version(args.tool, args.version)
+    asset_rel = Path(args.tool) / asset_version / _asset_platform_dir(args.tool, args.shape) / asset_name
     asset_path = args.assets_root / asset_rel
     asset_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -279,6 +318,16 @@ def main(argv: list[str] | None = None) -> int:
         sha256=sha256,
         forge_run_id=args.forge_run_id,
         provenance=provenance,
+    )
+    _update_manifest_catalog(
+        args.assets_root,
+        tool=args.tool,
+        package_version=args.version,
+        shape=args.shape,
+        asset_rel=asset_rel,
+        asset_name=asset_name,
+        asset_size=asset_path.stat().st_size,
+        sha256=sha256,
     )
     print(f"catalogue: updated {catalogue_path}")
     return 0
@@ -519,6 +568,149 @@ def _update_catalogue(
     }
     with provenance_log.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(log_row) + "\n")
+
+
+def _catalog_version(tool: str, package_version: str) -> str:
+    if tool in {"cargo-chef", "crgx"} and not package_version.startswith("v"):
+        return f"v{package_version}"
+    return package_version
+
+
+def _flatten_platform(platform: dict[str, str]) -> str:
+    parts = [platform["os"], platform["arch"]]
+    if platform.get("libc"):
+        parts.append(platform["libc"])
+    if platform.get("abi"):
+        parts.append(platform["abi"])
+    return "-".join(parts)
+
+
+def _asset_platform_dir(tool: str, shape: str) -> str:
+    if tool in {"cargo-chef", "crgx"}:
+        platform = SHAPE_TO_PLATFORM_TUPLE.get(shape)
+        if platform is None:
+            raise SystemExit(f"forge_to_catalogue.py: no v1 platform tuple for shape={shape}")
+        return _flatten_platform(platform)
+    return SHAPE_TO_PLATFORM[shape]
+
+
+def _asset_urls(asset_rel: Path) -> list[str]:
+    rel = asset_rel.as_posix()
+    return [
+        f"https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/{rel}",
+        f"https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/{rel}",
+    ]
+
+
+def _update_manifest_catalog(
+    assets_root: Path,
+    *,
+    tool: str,
+    package_version: str,
+    shape: str,
+    asset_rel: Path,
+    asset_name: str,
+    asset_size: int,
+    sha256: str,
+) -> None:
+    """Merge a local blob into manifest.json v1 files.
+
+    Release-archive support binaries are resolved through the public
+    Pages ``manifest.json`` tree, so the per-tool Catalog must know
+    about locally built bundles too.
+    """
+    if tool not in {"cargo-chef", "crgx"}:
+        return
+    platform = SHAPE_TO_PLATFORM_TUPLE.get(shape)
+    if platform is None:
+        raise SystemExit(f"forge_to_catalogue.py: no v1 platform tuple for shape={shape}")
+
+    catalog_version = _catalog_version(tool, package_version)
+    catalog_path = assets_root / tool / "manifest.json"
+    catalog_path.parent.mkdir(parents=True, exist_ok=True)
+    if catalog_path.is_file():
+        catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    else:
+        catalog = {
+            "$schema": V1_SCHEMA_URL,
+            "kind": "Catalog",
+            "schema_version": 1,
+            "tool": tool,
+            "online_url": f"{ONLINE_BASE}/{tool}/manifest.json",
+            "channels": {},
+            "releases": [],
+        }
+
+    releases = catalog.setdefault("releases", [])
+    release = next((r for r in releases if r.get("version") == catalog_version), None)
+    if release is None:
+        release = {
+            "schema_version": 1,
+            "version": catalog_version,
+            "published_at": "",
+            "min_client_version": 1,
+            "platforms": [],
+        }
+        releases.append(release)
+
+    platform_entry = {
+        "platform": platform,
+        "asset": {
+            "filename": asset_name,
+            "size_bytes": asset_size,
+            "sha256": sha256,
+            "urls": _asset_urls(asset_rel),
+        },
+    }
+    existing_platforms = release.setdefault("platforms", [])
+    release["platforms"] = [
+        p for p in existing_platforms
+        if p.get("platform") != platform
+    ]
+    release["platforms"].append(platform_entry)
+    release["platforms"].sort(
+        key=lambda p: (
+            p.get("platform", {}).get("os", ""),
+            p.get("platform", {}).get("arch", ""),
+            p.get("platform", {}).get("libc", ""),
+            p.get("platform", {}).get("abi", ""),
+        )
+    )
+
+    channels = catalog.setdefault("channels", {})
+    channels.setdefault("pinned", catalog_version)
+    channels.setdefault("latest-stable", catalog_version)
+    channels.setdefault("stable", channels["latest-stable"])
+    catalog_path.write_text(json.dumps(catalog, indent=2) + "\n", encoding="utf-8")
+    _refresh_index_entry(assets_root, tool, catalog_path)
+
+
+def _refresh_index_entry(assets_root: Path, tool: str, catalog_path: Path) -> None:
+    import hashlib
+
+    index_path = assets_root / "manifest.json"
+    if index_path.is_file():
+        index = json.loads(index_path.read_text(encoding="utf-8"))
+    else:
+        index = {
+            "$schema": V1_SCHEMA_URL,
+            "kind": "Index",
+            "schema_version": 1,
+            "tools": {},
+        }
+    blob = catalog_path.read_bytes()
+    index.setdefault("tools", {})[tool] = {
+        "descriptor": {
+            "url": f"{tool}/manifest.json",
+            "size_bytes": len(blob),
+            "media_type": "application/vnd.manifest.v1+json",
+            "sha256": hashlib.sha256(blob).hexdigest(),
+        },
+        "summary": TOOL_SUMMARY.get(tool, tool),
+        "kind_hint": "tool",
+    }
+    index["tools"] = dict(sorted(index["tools"].items()))
+    index_path.write_text(json.dumps(index, indent=2) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

@@ -27,6 +27,7 @@ Platform-key normalization (npm-style flat -> orthogonal tuple):
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import shutil
 import sys
@@ -38,6 +39,8 @@ ONLINE_BASE = "https://zackees.github.io/soldr-toolchain"
 # Canonical pointer for IDE auto-validation and document self-verification.
 # Pinned to /v1/ so consumers stay valid forever as the schema evolves.
 SCHEMA_URL = "https://zackees.github.io/manifest.json/v1/manifest.schema.json"
+LOCAL_SUPPORT_TOOLS = {"cargo-chef", "crgx"}
+LOCAL_SUPPORT_URL_MARKER = "zackees/soldr-toolchain/assets/"
 
 # v5 short-arch -> v1 canonical arch
 ARCH_MAP: dict[str, str] = {
@@ -247,6 +250,115 @@ def convert_tool_catalog(
     }
 
 
+def _platform_identity(platform_entry: dict[str, Any]) -> tuple[tuple[str, str], ...]:
+    platform = platform_entry.get("platform") or {}
+    return tuple(sorted((str(k), str(v)) for k, v in platform.items()))
+
+
+def _is_local_support_asset(platform_entry: dict[str, Any]) -> bool:
+    asset = platform_entry.get("asset") or {}
+    urls = asset.get("urls") or []
+    return any(LOCAL_SUPPORT_URL_MARKER in str(url) for url in urls)
+
+
+def _sort_platforms(platforms: list[dict[str, Any]]) -> None:
+    platforms.sort(
+        key=lambda p: (
+            p.get("platform", {}).get("os", ""),
+            p.get("platform", {}).get("arch", ""),
+            p.get("platform", {}).get("libc", ""),
+            p.get("platform", {}).get("abi", ""),
+        )
+    )
+
+
+def merge_local_support_assets(
+    dest: Path,
+    tool_name: str,
+    catalog: dict[str, Any],
+) -> dict[str, Any]:
+    """Preserve locally hosted support bundles across v5 refreshes.
+
+    cargo-chef and crgx are both upstream GitHub tools and soldr release
+    support binaries. The v5 refresh can rebuild their Catalogs from the
+    upstream releases, but the support bundles are produced by this repo's
+    Forge jobs under the soldr-toolchain assets branch. Keep only those
+    local entries from the existing v1 Catalog and merge them into the
+    freshly converted Catalog.
+    """
+    if tool_name not in LOCAL_SUPPORT_TOOLS:
+        return catalog
+
+    existing_path = dest / tool_name / "manifest.json"
+    if not existing_path.is_file():
+        return catalog
+
+    try:
+        existing = json.loads(existing_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return catalog
+    if existing.get("kind") != "Catalog":
+        return catalog
+
+    releases = catalog.setdefault("releases", [])
+    releases_by_version = {
+        r.get("version"): r
+        for r in releases
+        if isinstance(r, dict) and r.get("version")
+    }
+    preserved_count = 0
+
+    for old_release in existing.get("releases", []) or []:
+        if not isinstance(old_release, dict):
+            continue
+        local_platforms = [
+            copy.deepcopy(p)
+            for p in (old_release.get("platforms") or [])
+            if isinstance(p, dict) and _is_local_support_asset(p)
+        ]
+        if not local_platforms:
+            continue
+
+        version = old_release.get("version")
+        if not version:
+            continue
+        release = releases_by_version.get(version)
+        if release is None:
+            release = {
+                k: copy.deepcopy(v)
+                for k, v in old_release.items()
+                if k != "platforms"
+            }
+            release.setdefault("schema_version", V1_SCHEMA_VERSION)
+            release.setdefault("published_at", "")
+            release.setdefault("min_client_version", 1)
+            release["platforms"] = []
+            releases.append(release)
+            releases_by_version[version] = release
+
+        local_keys = {_platform_identity(p) for p in local_platforms}
+        current_platforms = [
+            p for p in (release.get("platforms") or [])
+            if _platform_identity(p) not in local_keys
+        ]
+        current_platforms.extend(local_platforms)
+        _sort_platforms(current_platforms)
+        release["platforms"] = current_platforms
+        preserved_count += len(local_platforms)
+
+    if preserved_count:
+        existing_channels = existing.get("channels") or {}
+        channels = catalog.setdefault("channels", {})
+        for name, version in existing_channels.items():
+            channels.setdefault(name, version)
+        print(
+            f"  preserved {preserved_count} local support platform(s) for {tool_name}",
+            file=sys.stderr,
+        )
+
+    return catalog
+
+
 def _kind_hint_for(tool_name: str, meta: dict[str, Any]) -> str:
     """Map an entry to a coarse-grained category surfaced via the v1
     ToolEntry.kind_hint field. Free-form; informational only.
@@ -376,6 +488,7 @@ def main() -> int:
             # but defensively accept dict too.
             v5_releases = [v5_releases]
         catalog = convert_tool_catalog(tool_name, v5_releases, asset_lookup, top_level_v5)
+        catalog = merge_local_support_assets(args.dest, tool_name, catalog)
         data = write_json(args.dest / tool_name / "manifest.json", catalog)
         catalog_sha[tool_name] = (hash_sha256(data), len(data))
         print(f"  wrote {tool_name}/manifest.json ({len(data)} bytes, {len(catalog['releases'])} releases)")

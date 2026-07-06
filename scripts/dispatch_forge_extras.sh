@@ -21,6 +21,8 @@ declare -A VERSIONS=(
     [cmake]=4.3.4
     [ninja]=1.13.2
     [uv]=0.11.26
+    [cargo-chef]=0.1.73
+    [crgx]=0.1.0
 )
 
 # Which shapes each tool builds. xwin-cache is special: x64 was
@@ -39,6 +41,9 @@ CMAKE_SHAPES=( windows-x64 windows-arm64 darwin-x64 darwin-arm64 linux-x64-gnu l
 NINJA_SHAPES=( windows-x64 windows-arm64 darwin-x64 darwin-arm64 linux-x64-gnu linux-arm64-gnu )
 # uv ships musl builds upstream — all eight shapes.
 UV_SHAPES=( windows-x64 windows-arm64 darwin-x64 darwin-arm64 linux-x64-gnu linux-arm64-gnu linux-x64-musl linux-arm64-musl )
+# soldr release archive support binaries. x86_64-apple-darwin is not
+# in the current soldr release matrix.
+RUST_CLI_SHAPES=( windows-x64 windows-arm64 darwin-arm64 linux-x64-gnu linux-arm64-gnu linux-x64-musl linux-arm64-musl )
 
 dry_run=0
 selected_lib=""
@@ -68,6 +73,7 @@ shapes_for() {
         cmake) printf '%s\n' "${CMAKE_SHAPES[@]}" ;;
         ninja) printf '%s\n' "${NINJA_SHAPES[@]}" ;;
         uv) printf '%s\n' "${UV_SHAPES[@]}" ;;
+        cargo-chef|crgx) printf '%s\n' "${RUST_CLI_SHAPES[@]}" ;;
         *) echo "unknown tool: $1" >&2; return 1 ;;
     esac
 }
@@ -108,6 +114,9 @@ recipe_path_for() {
         xwin-cache)
             # recipes/xwin-cache-windows-arm64
             echo "recipes/xwin-cache-${shape}"
+            ;;
+        cargo-chef|crgx)
+            echo "recipes/rust-cli"
             ;;
         *)
             echo "recipes/${tool}-${shape}"
