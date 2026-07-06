@@ -91,6 +91,10 @@ def test_syslib_recipe_mapping_and_default_asset_names() -> None:
     assert fc.SHAPE_TO_PLATFORM["linux-arm64-gnu"] == "linux-arm64-gnu"
     assert fc.DEFAULT_ASSET_NAME["zstd"] == "bundle.tar.zst"
     assert fc.DEFAULT_ASSET_NAME["apple-sdk"] == "sdk.tar.zst"
+    assert fc._resolve_recipe_name("cargo-chef", "windows-arm64") == "cargo-chef-windows-arm64"
+    assert fc._resolve_recipe_name("crgx", "linux-arm64-musl") == "crgx-linux-arm64-musl"
+    assert fc.DEFAULT_ASSET_NAME["cargo-chef"] == "bundle.tar.zst"
+    assert fc.DEFAULT_ASSET_NAME["crgx"] == "bundle.tar.zst"
 
 
 def test_jemalloc_windows_shapes_are_not_mapped() -> None:
@@ -206,3 +210,51 @@ def test_update_catalogue_idempotent_and_provenance_logged(tmp_path: Path) -> No
     assert len(log) == 2
     assert json.loads(log[0])["forge_run_id"] == "28299235391"
     assert json.loads(log[1])["forge_run_id"] == "28299235392"
+
+
+def test_update_manifest_catalog_merges_rust_cli_platform(tmp_path: Path) -> None:
+    assets_root = tmp_path
+    (assets_root / "manifest.json").write_text(
+        json.dumps(
+            {
+                "$schema": fc.V1_SCHEMA_URL,
+                "kind": "Index",
+                "schema_version": 1,
+                "tools": {},
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    fc._update_manifest_catalog(
+        assets_root,
+        tool="cargo-chef",
+        package_version="0.1.73",
+        shape="windows-arm64",
+        asset_rel=Path("cargo-chef/v0.1.73/windows-aarch64-msvc/bundle.tar.zst"),
+        asset_name="bundle.tar.zst",
+        asset_size=12345,
+        sha256="a" * 64,
+    )
+
+    catalog = json.loads((assets_root / "cargo-chef" / "manifest.json").read_text())
+    assert catalog["tool"] == "cargo-chef"
+    assert catalog["channels"]["pinned"] == "v0.1.73"
+    release = next(r for r in catalog["releases"] if r["version"] == "v0.1.73")
+    assert release["platforms"] == [
+        {
+            "platform": {"os": "windows", "arch": "aarch64", "abi": "msvc"},
+            "asset": {
+                "filename": "bundle.tar.zst",
+                "size_bytes": 12345,
+                "sha256": "a" * 64,
+                "urls": [
+                    "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/windows-aarch64-msvc/bundle.tar.zst",
+                    "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/windows-aarch64-msvc/bundle.tar.zst",
+                ],
+            },
+        }
+    ]
+    index = json.loads((assets_root / "manifest.json").read_text())
+    assert index["tools"]["cargo-chef"]["descriptor"]["url"] == "cargo-chef/manifest.json"

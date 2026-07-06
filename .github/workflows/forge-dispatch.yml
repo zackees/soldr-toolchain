@@ -27,6 +27,8 @@ on:
           - cmake
           - ninja
           - uv
+          - cargo-chef
+          - crgx
       version:
         description: "SDK / tool/library version (e.g. 14.5, 1.5.7)"
         required: true
@@ -90,6 +92,15 @@ jobs:
           # glibc Linux binaries — no musl shapes. uv ships musl builds
           # upstream, so it covers all eight.
           prebuilt_shapes = syslib_shapes[:6]
+          rust_cli_shapes = [
+              "windows-x64",
+              "windows-arm64",
+              "darwin-arm64",
+              "linux-x64-gnu",
+              "linux-arm64-gnu",
+              "linux-x64-musl",
+              "linux-arm64-musl",
+          ]
           supported = {
               "apple-sdk": apple_shapes,
               "zstd": syslib_shapes,
@@ -102,6 +113,8 @@ jobs:
               "cmake": prebuilt_shapes,
               "ninja": prebuilt_shapes,
               "uv": syslib_shapes,
+              "cargo-chef": rust_cli_shapes,
+              "crgx": rust_cli_shapes,
           }
 
           tool = os.environ["TOOL"]
@@ -133,7 +146,10 @@ jobs:
           GH_TOKEN: ${{ secrets.FORGE_INGEST_TOKEN }}
         run: |
           set -euo pipefail
-          recipe_path="recipes/${{ inputs.tool }}-${{ matrix.shape }}"
+          case "${{ inputs.tool }}" in
+            cargo-chef|crgx) recipe_path="recipes/rust-cli" ;;
+            *) recipe_path="recipes/${{ inputs.tool }}-${{ matrix.shape }}" ;;
+          esac
           name="${{ inputs.tool }}-${{ matrix.shape }}"
           echo "dispatching forge: recipe=$recipe_path name=$name version=${{ inputs.version }}"
 
@@ -228,6 +244,7 @@ jobs:
         run: |
           gh workflow run forge-ingest.yml \
             --repo zackees/soldr-toolchain \
+            --ref "${{ inputs.recipe_ref }}" \
             -f forge_run_id="${{ steps.dispatch.outputs.forge_run_id }}" \
             -f tool="${{ inputs.tool }}" \
             -f version="${{ inputs.version }}" \
