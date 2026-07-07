@@ -88,7 +88,10 @@ def test_find_forge_artifact_matches_name_and_version(tmp_path: Path) -> None:
 def test_syslib_recipe_mapping_and_default_asset_names() -> None:
     assert fc._resolve_recipe_name("zstd", "linux-x64-musl") == "zstd-linux-x64-musl"
     assert fc._resolve_recipe_name("sqlite", "windows-arm64") == "sqlite-windows-arm64"
+    assert fc._resolve_recipe_name("zstd", "windows-x64-gnu") == "zstd-windows-x64-gnu"
+    assert fc._resolve_recipe_name("bzip2", "windows-x64-gnu") == "bzip2-windows-x64-gnu"
     assert fc.SHAPE_TO_PLATFORM["linux-arm64-gnu"] == "linux-arm64-gnu"
+    assert fc.SHAPE_TO_PLATFORM["windows-x64-gnu"] == "windows-x64-gnu"
     assert fc.DEFAULT_ASSET_NAME["zstd"] == "bundle.tar.zst"
     assert fc.DEFAULT_ASSET_NAME["apple-sdk"] == "sdk.tar.zst"
     assert fc._resolve_recipe_name("cargo-chef", "windows-arm64") == "cargo-chef-windows-arm64"

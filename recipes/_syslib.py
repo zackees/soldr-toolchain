@@ -33,12 +33,21 @@ class Shape:
     forge_input: str
     runner_platform: str
     cmake_arch: str | None = None
+    cmake_generator: str | None = None
     musl: bool = False
 
 
 SHAPES: dict[str, Shape] = {
     "windows-x64": Shape(
         "x86_64-pc-windows-msvc", "Windows", "x86_64", "windows_x64", "windows-x64", "x64"
+    ),
+    "windows-x64-gnu": Shape(
+        "x86_64-pc-windows-gnu",
+        "Windows",
+        "x86_64",
+        "windows_x64_gnu",
+        "windows-x64-gnu",
+        cmake_generator="MinGW Makefiles",
     ),
     "windows-arm64": Shape(
         "aarch64-pc-windows-msvc", "Windows", "armv8", "windows_arm64", "windows-arm64", "ARM64"
@@ -119,7 +128,7 @@ LIBRARIES: dict[str, Library] = {
         license="BSD-2-Clause",
         description="jemalloc static library and headers for tikv-jemalloc-sys",
         custom="jemalloc",
-        unsupported_shapes=frozenset({"windows-x64", "windows-arm64"}),
+        unsupported_shapes=frozenset({"windows-x64", "windows-x64-gnu", "windows-arm64"}),
     ),
     "mimalloc": Library(
         tool="mimalloc",
@@ -291,6 +300,8 @@ def _build_cmake(conanfile, source_dir: Path, package_root: Path, shape: Shape, 
     ]
     if shape.musl:
         args.append("-DCMAKE_C_COMPILER=musl-gcc")
+    if shape.cmake_generator:
+        args.extend(["-G", shape.cmake_generator])
     if shape.cmake_arch:
         args.extend(["-A", shape.cmake_arch])
     for key, value in sorted((lib.cmake_defs or {}).items()):
@@ -412,7 +423,7 @@ def _flatten_mimalloc_install_layout(package_root: Path) -> None:
 
 
 def _write_pkg_config(package_root: Path, lib: Library, shape: Shape, pc_name: str, link_lib: str) -> None:
-    if shape.conan_os == "Windows" and lib.msvc_pkg_config_lib:
+    if shape.target_triple.endswith("-msvc") and lib.msvc_pkg_config_lib:
         link_lib = lib.msvc_pkg_config_lib
     pc_dir = package_root / "lib" / "pkgconfig"
     pc_dir.mkdir(parents=True, exist_ok=True)
