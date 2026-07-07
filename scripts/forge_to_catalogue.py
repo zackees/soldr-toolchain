@@ -73,6 +73,7 @@ SHAPE_TO_PLATFORM = {
     "linux-arm64-gnu": "linux-arm64-gnu",
     "linux-x64-musl": "linux-x64-musl",
     "linux-arm64-musl": "linux-arm64-musl",
+    "windows-x64-gnu": "windows-x64-gnu",
 }
 
 # Map tool → recipe name prefix (forge artifact name embeds this).
@@ -171,6 +172,10 @@ TOOL_RECIPE_NAME["uv"] = {
     )
 }
 
+TOOL_RECIPE_NAME["mingw-w64-gcc"] = {
+    "windows-x64-gnu": "mingw-w64-gcc-windows-x64-gnu",
+}
+
 # Rust CLI support binaries that soldr bundles into release archives.
 # x86_64-apple-darwin is intentionally omitted because it is not in the
 # current soldr release matrix.
@@ -210,6 +215,7 @@ DEFAULT_ASSET_NAME = {
     "cmake": "bundle.tar.zst",
     "ninja": "bundle.tar.zst",
     "uv": "bundle.tar.zst",
+    "mingw-w64-gcc": "bundle.tar.zst",
     # Rust CLI support bundles.
     "cargo-chef": "bundle.tar.zst",
     "crgx": "bundle.tar.zst",
@@ -231,6 +237,7 @@ SHAPE_TO_PLATFORM_TUPLE = {
     "linux-arm64-gnu": {"os": "linux", "arch": "aarch64", "libc": "glibc"},
     "linux-x64-musl": {"os": "linux", "arch": "x86_64", "libc": "musl"},
     "linux-arm64-musl": {"os": "linux", "arch": "aarch64", "libc": "musl"},
+    "windows-x64-gnu": {"os": "windows", "arch": "x86_64", "abi": "gnu"},
 }
 
 

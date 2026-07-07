@@ -40,6 +40,7 @@ on:
           - linux-arm64-gnu
           - linux-x64-musl
           - linux-arm64-musl
+          - windows-x64-gnu
 
 permissions:
   contents: write
