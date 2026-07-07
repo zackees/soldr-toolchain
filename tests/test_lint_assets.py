@@ -84,3 +84,26 @@ def test_flat_catalogue_reference_allows_unindexed_tool_directory(tmp_path: Path
 
     issues = lint_assets.lint(tmp_path)
     assert not [i for i in issues if i.severity == "ERROR"], [str(i) for i in issues]
+
+
+def test_index_descriptor_sha256_must_match_catalog_bytes(tmp_path: Path) -> None:
+    _write_json(tmp_path / "tool" / "manifest.json", _catalog("tool"))
+    _write_json(
+        tmp_path / "manifest.json",
+        _index({
+            "tool": {
+                "descriptor": {
+                    "url": "tool/manifest.json",
+                    "size_bytes": 1,
+                    "sha256": "0" * 64,
+                },
+                "summary": "Tool",
+                "kind_hint": "tool",
+            }
+        }),
+    )
+
+    issues = lint_assets.lint(tmp_path)
+    messages = [str(i) for i in issues]
+    assert any("R11" in msg and "descriptor.sha256" in msg for msg in messages), messages
+    assert any("R11" in msg and "descriptor.size_bytes" in msg for msg in messages), messages
