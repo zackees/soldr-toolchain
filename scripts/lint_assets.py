@@ -39,6 +39,8 @@ Rules checked:
        asset-index/catalogue entry. Orphaned files become silent dead
        weight.
   R10. No backslashes in any path field (forward slashes only).
+  R11. Index.tools[].descriptor sha256/size_bytes match the referenced
+       catalog file bytes when those fields are present.
 
 Exit code 0 = clean. Non-zero = at least one rule violated.
 """
@@ -214,6 +216,23 @@ def lint(assets_root: Path) -> list[LintIssue]:
         if not cat_path.is_file():
             issues.append(LintIssue("R2", "ERROR", tool_name, f"descriptor.url -> {rel!r} not on disk"))
             continue
+        desc = entry.get("descriptor") or {}
+        declared_sha = desc.get("sha256", "")
+        if declared_sha:
+            actual_sha = _hash_sha256(cat_path)
+            if declared_sha != actual_sha:
+                issues.append(LintIssue(
+                    "R11", "ERROR", tool_name,
+                    f"descriptor.sha256={declared_sha!r} but hash({rel!r})={actual_sha!r}",
+                ))
+        declared_size = desc.get("size_bytes")
+        if declared_size is not None:
+            actual_size = cat_path.stat().st_size
+            if declared_size != actual_size:
+                issues.append(LintIssue(
+                    "R11", "ERROR", tool_name,
+                    f"descriptor.size_bytes={declared_size!r} but size({rel!r})={actual_size}",
+                ))
         try:
             cat = json.loads(cat_path.read_text(encoding="utf-8"))
             validate_document(cat)
