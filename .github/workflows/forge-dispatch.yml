@@ -27,6 +27,7 @@ on:
           - cmake
           - ninja
           - uv
+          - mingw-w64-gcc
           - cargo-chef
           - crgx
       version:
@@ -55,6 +56,7 @@ on:
           - linux-arm64-gnu
           - linux-x64-musl
           - linux-arm64-musl
+          - windows-x64-gnu
           - all
 
 permissions:
@@ -101,6 +103,7 @@ jobs:
               "linux-x64-musl",
               "linux-arm64-musl",
           ]
+          mingw_shapes = ["windows-x64-gnu"]
           supported = {
               "apple-sdk": apple_shapes,
               "zstd": syslib_shapes,
@@ -113,6 +116,7 @@ jobs:
               "cmake": prebuilt_shapes,
               "ninja": prebuilt_shapes,
               "uv": syslib_shapes,
+              "mingw-w64-gcc": mingw_shapes,
               "cargo-chef": rust_cli_shapes,
               "crgx": rust_cli_shapes,
           }
@@ -162,7 +166,7 @@ jobs:
           macos_x64=false
           macos_arm64=false
           case "${{ inputs.tool }}" in
-            cmake|ninja|uv)
+            cmake|ninja|uv|mingw-w64-gcc)
               # Pure download+repackage recipes: the artifact is
               # identical no matter which runner builds it, so every
               # shape runs on the cheap Linux x64 runner (same trick
@@ -179,6 +183,7 @@ jobs:
                 linux-arm64-gnu) linux_arm64=true ;;
                 linux-x64-musl) linux_x64_musl=true ;;
                 linux-arm64-musl) linux_arm64_musl=true ;;
+                windows-x64-gnu) linux_x64=true ;;
                 *) echo "::error::unknown shape ${{ matrix.shape }}"; exit 1 ;;
               esac
               ;;

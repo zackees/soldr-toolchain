@@ -50,6 +50,7 @@ TOOL_SHAPES = {
     "cmake": EXPECTED_SHAPES,
     "ninja": EXPECTED_SHAPES,
     "uv": UV_EXPECTED_SHAPES,
+    "mingw-w64-gcc": {"windows-x64-gnu"},
 }
 
 
@@ -95,6 +96,16 @@ def test_uv_helper_shapes_all_eight():
             assert asset.endswith(".zip"), (shape, asset)
         else:
             assert asset.endswith(".tar.gz"), (shape, asset)
+
+
+def test_mingw_w64_gcc_helper_shape():
+    mingw = _load_helper("_mingw_w64_gcc")
+    assert set(mingw.SHAPE_ASSETS) == {"windows-x64-gnu"}
+    assert mingw.PINNED_VERSIONS == ("15.3.0posix-14.0.0-msvcrt-r1",)
+    asset = mingw.SHAPE_ASSETS["windows-x64-gnu"]["asset"]
+    assert asset.endswith(".zip")
+    assert "x86_64-posix-seh" in asset
+    assert "mingw-w64msvcrt" in asset
 
 
 def test_rust_cli_helper_shapes_release_matrix():

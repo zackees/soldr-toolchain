@@ -142,6 +142,7 @@ to fragment to track them.
 | cargo-chef | `LukeMathWalker/cargo-chef` | soldr `CARGO_CHEF_PINNED_VERSION` |
 | cargo-zigbuild | `rust-cross/cargo-zigbuild` | latest |
 | cargo-xwin | `rust-cross/cargo-xwin` | latest |
+| mingw-w64-gcc | `brechtsanders/winlibs_mingw` | pinned WinLibs release |
 | apple-sdk | vendored under `apple-sdk/MacOSX11.3/darwin/` | manual |
 
 The `scripts/build_manifest.py` script reads the three pinned versions
