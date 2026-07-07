@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-07T02:47:46Z",
+  "generated_at": "2026-07-07T22:21:33Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -778,6 +778,54 @@
       "asset": "bundle.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/mingw-w64-gcc/15.3.0posix-14.0.0-msvcrt-r1/windows-x64-gnu/bundle.tar.zst",
       "sha256": "ecece758188f0a4b85c82e7a509264530eccd7b570da692e8a1cfb0a52dd703b"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/zstd/1.5.7/windows-x64-gnu/bundle.tar.zst",
+      "sha256": "8dc9cab5a0c68f51362464e949524054ff703d85fb4507b8bef015503a4f7506"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/sqlite/3.46.0/windows-x64-gnu/bundle.tar.zst",
+      "sha256": "c14db6170678e860e3f6f3c580b090c8baf133fe1b85e069126d18ab32edd145"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/mimalloc/3.3.2/windows-x64-gnu/bundle.tar.zst",
+      "sha256": "9b4d145f1d127ead23ac75f1aab1acf762bb5347e5c71a36b8032327bd811634"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/zlib-ng/2.2.5/windows-x64-gnu/bundle.tar.zst",
+      "sha256": "4a4033798201280a6140abaf13dcaa83e5fdc91c617fc4635b5eb6fa77f6f2cd"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/lzma/5.6.3/windows-x64-gnu/bundle.tar.zst",
+      "sha256": "d72c50c5104033cd56ec3f77c0869471e40197a7b5cdff872c5421eb62e4b516"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/bzip2/1.0.8/windows-x64-gnu/bundle.tar.zst",
+      "sha256": "ea0484ac4c22ef2aa7cc04e15280440c18542ddb780324b7bb5ec09950371619"
     }
   ]
 }
