@@ -21,6 +21,7 @@ gh workflow run forge-conan.yml --repo zackees/forge \
     -f name=jemalloc-linux-x64-gnu \
     -f version=5.3.0 \
     -f windows_x64=false \
+    -f windows_x64_gnu=false \
     -f windows_arm64=false \
     -f linux_x64=true \
     -f linux_arm64=false \

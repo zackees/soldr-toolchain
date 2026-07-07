@@ -21,6 +21,7 @@ gh workflow run forge-conan.yml --repo zackees/forge \
     -f name=bzip2-darwin-x64 \
     -f version=1.0.8 \
     -f windows_x64=false \
+    -f windows_x64_gnu=false \
     -f windows_arm64=false \
     -f linux_x64=false \
     -f linux_arm64=false \

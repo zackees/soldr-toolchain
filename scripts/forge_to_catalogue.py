@@ -89,24 +89,29 @@ TOOL_RECIPE_NAME = {
     },
 }
 
-for _tool in ("zstd", "sqlite", "jemalloc", "mimalloc", "zlib-ng", "lzma", "bzip2"):
+_SYSLIB_SHAPES = (
+    "windows-x64",
+    "windows-x64-gnu",
+    "windows-arm64",
+    "darwin-x64",
+    "darwin-arm64",
+    "linux-x64-gnu",
+    "linux-arm64-gnu",
+    "linux-x64-musl",
+    "linux-arm64-musl",
+)
+
+for _tool in ("zstd", "sqlite", "mimalloc", "zlib-ng", "lzma", "bzip2"):
     TOOL_RECIPE_NAME[_tool] = {
-        shape: f"{_tool}-{shape}"
-        for shape in (
-            "windows-x64",
-            "windows-arm64",
-            "darwin-x64",
-            "darwin-arm64",
-            "linux-x64-gnu",
-            "linux-arm64-gnu",
-            "linux-x64-musl",
-            "linux-arm64-musl",
-        )
+        shape: f"{_tool}-{shape}" for shape in _SYSLIB_SHAPES
     }
 
-# jemalloc is not buildable for Windows MSVC in the current upstream.
-TOOL_RECIPE_NAME["jemalloc"].pop("windows-x64")
-TOOL_RECIPE_NAME["jemalloc"].pop("windows-arm64")
+# jemalloc is not buildable for Windows in the current upstream.
+TOOL_RECIPE_NAME["jemalloc"] = {
+    shape: f"jemalloc-{shape}"
+    for shape in _SYSLIB_SHAPES
+    if shape not in {"windows-x64", "windows-x64-gnu", "windows-arm64"}
+}
 
 # soldr#1010 phase 2-3: python ships all eight shapes — PyO3 needs
 # headers and a libpython per target triple to cross-compile.

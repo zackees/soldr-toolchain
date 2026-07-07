@@ -94,6 +94,7 @@ Ingested catalogue path:
 def dispatch_flags(enabled: str) -> str:
     inputs = [
         "windows_x64",
+        "windows_x64_gnu",
         "windows_arm64",
         "linux_x64",
         "linux_arm64",

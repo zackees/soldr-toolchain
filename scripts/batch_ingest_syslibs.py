@@ -44,7 +44,7 @@ HERE = Path(__file__).resolve().parent
 # order is load-bearing for correctness on the musl/gnu shapes.
 _ARTIFACT_RE = re.compile(
     r"^forge-(?P<tool>[a-z0-9-]+?)-(?P<shape>"
-    r"windows-x64|windows-arm64|darwin-x64|darwin-arm64|"
+    r"windows-x64-gnu|windows-x64|windows-arm64|darwin-x64|darwin-arm64|"
     r"linux-x64-gnu|linux-arm64-gnu|linux-x64-musl|linux-arm64-musl|"
     r"linux-x64|linux-arm64"
     r")-(?P<version>[0-9.]+)-"

@@ -82,6 +82,17 @@ jobs:
           apple_shapes = ["universal2", "thin-x86_64", "thin-aarch64"]
           syslib_shapes = [
               "windows-x64",
+              "windows-x64-gnu",
+              "windows-arm64",
+              "darwin-x64",
+              "darwin-arm64",
+              "linux-x64-gnu",
+              "linux-arm64-gnu",
+              "linux-x64-musl",
+              "linux-arm64-musl",
+          ]
+          legacy_syslib_shapes = [
+              "windows-x64",
               "windows-arm64",
               "darwin-x64",
               "darwin-arm64",
@@ -93,7 +104,7 @@ jobs:
           # cmake + ninja repackage upstream prebuilts that only ship
           # glibc Linux binaries — no musl shapes. uv ships musl builds
           # upstream, so it covers all eight.
-          prebuilt_shapes = syslib_shapes[:6]
+          prebuilt_shapes = legacy_syslib_shapes[:6]
           rust_cli_shapes = [
               "windows-x64",
               "windows-arm64",
@@ -108,14 +119,14 @@ jobs:
               "apple-sdk": apple_shapes,
               "zstd": syslib_shapes,
               "sqlite": syslib_shapes,
-              "jemalloc": syslib_shapes[2:],
+              "jemalloc": legacy_syslib_shapes[2:],
               "mimalloc": syslib_shapes,
               "zlib-ng": syslib_shapes,
               "lzma": syslib_shapes,
               "bzip2": syslib_shapes,
               "cmake": prebuilt_shapes,
               "ninja": prebuilt_shapes,
-              "uv": syslib_shapes,
+              "uv": legacy_syslib_shapes,
               "mingw-w64-gcc": mingw_shapes,
               "cargo-chef": rust_cli_shapes,
               "crgx": rust_cli_shapes,
@@ -158,6 +169,7 @@ jobs:
           echo "dispatching forge: recipe=$recipe_path name=$name version=${{ inputs.version }}"
 
           windows_x64=false
+          windows_x64_gnu=false
           windows_arm64=false
           linux_x64=false
           linux_arm64=false
@@ -178,12 +190,12 @@ jobs:
                 universal2|thin-x86_64|thin-aarch64|darwin-arm64) macos_arm64=true ;;
                 darwin-x64) macos_x64=true ;;
                 windows-x64) windows_x64=true ;;
+                windows-x64-gnu) windows_x64_gnu=true ;;
                 windows-arm64) windows_arm64=true ;;
                 linux-x64-gnu) linux_x64=true ;;
                 linux-arm64-gnu) linux_arm64=true ;;
                 linux-x64-musl) linux_x64_musl=true ;;
                 linux-arm64-musl) linux_arm64_musl=true ;;
-                windows-x64-gnu) linux_x64=true ;;
                 *) echo "::error::unknown shape ${{ matrix.shape }}"; exit 1 ;;
               esac
               ;;
@@ -197,6 +209,7 @@ jobs:
             -f name="$name" \
             -f version="${{ inputs.version }}" \
             -f windows_x64="$windows_x64" \
+            -f windows_x64_gnu="$windows_x64_gnu" \
             -f windows_arm64="$windows_arm64" \
             -f linux_x64="$linux_x64" \
             -f linux_arm64="$linux_arm64" \

@@ -21,6 +21,7 @@ gh workflow run forge-conan.yml --repo zackees/forge \
     -f name=lzma-linux-arm64-musl \
     -f version=5.6.3 \
     -f windows_x64=false \
+    -f windows_x64_gnu=false \
     -f windows_arm64=false \
     -f linux_x64=false \
     -f linux_arm64=false \

@@ -28,6 +28,7 @@ set -euo pipefail
 
 ALL_SHAPES=(
     windows-x64
+    windows-x64-gnu
     windows-arm64
     darwin-x64
     darwin-arm64
@@ -49,6 +50,8 @@ JEMALLOC_SHAPES=(
 )
 
 declare -A VERSIONS=(
+    [zstd]=1.5.7
+    [sqlite]=3.46.0
     [jemalloc]=5.3.0
     [mimalloc]=3.3.2
     [zlib-ng]=2.2.5
@@ -84,6 +87,7 @@ shape_to_flags() {
     local shape="$1"
     declare -A flags=(
         [windows-x64]=windows_x64
+        [windows-x64-gnu]=windows_x64_gnu
         [windows-arm64]=windows_arm64
         [darwin-x64]=macos_x64
         [darwin-arm64]=macos_arm64
@@ -94,7 +98,7 @@ shape_to_flags() {
     )
     local on="${flags[$shape]:-}"
     [ -z "$on" ] && { echo "unknown shape: $shape" >&2; return 1; }
-    for k in windows_x64 windows_arm64 macos_x64 macos_arm64 linux_x64 linux_arm64 linux_x64_musl linux_arm64_musl; do
+    for k in windows_x64 windows_x64_gnu windows_arm64 macos_x64 macos_arm64 linux_x64 linux_arm64 linux_x64_musl linux_arm64_musl; do
         if [ "$k" = "$on" ]; then
             printf -- '-f %s=true ' "$k"
         else

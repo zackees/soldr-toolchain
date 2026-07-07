@@ -21,6 +21,7 @@ gh workflow run forge-conan.yml --repo zackees/forge \
     -f name=sqlite-darwin-x64 \
     -f version=3.46.0 \
     -f windows_x64=false \
+    -f windows_x64_gnu=false \
     -f windows_arm64=false \
     -f linux_x64=false \
     -f linux_arm64=false \
