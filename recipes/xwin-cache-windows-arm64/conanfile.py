@@ -46,10 +46,10 @@ from conan import ConanFile
 from conan.tools.files import copy
 
 
-# Pinned xwin release. Bump when a newer xwin release ships and the
-# recipe should pick it up. xwin's release cadence is slow (months
-# between releases), so the pin rarely drifts.
-XWIN_VERSION = "0.6.5"
+# xwin 0.6.7 fixed Jake-Shadle/xwin#126, where ARM64 SDK MSI files
+# without CAB payloads aborted `xwin splat`. Keep this on the current
+# release so the forge recipe follows Microsoft's manifest changes.
+XWIN_VERSION = "0.9.0"
 XWIN_LINUX_X64_ASSET = f"xwin-{XWIN_VERSION}-x86_64-unknown-linux-musl.tar.gz"
 XWIN_URL = (
     f"https://github.com/Jake-Shadle/xwin/releases/download/"
