@@ -366,6 +366,9 @@ def merge_local_support_assets(
         current_platforms.extend(local_platforms)
         _sort_platforms(current_platforms)
         release["platforms"] = current_platforms
+        old_source = old_release.get("source") or {}
+        if len(str(old_source.get("ref", ""))) == 40:
+            release["source"] = copy.deepcopy(old_source)
         preserved_count += len(local_platforms)
 
     if preserved_count:

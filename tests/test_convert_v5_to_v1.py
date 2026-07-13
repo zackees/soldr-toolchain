@@ -81,6 +81,11 @@ def test_convert_preserves_local_support_assets_for_v5_tool(
                     "version": "v0.1.73",
                     "published_at": "",
                     "min_client_version": 1,
+                    "source": {
+                        "vcs": "git",
+                        "repo_url": "https://github.com/LukeMathWalker/cargo-chef",
+                        "ref": "0" * 40,
+                    },
                     "platforms": [
                         {
                             "platform": {
@@ -140,6 +145,7 @@ def test_convert_preserves_local_support_assets_for_v5_tool(
     assert platforms[windows_arm64]["asset"]["filename"] == "bundle.tar.zst"
     assert "soldr-toolchain/assets" in platforms[windows_arm64]["asset"]["urls"][0]
     assert linux_musl not in platforms
+    assert release["source"]["ref"] == "0" * 40
 
     index = json.loads((dest / "manifest.json").read_text(encoding="utf-8"))
     desc = index["tools"]["cargo-chef"]["descriptor"]

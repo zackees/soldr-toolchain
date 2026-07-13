@@ -203,8 +203,10 @@ def _load_per_tool_releases(tool_manifest_path: Path) -> dict[str, dict[str, Any
     except (OSError, json.JSONDecodeError):
         return {}
     if isinstance(payload, dict) and payload.get("kind") == "Catalog":
+        is_v1_catalog = True
         releases = payload.get("releases") or []
     elif isinstance(payload, list):
+        is_v1_catalog = False
         releases = payload
     else:
         return {}
@@ -215,9 +217,13 @@ def _load_per_tool_releases(tool_manifest_path: Path) -> dict[str, dict[str, Any
         identity = release.get("tag") or release.get("version")
         if isinstance(identity, str):
             normalized = dict(release)
-            repo_url = str((release.get("source") or {}).get("repo_url", ""))
+            source = release.get("source") or {}
+            repo_url = str(source.get("repo_url", ""))
+            source_ref = str(source.get("ref", ""))
+            if is_v1_catalog and re.fullmatch(r"[0-9a-f]{40}", source_ref) is None:
+                continue
             match = re.fullmatch(r"https://github\.com/([^/]+)/([^/]+)", repo_url)
-            if match:
+            if match and re.fullmatch(r"[0-9a-f]{40}", source_ref):
                 normalized.setdefault("owner", match.group(1))
                 normalized.setdefault("repo", match.group(2))
             out[identity] = normalized
