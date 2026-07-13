@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import build_catalogue_v1 as bc
+from scripts import build_catalogue_v1 as bc
 
 
 def _asset_index_entry(**overrides: str) -> dict[str, str]:

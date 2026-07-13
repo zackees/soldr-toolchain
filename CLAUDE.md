@@ -15,18 +15,18 @@ uv run --group dev pytest tests/test_build_manifest.py
 uv run --group dev pytest tests/test_build_manifest.py::test_derive_platform_key_linux
 
 # Rebuild the catalogue locally (writes into a sibling `assets`-branch checkout)
-uv run python scripts/build_manifest.py \
+uv run --group dev python -m scripts.build_manifest \
     --output-dir ../soldr-toolchain-assets \
     --repo-root ../soldr
 
-uv run python scripts/build_asset_index.py \
+uv run --group dev python -m scripts.build_asset_index \
     --manifest-checkout ../soldr-toolchain-assets \
     --output ../soldr-toolchain-assets/asset-index.json \
     --branch assets \
     --offline       # omit to do the SHA256SUMS HTTP fetch pass
 
 # Resolve a single asset URL out of the published manifest
-uv run python scripts/tool_query.py --platform linux --arch x86 --extra musl zccache
+uv run --group dev python -m scripts.tool_query --platform linux --arch x86 --extra musl zccache
 ```
 
 `pyproject.toml` puts `scripts/` on `sys.path` (see `[tool.pytest.ini_options]`), so tests `import build_manifest` directly — no `sys.path.insert` hacks.

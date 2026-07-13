@@ -31,6 +31,13 @@ jobs:
           lfs: true
       - name: Install uv
         uses: astral-sh/setup-uv@v6
+      - name: Verify generated recipe wrappers
+        run: |
+          uv run --group dev python -m scripts.generate_syslib_recipes
+          git diff --exit-code -- recipes
+
+      - name: Lint Python import paths
+        run: uv run --group dev python -m scripts.lint_python_import_paths
       - name: Run pytest via uv
         env:
           SOLDR_TOOLCHAIN_ASSETS_DIR: ${{ github.workspace }}/assets-checkout
@@ -39,4 +46,4 @@ jobs:
       - name: Lint asset catalog
         # Enforces docs/ASSET_CATALOG.md: directory layout, URL conventions,
         # every catalog entry matches a real on-disk file, no orphans.
-        run: uv run --group dev python scripts/lint_assets.py --assets-dir assets-checkout
+        run: uv run --group dev python -m scripts.lint_assets --assets-dir assets-checkout

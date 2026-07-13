@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import lint_assets
+from scripts import lint_assets
 
 
 def _write_json(path: Path, payload: dict) -> None:

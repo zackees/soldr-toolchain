@@ -21,7 +21,7 @@ import importlib.util
 import sys
 from pathlib import Path
 
-import forge_to_catalogue as fc
+from scripts import forge_to_catalogue as fc
 
 RECIPES_DIR = Path(__file__).resolve().parents[1] / "recipes"
 
@@ -39,6 +39,7 @@ UV_EXPECTED_SHAPES = EXPECTED_SHAPES | {"linux-x64-musl", "linux-arm64-musl"}
 RUST_CLI_EXPECTED_SHAPES = {
     "windows-x64",
     "windows-arm64",
+    "darwin-x64",
     "darwin-arm64",
     "linux-x64-gnu",
     "linux-arm64-gnu",
@@ -137,6 +138,15 @@ def test_recipe_dirs_exist_per_shape():
     assert (rust_recipe / "README.md").is_file()
 
 
+def test_recipe_entrypoints_load_helpers_without_search_path_mutation():
+    for conanfile in RECIPES_DIR.glob("*/conanfile.py"):
+        text = conanfile.read_text(encoding="utf-8")
+        assert "sys.path.insert" not in text, conanfile
+        if "_load_recipe_helper" in text or "_load_helper" in text:
+            assert "importlib.util.spec_from_file_location" in text, conanfile
+            assert "def export" in text, conanfile
+
+
 def test_forge_to_catalogue_wiring():
     for tool, shapes in TOOL_SHAPES.items():
         assert set(fc.TOOL_RECIPE_NAME[tool]) == shapes
@@ -145,7 +155,7 @@ def test_forge_to_catalogue_wiring():
             # Every ingest shape must resolve to a catalogue platform.
             assert shape in fc.SHAPE_TO_PLATFORM
         assert fc.DEFAULT_ASSET_NAME[tool] == "bundle.tar.zst"
-    for tool in ("cargo-chef", "crgx"):
+    for tool in ("cargo-chef", "crgx", "cargo-binstall", "cargo-nextest"):
         assert set(fc.TOOL_RECIPE_NAME[tool]) == RUST_CLI_EXPECTED_SHAPES
         for shape, recipe_name in fc.TOOL_RECIPE_NAME[tool].items():
             assert recipe_name == f"{tool}-{shape}"

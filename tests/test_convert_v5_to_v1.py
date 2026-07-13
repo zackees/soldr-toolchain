@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-import convert_v5_to_v1 as cv
+from scripts import convert_v5_to_v1 as cv
 
 
 def _write_json(path: Path, doc: dict | list) -> None:

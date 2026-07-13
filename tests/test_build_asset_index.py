@@ -18,7 +18,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import build_asset_index as bai
+from scripts import build_asset_index as bai
 
 
 class Sha256OfFileTest(unittest.TestCase):

@@ -2,17 +2,30 @@
 
 from __future__ import annotations
 
+import importlib.util
 import sys
 from pathlib import Path
 
 from conan import ConanFile
 from conan.tools.files import copy
 
-_RECIPE_DIR = Path(__file__).resolve().parent
-for _candidate in (_RECIPE_DIR, _RECIPE_DIR.parent):
-    if (_candidate / "_syslib.py").is_file() and str(_candidate) not in sys.path:
-        sys.path.insert(0, str(_candidate))
-import _syslib  # noqa: E402
+def _load_helper() -> object:
+    recipe_dir = Path(__file__).resolve().parent
+    for candidate in (recipe_dir, recipe_dir.parent):
+        helper_path = candidate / "_syslib.py"
+        if not helper_path.is_file():
+            continue
+        spec = importlib.util.spec_from_file_location("_syslib", helper_path)
+        if spec is None or spec.loader is None:
+            continue
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        return module
+    raise ImportError("Conan recipe helper _syslib.py was not exported beside the recipe")
+
+
+_syslib = _load_helper()
 
 
 class SyslibRecipe(ConanFile):
