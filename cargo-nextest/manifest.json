@@ -5,8 +5,9 @@
   "tool": "cargo-nextest",
   "online_url": "https://zackees.github.io/soldr-toolchain/cargo-nextest/manifest.json",
   "channels": {
-    "latest-stable": "cargo-nextest-0.9.140",
-    "stable": "cargo-nextest-0.9.140"
+    "latest-stable": "0.9.140",
+    "stable": "0.9.140",
+    "pinned": "0.9.140"
   },
   "releases": [
     {
@@ -5582,6 +5583,145 @@
         "repo_url": "https://github.com/nextest-rs/nextest",
         "ref": "nextest-runner-0.91.0",
         "archive_url": "https://github.com/nextest-rs/nextest/archive/refs/tags/nextest-runner-0.91.0.tar.gz"
+      }
+    },
+    {
+      "schema_version": 1,
+      "version": "0.9.140",
+      "published_at": "",
+      "min_client_version": 1,
+      "platforms": [
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "cargo-nextest-0.9.140-aarch64-apple-darwin.tar.gz",
+            "size_bytes": 8674764,
+            "sha256": "4816d0af5bc2bbcc01da2776fe2b7f2bac4386afea8b13963526df17920a9bba",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/darwin-aarch64/cargo-nextest-0.9.140-aarch64-apple-darwin.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/darwin-aarch64/cargo-nextest-0.9.140-aarch64-apple-darwin.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "cargo-nextest-0.9.140-x86_64-apple-darwin.tar.gz",
+            "size_bytes": 9044240,
+            "sha256": "422bd5dc1304fe41aa5d65446d1422b69ef2e804c7e747c0d5ec13a56ed7db3e",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/darwin-x86_64/cargo-nextest-0.9.140-x86_64-apple-darwin.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/darwin-x86_64/cargo-nextest-0.9.140-x86_64-apple-darwin.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "cargo-nextest-0.9.140-aarch64-unknown-linux-gnu.tar.gz",
+            "size_bytes": 10490627,
+            "sha256": "09c267040ade9540ca782c5ec49e4030b557c395e026e7434e894d24bff9f7ac",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-aarch64-glibc/cargo-nextest-0.9.140-aarch64-unknown-linux-gnu.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-aarch64-glibc/cargo-nextest-0.9.140-aarch64-unknown-linux-gnu.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "cargo-nextest-0.9.140-aarch64-unknown-linux-musl.tar.gz",
+            "size_bytes": 10589072,
+            "sha256": "32a89aad07ecd15a9459d417b49dadd07a51a1fc5ba3bae77f64ce0476b93515",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-aarch64-musl/cargo-nextest-0.9.140-aarch64-unknown-linux-musl.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-aarch64-musl/cargo-nextest-0.9.140-aarch64-unknown-linux-musl.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "cargo-nextest-0.9.140-x86_64-unknown-linux-gnu.tar.gz",
+            "size_bytes": 10962403,
+            "sha256": "c0e951a1f87ea6f542734f7362ce1b2ad796913a0fc605fb2249bf89c8674e44",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-x86_64-glibc/cargo-nextest-0.9.140-x86_64-unknown-linux-gnu.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-x86_64-glibc/cargo-nextest-0.9.140-x86_64-unknown-linux-gnu.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "cargo-nextest-0.9.140-x86_64-unknown-linux-musl.tar.gz",
+            "size_bytes": 11203494,
+            "sha256": "92e42d3200bf250948704f99fed56ff2312115c39cc68ed8f258033118d4b3db",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-x86_64-musl/cargo-nextest-0.9.140-x86_64-unknown-linux-musl.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-x86_64-musl/cargo-nextest-0.9.140-x86_64-unknown-linux-musl.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "aarch64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "cargo-nextest-0.9.140-aarch64-pc-windows-msvc.tar.gz",
+            "size_bytes": 7505285,
+            "sha256": "b4f1ee97ebed3fbd9fa0baf99c4f19bf9f96d9b4f014ce736ec4710202f7d68e",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/windows-aarch64-msvc/cargo-nextest-0.9.140-aarch64-pc-windows-msvc.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/windows-aarch64-msvc/cargo-nextest-0.9.140-aarch64-pc-windows-msvc.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "x86_64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "cargo-nextest-0.9.140-x86_64-pc-windows-msvc.tar.gz",
+            "size_bytes": 7844535,
+            "sha256": "9df20c922b6f04bda12b7ae5c5cdf7944e4034b801eb425a7a5f94f26e372487",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/windows-x86_64-msvc/cargo-nextest-0.9.140-x86_64-pc-windows-msvc.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/windows-x86_64-msvc/cargo-nextest-0.9.140-x86_64-pc-windows-msvc.tar.gz"
+            ]
+          }
+        }
+      ],
+      "source": {
+        "vcs": "git",
+        "repo_url": "https://github.com/nextest-rs/nextest",
+        "ref": "a9fef2964e34f64ed4fceeee7c0c3559ce560920"
       }
     }
   ]
