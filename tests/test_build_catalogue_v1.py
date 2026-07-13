@@ -13,6 +13,9 @@ contract here, schema-validate the live output in CI.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import build_catalogue_v1 as bc
 
 
@@ -27,6 +30,18 @@ def _asset_index_entry(**overrides: str) -> dict[str, str]:
     }
     base.update(overrides)
     return base
+
+
+def test_schema_accepts_provider_neutral_https_origin() -> None:
+    import jsonschema
+
+    schema = json.loads((Path(__file__).parents[1] / "schemas/catalogue.v1.schema.json").read_text())
+    doc = {"schema_version": 1, "entries": [{
+        "owner": "forge", "repo": "producer", "tag": "assets", "asset": "bundle.tar.zst",
+        "url": "https://cdn.example.invalid/sha256/aa/" + "a" * 64 + "/bundle.tar.zst",
+        "sha256": "a" * 64,
+    }]}
+    jsonschema.validate(doc, schema)
 
 
 def test_transform_pins_schema_version_to_1() -> None:

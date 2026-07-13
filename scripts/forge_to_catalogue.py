@@ -181,19 +181,19 @@ TOOL_RECIPE_NAME["mingw-w64-gcc"] = {
     "windows-x64-gnu": "mingw-w64-gcc-windows-x64-gnu",
 }
 
-# Rust CLI support binaries that soldr bundles into release archives.
-# x86_64-apple-darwin is intentionally omitted because it is not in the
-# current soldr release matrix.
+# Rust CLI support binaries. Keep all eight native leaves, including Intel
+# macOS, even when an upstream universal archive backs both Darwin rows.
 RUST_CLI_SHAPES = (
     "windows-x64",
     "windows-arm64",
     "darwin-arm64",
+    "darwin-x64",
     "linux-x64-gnu",
     "linux-arm64-gnu",
     "linux-x64-musl",
     "linux-arm64-musl",
 )
-for _tool in ("cargo-chef", "crgx"):
+for _tool in ("cargo-chef", "crgx", "cargo-binstall", "cargo-nextest"):
     TOOL_RECIPE_NAME[_tool] = {
         shape: f"{_tool}-{shape}"
         for shape in RUST_CLI_SHAPES
@@ -224,6 +224,8 @@ DEFAULT_ASSET_NAME = {
     # Rust CLI support bundles.
     "cargo-chef": "bundle.tar.zst",
     "crgx": "bundle.tar.zst",
+    "cargo-binstall": "bundle.tar.zst",
+    "cargo-nextest": "bundle.tar.zst",
 }
 
 V1_SCHEMA_URL = "https://zackees.github.io/manifest.json/v1/manifest.schema.json"
@@ -231,6 +233,8 @@ ONLINE_BASE = "https://zackees.github.io/soldr-toolchain"
 TOOL_SUMMARY = {
     "cargo-chef": "LukeMathWalker/cargo-chef",
     "crgx": "yfedoseev/crgx",
+    "cargo-binstall": "cargo-bins/cargo-binstall",
+    "cargo-nextest": "nextest-rs/nextest",
 }
 
 SHAPE_TO_PLATFORM_TUPLE = {
@@ -270,6 +274,10 @@ def main(argv: list[str] | None = None) -> int:
                              "(default: <assets-root>/catalogue.v1.json).")
     parser.add_argument("--asset-name",
                         help="Filename for the placed asset (default: per-tool).")
+    parser.add_argument("--blob-public-origin",
+                        help="HTTPS immutable blob origin; requires --upload-helper.")
+    parser.add_argument("--upload-helper",
+                        help="Executable receiving a JSON create-only upload request on stdin.")
     args = parser.parse_args(argv)
 
     try:
@@ -319,6 +327,19 @@ def main(argv: list[str] | None = None) -> int:
 
     sha256 = _sha256_of(asset_path)
     print(f"sha256: {sha256}")
+    delivery_urls = _asset_urls(asset_rel)
+    if bool(args.blob_public_origin) != bool(args.upload_helper):
+        raise SystemExit("--blob-public-origin and --upload-helper must be supplied together")
+    if args.blob_public_origin:
+        from blob_store import upload
+        delivery_urls = [upload(asset_path, origin=args.blob_public_origin, helper=args.upload_helper)["url"]]
+        record_path = args.assets_root / "forge-assets.json"
+        records = json.loads(record_path.read_text(encoding="utf-8")) if record_path.is_file() else {"schema_version": 1, "records": []}
+        records.setdefault("records", []).append({"tool": args.tool, "version": asset_version,
+            "shape": args.shape, "delivery_url": delivery_urls[0], "sha256": sha256,
+            "size_bytes": asset_path.stat().st_size, "forge_run_id": args.forge_run_id,
+            "source": provenance})
+        record_path.write_text(json.dumps(records, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     catalogue_path = args.catalogue or (args.assets_root / "catalogue.v1.json")
     schema_path = args.schema or _default_schema_path()
@@ -328,6 +349,7 @@ def main(argv: list[str] | None = None) -> int:
         asset_rel=asset_rel,
         asset_name=asset_name,
         sha256=sha256,
+        delivery_url=delivery_urls[0],
         forge_run_id=args.forge_run_id,
         provenance=provenance,
     )
@@ -340,6 +362,7 @@ def main(argv: list[str] | None = None) -> int:
         asset_name=asset_name,
         asset_size=asset_path.stat().st_size,
         sha256=sha256,
+        delivery_urls=delivery_urls,
     )
     print(f"catalogue: updated {catalogue_path}")
     return 0
@@ -515,6 +538,7 @@ def _update_catalogue(
     sha256: str,
     forge_run_id: str,
     provenance: dict[str, Any],
+    delivery_url: str | None = None,
 ) -> None:
     if not catalogue_path.is_file():
         raise SystemExit(
@@ -522,7 +546,7 @@ def _update_catalogue(
         )
     catalogue = json.loads(catalogue_path.read_text(encoding="utf-8"))
 
-    url = (
+    url = delivery_url or (
         "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/"
         + asset_rel.as_posix()
     )
@@ -598,7 +622,7 @@ def _flatten_platform(platform: dict[str, str]) -> str:
 
 
 def _asset_platform_dir(tool: str, shape: str) -> str:
-    if tool in {"cargo-chef", "crgx"}:
+    if tool in {"cargo-chef", "crgx", "cargo-binstall", "cargo-nextest"}:
         platform = SHAPE_TO_PLATFORM_TUPLE.get(shape)
         if platform is None:
             raise SystemExit(f"forge_to_catalogue.py: no v1 platform tuple for shape={shape}")
@@ -624,6 +648,7 @@ def _update_manifest_catalog(
     asset_name: str,
     asset_size: int,
     sha256: str,
+    delivery_urls: list[str] | None = None,
 ) -> None:
     """Merge a local blob into manifest.json v1 files.
 
@@ -631,7 +656,7 @@ def _update_manifest_catalog(
     Pages ``manifest.json`` tree, so the per-tool Catalog must know
     about locally built bundles too.
     """
-    if tool not in {"cargo-chef", "crgx"}:
+    if tool not in {"cargo-chef", "crgx", "cargo-binstall", "cargo-nextest"}:
         return
     platform = SHAPE_TO_PLATFORM_TUPLE.get(shape)
     if platform is None:
@@ -671,7 +696,7 @@ def _update_manifest_catalog(
             "filename": asset_name,
             "size_bytes": asset_size,
             "sha256": sha256,
-            "urls": _asset_urls(asset_rel),
+            "urls": delivery_urls or _asset_urls(asset_rel),
         },
     }
     existing_platforms = release.setdefault("platforms", [])
