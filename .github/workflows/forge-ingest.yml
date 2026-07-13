@@ -74,7 +74,7 @@ jobs:
 
       - name: Download forge artifacts
         env:
-          GH_TOKEN: ${{ secrets.FORGE_INGEST_TOKEN }}
+          GH_TOKEN: ${{ secrets.FORGE_INGEST_TOKEN || github.token }}
         run: |
           mkdir -p forge-downloads
           gh run download "${{ inputs.forge_run_id }}" \
