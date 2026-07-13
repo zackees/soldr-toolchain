@@ -16,9 +16,9 @@
     "cargo-binstall": {
       "descriptor": {
         "url": "cargo-binstall/manifest.json",
-        "size_bytes": 104270,
+        "size_bytes": 63484,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "382fc4a9c60b9a418040bd9aa2bca0f58b177772ac1d8532ff7c87063b359079"
+        "sha256": "a95477b0e002ed62cdd293ca3b317804853928e3f3a3d36e971e610d0a910e7e"
       },
       "summary": "cargo-bins/cargo-binstall",
       "kind_hint": "tool"
@@ -36,9 +36,9 @@
     "cargo-nextest": {
       "descriptor": {
         "url": "cargo-nextest/manifest.json",
-        "size_bytes": 213094,
+        "size_bytes": 184071,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "883c70994783cd11dc8b783456b5241383031b60565b0ecdc89d6966f50f5416"
+        "sha256": "8bfb07fba4feb04228d005466f3f3527ad3661779eadc82c6e775b40cff40d75"
       },
       "summary": "nextest-rs/nextest",
       "kind_hint": "tool"
