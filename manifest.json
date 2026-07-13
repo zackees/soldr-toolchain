@@ -13,6 +13,16 @@
       "summary": "messense/cargo-zigbuild",
       "kind_hint": "sysroot"
     },
+    "cargo-binstall": {
+      "descriptor": {
+        "url": "cargo-binstall/manifest.json",
+        "size_bytes": 104270,
+        "media_type": "application/vnd.manifest.v1+json",
+        "sha256": "382fc4a9c60b9a418040bd9aa2bca0f58b177772ac1d8532ff7c87063b359079"
+      },
+      "summary": "cargo-bins/cargo-binstall",
+      "kind_hint": "tool"
+    },
     "cargo-chef": {
       "descriptor": {
         "url": "cargo-chef/manifest.json",
@@ -21,6 +31,16 @@
         "sha256": "f1bc0e2b1c980a1eaeba0132edbe92432384e8bbb992024fe5a2033d78ec4489"
       },
       "summary": "LukeMathWalker/cargo-chef",
+      "kind_hint": "tool"
+    },
+    "cargo-nextest": {
+      "descriptor": {
+        "url": "cargo-nextest/manifest.json",
+        "size_bytes": 206630,
+        "media_type": "application/vnd.manifest.v1+json",
+        "sha256": "9f78716717ef224a16219579b431aa8ab044d8eb6ea3d98f8f5b598b9aeb88ad"
+      },
+      "summary": "nextest-rs/nextest",
       "kind_hint": "tool"
     },
     "cargo-xwin": {
@@ -66,9 +86,9 @@
     "zccache": {
       "descriptor": {
         "url": "zccache/manifest.json",
-        "size_bytes": 200182,
+        "size_bytes": 210838,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "f582fc39ae170b80c26e1051043192e4e7debab01f7dc0ca7915f6dbffcec0bf"
+        "sha256": "556cc44c91556e524c2edba3f8a0b93cef7c3fec22e24d2d85b2dad0e75d8a8e"
       },
       "summary": "zackees/zccache",
       "kind_hint": "tool"
