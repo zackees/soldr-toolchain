@@ -559,10 +559,51 @@ class LoadManagedRustToolsTest(unittest.TestCase):
             self.assertEqual(
                 bm.load_managed_rust_tools(path),
                 [
-                    ("cargo-binstall", "cargo-bins", "cargo-binstall", "v1.20.1"),
-                    ("cargo-nextest", "nextest-rs", "nextest", "cargo-nextest-0.9.140"),
+                    ("cargo-binstall", "cargo-bins", "cargo-binstall", "v1.20.1", "v"),
+                    (
+                        "cargo-nextest",
+                        "nextest-rs",
+                        "nextest",
+                        "cargo-nextest-0.9.140",
+                        "cargo-nextest-",
+                    ),
                 ],
             )
+
+    def test_filters_monorepo_releases_and_normalizes_catalog_version(self) -> None:
+        def fake_list(*args, **kwargs):
+            return [
+                {
+                    "tag_name": "nextest-runner-0.121.0",
+                    "published_at": "2026-07-13T01:00:00Z",
+                    "assets": [],
+                },
+                {
+                    "tag_name": "cargo-nextest-0.9.140",
+                    "published_at": "2026-07-12T01:00:00Z",
+                    "assets": [],
+                },
+                {
+                    "tag_name": "nextest-filtering-0.21.3",
+                    "published_at": "2026-07-11T01:00:00Z",
+                    "assets": [],
+                },
+            ]
+
+        entries, latest = bm.build_merged_tool_releases(
+            "cargo-nextest",
+            "nextest-rs",
+            "nextest",
+            pinned_tag="cargo-nextest-0.9.140",
+            token=None,
+            existing=[],
+            release_tag_prefix="cargo-nextest-",
+            list_releases_fn=fake_list,
+        )
+
+        self.assertEqual([entry["tag"] for entry in entries], ["cargo-nextest-0.9.140"])
+        self.assertEqual(entries[0]["catalog_version"], "0.9.140")
+        self.assertEqual(latest, "cargo-nextest-0.9.140")
 
 
 if __name__ == "__main__":

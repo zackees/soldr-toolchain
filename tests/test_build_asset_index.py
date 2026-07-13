@@ -237,6 +237,45 @@ class BuildAssetIndexTest(unittest.TestCase):
             assets = {e["asset"] for e in self_attributed}
             self.assertIn("sdk.tar.zstd", assets)
 
+    def test_v1_catalog_attributes_forge_blob_to_source_repo(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            blob_dir = root / "cargo-nextest" / "0.9.140" / "linux-x86_64-musl"
+            blob_dir.mkdir(parents=True)
+            payload = b"forge-nextest"
+            (blob_dir / "bundle.tar.gz").write_bytes(payload)
+            (root / "cargo-nextest" / "manifest.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "Catalog",
+                        "releases": [
+                            {
+                                "version": "0.9.140",
+                                "source": {
+                                    "repo_url": "https://github.com/nextest-rs/nextest"
+                                },
+                                "platforms": [],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            index = bai.build_asset_index(
+                root,
+                repo_owner="zackees",
+                repo_name="soldr-toolchain",
+                branch="assets",
+                offline=True,
+            )
+
+            entry = next(e for e in index["entries"] if e["asset"] == "bundle.tar.gz")
+            self.assertEqual(entry["owner"], "nextest-rs")
+            self.assertEqual(entry["repo"], "nextest")
+            self.assertEqual(entry["tag"], "0.9.140")
+            self.assertEqual(entry["sha256"], hashlib.sha256(payload).hexdigest())
+
     def test_variants_flat_inside_platform_folder(self) -> None:
         """Variants for the same OS+arch (e.g. gnu/musl on linux-x64)
         live as flat siblings inside the platform folder. Both must

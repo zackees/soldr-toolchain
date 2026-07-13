@@ -134,7 +134,9 @@ def test_convert_preserves_local_support_assets_for_v5_tool(
     windows_arm64 = (("abi", "msvc"), ("arch", "aarch64"), ("os", "windows"))
     linux_musl = (("arch", "x86_64"), ("libc", "musl"), ("os", "linux"))
 
-    assert platforms[windows_x64]["asset"]["urls"] == ["https://example.invalid/upstream-x64.zip"]
+    assert platforms[windows_x64]["asset"]["urls"] == [
+        "https://example.invalid/upstream-x64.zip"
+    ]
     assert platforms[windows_arm64]["asset"]["filename"] == "bundle.tar.zst"
     assert "soldr-toolchain/assets" in platforms[windows_arm64]["asset"]["urls"][0]
     assert linux_musl not in platforms
@@ -143,3 +145,35 @@ def test_convert_preserves_local_support_assets_for_v5_tool(
     desc = index["tools"]["cargo-chef"]["descriptor"]
     assert desc["url"] == "cargo-chef/manifest.json"
     assert desc["sha256"] == hashlib.sha256(catalog_path.read_bytes()).hexdigest()
+
+
+def test_managed_component_uses_logical_version_and_qualified_source_ref() -> None:
+    release = {
+        "owner": "nextest-rs",
+        "repo": "nextest",
+        "tag": "cargo-nextest-0.9.140",
+        "version": "0.9.140",
+        "catalog_version": "0.9.140",
+        "published_at": "2026-07-12T01:00:00Z",
+        "platforms": {},
+    }
+    catalog = cv.convert_tool_catalog(
+        "cargo-nextest",
+        [release],
+        {},
+        {
+            "tools": {
+                "cargo-nextest": {
+                    "latest": "cargo-nextest-0.9.140",
+                    "pinned": "cargo-nextest-0.9.140",
+                }
+            }
+        },
+    )
+
+    assert catalog["channels"] == {
+        "latest-stable": "0.9.140",
+        "stable": "0.9.140",
+    }
+    assert catalog["releases"][0]["version"] == "0.9.140"
+    assert catalog["releases"][0]["source"]["ref"] == "cargo-nextest-0.9.140"

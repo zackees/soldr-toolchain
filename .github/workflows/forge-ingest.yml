@@ -41,6 +41,7 @@ on:
           - linux-x64-musl
           - linux-arm64-musl
           - windows-x64-gnu
+          - all
 
 permissions:
   contents: write
@@ -82,14 +83,24 @@ jobs:
 
       - name: Run ingest
         run: |
-          python main/scripts/forge_to_catalogue.py \
-            --forge-dir forge-downloads \
-            --tool "${{ inputs.tool }}" \
-            --version "${{ inputs.version }}" \
-            --shape "${{ inputs.shape }}" \
-            --forge-run-id "${{ inputs.forge_run_id }}" \
-            --assets-root assets \
-            --schema main/schemas/catalogue.v1.schema.json
+          if [ "${{ inputs.shape }}" = all ]; then
+            PYTHONPATH=main python main/scripts/ingest_forge_rust_run.py \
+              --forge-dir forge-downloads \
+              --tool "${{ inputs.tool }}" \
+              --version "${{ inputs.version }}" \
+              --forge-run-id "${{ inputs.forge_run_id }}" \
+              --assets-root assets \
+              --schema main/schemas/catalogue.v1.schema.json
+          else
+            python main/scripts/forge_to_catalogue.py \
+              --forge-dir forge-downloads \
+              --tool "${{ inputs.tool }}" \
+              --version "${{ inputs.version }}" \
+              --shape "${{ inputs.shape }}" \
+              --forge-run-id "${{ inputs.forge_run_id }}" \
+              --assets-root assets \
+              --schema main/schemas/catalogue.v1.schema.json
+          fi
 
       - name: Commit + open PR against assets
         env:

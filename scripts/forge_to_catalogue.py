@@ -43,11 +43,11 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import gzip
 import hashlib
 import io
 import json
 import re
-import shutil
 import sys
 import tarfile
 from pathlib import Path
@@ -102,9 +102,7 @@ _SYSLIB_SHAPES = (
 )
 
 for _tool in ("zstd", "sqlite", "mimalloc", "zlib-ng", "lzma", "bzip2"):
-    TOOL_RECIPE_NAME[_tool] = {
-        shape: f"{_tool}-{shape}" for shape in _SYSLIB_SHAPES
-    }
+    TOOL_RECIPE_NAME[_tool] = {shape: f"{_tool}-{shape}" for shape in _SYSLIB_SHAPES}
 
 # jemalloc is not buildable for Windows in the current upstream.
 TOOL_RECIPE_NAME["jemalloc"] = {
@@ -193,11 +191,34 @@ RUST_CLI_SHAPES = (
     "linux-x64-musl",
     "linux-arm64-musl",
 )
+FORGE_RUST_PLATFORM_BY_SHAPE = {
+    "windows-x64": "windows-x64-msvc",
+    "windows-arm64": "windows-arm64-msvc",
+    "darwin-x64": "macos-x64",
+    "darwin-arm64": "macos-arm64",
+    "linux-x64-gnu": "linux-x64-gnu",
+    "linux-arm64-gnu": "linux-arm64-gnu",
+    "linux-x64-musl": "linux-x64-musl",
+    "linux-arm64-musl": "linux-arm64-musl",
+}
+RUST_TARGET_BY_SHAPE = {
+    "windows-x64": "x86_64-pc-windows-msvc",
+    "windows-arm64": "aarch64-pc-windows-msvc",
+    "darwin-x64": "x86_64-apple-darwin",
+    "darwin-arm64": "aarch64-apple-darwin",
+    "linux-x64-gnu": "x86_64-unknown-linux-gnu",
+    "linux-arm64-gnu": "aarch64-unknown-linux-gnu",
+    "linux-x64-musl": "x86_64-unknown-linux-musl",
+    "linux-arm64-musl": "aarch64-unknown-linux-musl",
+}
+
+
+def _forge_rust_asset_name(tool: str, version: str, shape: str) -> str:
+    return f"{tool}-{version}-{RUST_TARGET_BY_SHAPE[shape]}.tar.gz"
+
+
 for _tool in ("cargo-chef", "crgx", "cargo-binstall", "cargo-nextest"):
-    TOOL_RECIPE_NAME[_tool] = {
-        shape: f"{_tool}-{shape}"
-        for shape in RUST_CLI_SHAPES
-    }
+    TOOL_RECIPE_NAME[_tool] = {shape: f"{_tool}-{shape}" for shape in RUST_CLI_SHAPES}
 
 
 DEFAULT_ASSET_NAME = {
@@ -252,32 +273,57 @@ SHAPE_TO_PLATFORM_TUPLE = {
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--forge-dir", type=Path, required=True,
-                        help="Directory containing the `gh run download` output.")
-    parser.add_argument("--tool", required=True,
-                        help="Logical tool name (e.g. 'apple-sdk').")
-    parser.add_argument("--version", required=True,
-                        help="SDK / tool version string (e.g. '14.5').")
-    parser.add_argument("--shape", required=True,
-                        choices=sorted(SHAPE_TO_PLATFORM.keys()),
-                        help="Shape of the artifact (universal2/thin-*).")
-    parser.add_argument("--forge-run-id", required=True,
-                        help="zackees/forge workflow run id, for provenance.")
-    parser.add_argument("--assets-root", type=Path, required=True,
-                        help="Root of the soldr-toolchain assets-branch checkout.")
-    parser.add_argument("--schema",
-                        type=Path,
-                        help="Path to catalogue.v1.schema.json (default: <repo>/schemas/...).")
-    parser.add_argument("--catalogue",
-                        type=Path,
-                        help="Path to catalogue.v1.json on the assets root "
-                             "(default: <assets-root>/catalogue.v1.json).")
-    parser.add_argument("--asset-name",
-                        help="Filename for the placed asset (default: per-tool).")
-    parser.add_argument("--blob-public-origin",
-                        help="HTTPS immutable blob origin; requires --upload-helper.")
-    parser.add_argument("--upload-helper",
-                        help="Executable receiving a JSON create-only upload request on stdin.")
+    parser.add_argument(
+        "--forge-dir",
+        type=Path,
+        required=True,
+        help="Directory containing the `gh run download` output.",
+    )
+    parser.add_argument(
+        "--tool", required=True, help="Logical tool name (e.g. 'apple-sdk')."
+    )
+    parser.add_argument(
+        "--version", required=True, help="SDK / tool version string (e.g. '14.5')."
+    )
+    parser.add_argument(
+        "--shape",
+        required=True,
+        choices=sorted(SHAPE_TO_PLATFORM.keys()),
+        help="Shape of the artifact (universal2/thin-*).",
+    )
+    parser.add_argument(
+        "--forge-run-id",
+        required=True,
+        help="zackees/forge workflow run id, for provenance.",
+    )
+    parser.add_argument(
+        "--assets-root",
+        type=Path,
+        required=True,
+        help="Root of the soldr-toolchain assets-branch checkout.",
+    )
+    parser.add_argument(
+        "--schema",
+        type=Path,
+        help="Path to catalogue.v1.schema.json (default: <repo>/schemas/...).",
+    )
+    parser.add_argument(
+        "--catalogue",
+        type=Path,
+        help="Path to catalogue.v1.json on the assets root "
+        "(default: <assets-root>/catalogue.v1.json).",
+    )
+    parser.add_argument(
+        "--asset-name", help="Filename for the placed asset (default: per-tool)."
+    )
+    parser.add_argument(
+        "--blob-public-origin",
+        help="HTTPS immutable blob origin; requires --upload-helper.",
+    )
+    parser.add_argument(
+        "--upload-helper",
+        help="Executable receiving a JSON create-only upload request on stdin.",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -298,8 +344,15 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
 
+    rust_artifact = None
+    if args.tool in {"cargo-binstall", "cargo-nextest"}:
+        rust_artifact = _find_forge_rust_artifact(
+            args.forge_dir, args.tool, args.version, args.shape
+        )
     recipe_name = _resolve_recipe_name(args.tool, args.shape)
-    forge_artifact = _find_forge_artifact(args.forge_dir, recipe_name, args.version)
+    forge_artifact = rust_artifact or _find_forge_artifact(
+        args.forge_dir, recipe_name, args.version
+    )
     if forge_artifact is None:
         sys.stderr.write(
             f"forge_to_catalogue.py: no forge artifact found in {args.forge_dir} "
@@ -309,9 +362,18 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"forge artifact: {forge_artifact}")
 
-    asset_name = args.asset_name or DEFAULT_ASSET_NAME.get(args.tool, "bundle.tar.zst")
+    asset_name = args.asset_name or (
+        _forge_rust_asset_name(args.tool, args.version, args.shape)
+        if rust_artifact is not None
+        else DEFAULT_ASSET_NAME.get(args.tool, "bundle.tar.zst")
+    )
     asset_version = _catalog_version(args.tool, args.version)
-    asset_rel = Path(args.tool) / asset_version / _asset_platform_dir(args.tool, args.shape) / asset_name
+    asset_rel = (
+        Path(args.tool)
+        / asset_version
+        / _asset_platform_dir(args.tool, args.shape)
+        / asset_name
+    )
     asset_path = args.assets_root / asset_rel
     asset_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -321,7 +383,16 @@ def main(argv: list[str] | None = None) -> int:
     # an NTFS-reserved character that `tarfile.extractall` cannot
     # write to disk. The streaming form keeps the bad bytes inside
     # tar archives end-to-end.
-    provenance = _stream_repack_to_zstd(forge_artifact, asset_path)
+    if rust_artifact is not None:
+        provenance = _package_forge_rust_artifact(
+            rust_artifact,
+            asset_path,
+            tool=args.tool,
+            version=args.version,
+            shape=args.shape,
+        )
+    else:
+        provenance = _stream_repack_to_zstd(forge_artifact, asset_path)
     print(f"wrote asset: {asset_path} ({asset_path.stat().st_size} bytes)")
     print(f"provenance: {json.dumps(provenance, indent=2)}")
 
@@ -329,17 +400,38 @@ def main(argv: list[str] | None = None) -> int:
     print(f"sha256: {sha256}")
     delivery_urls = _asset_urls(asset_rel)
     if bool(args.blob_public_origin) != bool(args.upload_helper):
-        raise SystemExit("--blob-public-origin and --upload-helper must be supplied together")
+        raise SystemExit(
+            "--blob-public-origin and --upload-helper must be supplied together"
+        )
     if args.blob_public_origin:
         from blob_store import upload
-        delivery_urls = [upload(asset_path, origin=args.blob_public_origin, helper=args.upload_helper)["url"]]
+
+        delivery_urls = [
+            upload(
+                asset_path, origin=args.blob_public_origin, helper=args.upload_helper
+            )["url"]
+        ]
         record_path = args.assets_root / "forge-assets.json"
-        records = json.loads(record_path.read_text(encoding="utf-8")) if record_path.is_file() else {"schema_version": 1, "records": []}
-        records.setdefault("records", []).append({"tool": args.tool, "version": asset_version,
-            "shape": args.shape, "delivery_url": delivery_urls[0], "sha256": sha256,
-            "size_bytes": asset_path.stat().st_size, "forge_run_id": args.forge_run_id,
-            "source": provenance})
-        record_path.write_text(json.dumps(records, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        records = (
+            json.loads(record_path.read_text(encoding="utf-8"))
+            if record_path.is_file()
+            else {"schema_version": 1, "records": []}
+        )
+        records.setdefault("records", []).append(
+            {
+                "tool": args.tool,
+                "version": asset_version,
+                "shape": args.shape,
+                "delivery_url": delivery_urls[0],
+                "sha256": sha256,
+                "size_bytes": asset_path.stat().st_size,
+                "forge_run_id": args.forge_run_id,
+                "source": provenance,
+            }
+        )
+        record_path.write_text(
+            json.dumps(records, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
 
     catalogue_path = args.catalogue or (args.assets_root / "catalogue.v1.json")
     schema_path = args.schema or _default_schema_path()
@@ -363,6 +455,7 @@ def main(argv: list[str] | None = None) -> int:
         asset_size=asset_path.stat().st_size,
         sha256=sha256,
         delivery_urls=delivery_urls,
+        provenance=provenance,
     )
     print(f"catalogue: updated {catalogue_path}")
     return 0
@@ -380,7 +473,9 @@ def _resolve_recipe_name(tool: str, shape: str) -> str:
         ) from exc
 
 
-def _find_forge_artifact(forge_dir: Path, recipe_name: str, version: str) -> Path | None:
+def _find_forge_artifact(
+    forge_dir: Path, recipe_name: str, version: str
+) -> Path | None:
     """`gh run download` lays artifacts out as one subdir per artifact, each
     containing a single `forge-<name>-<version>-<platform>.tar.gz`. Walk the
     subtree and match by name + version."""
@@ -393,6 +488,102 @@ def _find_forge_artifact(forge_dir: Path, recipe_name: str, version: str) -> Pat
         if pattern.match(path.name):
             return path
     return None
+
+
+def _find_forge_rust_artifact(
+    forge_dir: Path, tool: str, version: str, shape: str
+) -> Path | None:
+    """Locate one unpacked ``actions/upload-artifact`` Rust payload."""
+    platform = FORGE_RUST_PLATFORM_BY_SHAPE.get(shape, shape)
+    expected = f"forge-rust-{tool}-{version}-{platform}"
+    artifact_dir = forge_dir / expected
+    if artifact_dir.is_dir() and (artifact_dir / "manifest.json").is_file():
+        return artifact_dir
+    return None
+
+
+def _package_forge_rust_artifact(
+    artifact_dir: Path,
+    output_path: Path,
+    *,
+    tool: str,
+    version: str,
+    shape: str,
+) -> dict[str, Any]:
+    """Validate a Forge Rust directory and create a deterministic tar.gz."""
+    manifest_path = artifact_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    config_path = Path(__file__).resolve().parents[1] / "managed-rust-tools.json"
+    managed = json.loads(config_path.read_text(encoding="utf-8"))["tools"][tool]
+    expected = {
+        "tool": tool,
+        "version": version,
+        "platform": FORGE_RUST_PLATFORM_BY_SHAPE.get(shape, shape),
+        "target": RUST_TARGET_BY_SHAPE[shape],
+        "source_repo": managed["source"],
+    }
+    for field, value in expected.items():
+        if manifest.get(field) != value:
+            raise SystemExit(
+                f"forge_to_catalogue.py: Rust manifest {field}="
+                f"{manifest.get(field)!r}, expected {value!r}"
+            )
+    if managed.get("version") != version:
+        raise SystemExit(
+            f"forge_to_catalogue.py: {tool} version {version!r} is not the managed pin"
+        )
+    source_ref = str(manifest.get("source_ref", ""))
+    if source_ref != managed.get("source_ref"):
+        raise SystemExit(
+            f"forge_to_catalogue.py: Rust source_ref {source_ref!r}, "
+            f"expected managed commit {managed.get('source_ref')!r}"
+        )
+    if (manifest.get("smoke") or {}).get("result") != "passed":
+        raise SystemExit("forge_to_catalogue.py: Rust native smoke evidence is missing")
+    binary_name = str(manifest.get("binary", ""))
+    expected_binary = managed["binary"] + (
+        ".exe" if shape.startswith("windows-") else ""
+    )
+    if binary_name != expected_binary:
+        raise SystemExit(
+            f"forge_to_catalogue.py: Rust binary {binary_name!r}, "
+            f"expected {expected_binary!r}"
+        )
+    binary_path = artifact_dir / binary_name
+    if not binary_path.is_file():
+        raise SystemExit(
+            f"forge_to_catalogue.py: Rust binary is missing: {binary_name}"
+        )
+    actual_sha256 = _sha256_of(binary_path)
+    if actual_sha256 != manifest.get("payload_sha256"):
+        raise SystemExit("forge_to_catalogue.py: Rust payload SHA-256 does not match")
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_bytes = manifest_path.read_bytes()
+    with output_path.open("wb") as raw:
+        with gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0) as compressed:
+            with tarfile.open(fileobj=compressed, mode="w") as archive:
+                for name, payload, mode in (
+                    ("manifest.json", manifest_bytes, 0o644),
+                    (f"package/{binary_name}", binary_path.read_bytes(), 0o755),
+                ):
+                    info = tarfile.TarInfo(name)
+                    info.size = len(payload)
+                    info.mode = mode
+                    info.mtime = 0
+                    info.uid = 0
+                    info.gid = 0
+                    archive.addfile(info, io.BytesIO(payload))
+    return {
+        "producer": "forge-rust",
+        "source_repo": manifest["source_repo"],
+        "source_ref": source_ref,
+        "target": manifest.get("target"),
+        "platform": shape,
+        "resolution_mode": manifest.get("resolution_mode"),
+        "payload_sha256": actual_sha256,
+        "smoke": manifest["smoke"],
+    }
 
 
 def _extract_forge_payload(forge_artifact: Path) -> tuple[Path, dict[str, Any]]:
@@ -436,9 +627,7 @@ def _extract_forge_payload(forge_artifact: Path) -> tuple[Path, dict[str, Any]]:
 # ----- repack ------------------------------------------------------
 
 
-def _stream_repack_to_zstd(
-    forge_artifact: Path, output_path: Path
-) -> dict[str, Any]:
+def _stream_repack_to_zstd(forge_artifact: Path, output_path: Path) -> dict[str, Any]:
     """Read the forge .tar.gz one member at a time and emit each into
     the new zstd-wrapped tar without ever extracting to the host
     filesystem. Critical on Windows where SDK content contains paths
@@ -583,12 +772,12 @@ def _update_catalogue(
     if errors:
         for err in errors:
             path = "/".join(str(p) for p in err.absolute_path) or "<root>"
-            sys.stderr.write(f"forge_to_catalogue.py: schema error at {path}: {err.message}\n")
+            sys.stderr.write(
+                f"forge_to_catalogue.py: schema error at {path}: {err.message}\n"
+            )
         raise SystemExit(1)
 
-    catalogue_path.write_text(
-        json.dumps(catalogue, indent=2) + "\n", encoding="utf-8"
-    )
+    catalogue_path.write_text(json.dumps(catalogue, indent=2) + "\n", encoding="utf-8")
 
     # Provenance log (not in the catalogue itself; schema rejects unknown
     # top-level fields). Write a sibling JSONL of forge runs we've ingested.
@@ -625,7 +814,9 @@ def _asset_platform_dir(tool: str, shape: str) -> str:
     if tool in {"cargo-chef", "crgx", "cargo-binstall", "cargo-nextest"}:
         platform = SHAPE_TO_PLATFORM_TUPLE.get(shape)
         if platform is None:
-            raise SystemExit(f"forge_to_catalogue.py: no v1 platform tuple for shape={shape}")
+            raise SystemExit(
+                f"forge_to_catalogue.py: no v1 platform tuple for shape={shape}"
+            )
         return _flatten_platform(platform)
     return SHAPE_TO_PLATFORM[shape]
 
@@ -649,6 +840,7 @@ def _update_manifest_catalog(
     asset_size: int,
     sha256: str,
     delivery_urls: list[str] | None = None,
+    provenance: dict[str, Any] | None = None,
 ) -> None:
     """Merge a local blob into manifest.json v1 files.
 
@@ -660,7 +852,9 @@ def _update_manifest_catalog(
         return
     platform = SHAPE_TO_PLATFORM_TUPLE.get(shape)
     if platform is None:
-        raise SystemExit(f"forge_to_catalogue.py: no v1 platform tuple for shape={shape}")
+        raise SystemExit(
+            f"forge_to_catalogue.py: no v1 platform tuple for shape={shape}"
+        )
 
     catalog_version = _catalog_version(tool, package_version)
     catalog_path = assets_root / tool / "manifest.json"
@@ -689,6 +883,12 @@ def _update_manifest_catalog(
             "platforms": [],
         }
         releases.append(release)
+    if provenance and provenance.get("source_repo") and provenance.get("source_ref"):
+        release["source"] = {
+            "vcs": "git",
+            "repo_url": f"https://github.com/{provenance['source_repo']}",
+            "ref": provenance["source_ref"],
+        }
 
     platform_entry = {
         "platform": platform,
@@ -701,8 +901,7 @@ def _update_manifest_catalog(
     }
     existing_platforms = release.setdefault("platforms", [])
     release["platforms"] = [
-        p for p in existing_platforms
-        if p.get("platform") != platform
+        p for p in existing_platforms if p.get("platform") != platform
     ]
     release["platforms"].append(platform_entry)
     release["platforms"].sort(
@@ -715,9 +914,18 @@ def _update_manifest_catalog(
     )
 
     channels = catalog.setdefault("channels", {})
-    channels.setdefault("pinned", catalog_version)
-    channels.setdefault("latest-stable", catalog_version)
-    channels.setdefault("stable", channels["latest-stable"])
+    if tool in {"cargo-binstall", "cargo-nextest"}:
+        managed_path = Path(__file__).resolve().parents[1] / "managed-rust-tools.json"
+        managed = json.loads(managed_path.read_text(encoding="utf-8"))["tools"][tool]
+        qualified_version = f"{managed['release_tag_prefix']}{package_version}"
+        channels["pinned"] = catalog_version
+        for channel in ("latest-stable", "stable"):
+            if channels.get(channel) in {None, "", qualified_version, catalog_version}:
+                channels[channel] = catalog_version
+    else:
+        channels.setdefault("pinned", catalog_version)
+        channels.setdefault("latest-stable", catalog_version)
+        channels.setdefault("stable", channels["latest-stable"])
     catalog_path.write_text(json.dumps(catalog, indent=2) + "\n", encoding="utf-8")
     _refresh_index_entry(assets_root, tool, catalog_path)
 

@@ -202,12 +202,25 @@ def _load_per_tool_releases(tool_manifest_path: Path) -> dict[str, dict[str, Any
         payload = json.loads(tool_manifest_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return {}
-    if not isinstance(payload, list):
+    if isinstance(payload, dict) and payload.get("kind") == "Catalog":
+        releases = payload.get("releases") or []
+    elif isinstance(payload, list):
+        releases = payload
+    else:
         return {}
     out: dict[str, dict[str, Any]] = {}
-    for release in payload:
-        if isinstance(release, dict) and isinstance(release.get("tag"), str):
-            out[release["tag"]] = release
+    for release in releases:
+        if not isinstance(release, dict):
+            continue
+        identity = release.get("tag") or release.get("version")
+        if isinstance(identity, str):
+            normalized = dict(release)
+            repo_url = str((release.get("source") or {}).get("repo_url", ""))
+            match = re.fullmatch(r"https://github\.com/([^/]+)/([^/]+)", repo_url)
+            if match:
+                normalized.setdefault("owner", match.group(1))
+                normalized.setdefault("repo", match.group(2))
+            out[identity] = normalized
     return out
 
 
@@ -260,14 +273,16 @@ def collect_local_blob_entries(
                     continue
                 rel = blob_path.relative_to(manifest_root).as_posix()
                 sha = sha256_of_file(blob_path)
-                entries.append({
-                    "owner": owner,
-                    "repo": repo,
-                    "tag": tag,
-                    "asset": blob_path.name,
-                    "url": _url_for_local(repo_owner, repo_name, branch, rel),
-                    "sha256": sha,
-                })
+                entries.append(
+                    {
+                        "owner": owner,
+                        "repo": repo,
+                        "tag": tag,
+                        "asset": blob_path.name,
+                        "url": _url_for_local(repo_owner, repo_name, branch, rel),
+                        "sha256": sha,
+                    }
+                )
     return entries
 
 
@@ -303,8 +318,12 @@ def collect_release_entries_for_tool(
         repo = release.get("repo")
         tag = release.get("tag")
         assets = release.get("assets")
-        if not (isinstance(owner, str) and isinstance(repo, str)
-                and isinstance(tag, str) and isinstance(assets, dict)):
+        if not (
+            isinstance(owner, str)
+            and isinstance(repo, str)
+            and isinstance(tag, str)
+            and isinstance(assets, dict)
+        ):
             continue
         sums_entry = assets.get(SHA256SUMS_ASSET_NAME)
         if not isinstance(sums_entry, dict):
@@ -328,14 +347,16 @@ def collect_release_entries_for_tool(
             url = asset_entry.get("url")
             if not isinstance(url, str):
                 continue
-            entries.append({
-                "owner": owner,
-                "repo": repo,
-                "tag": tag,
-                "asset": asset_name,
-                "url": url,
-                "sha256": sha,
-            })
+            entries.append(
+                {
+                    "owner": owner,
+                    "repo": repo,
+                    "tag": tag,
+                    "asset": asset_name,
+                    "url": url,
+                    "sha256": sha,
+                }
+            )
     return entries
 
 
@@ -351,12 +372,16 @@ def build_asset_index(
     """Walk ``manifest_root`` (an assets-branch checkout) and produce
     the full asset index payload."""
     entries: list[dict[str, Any]] = []
-    entries.extend(collect_local_blob_entries(manifest_root, repo_owner, repo_name, branch))
+    entries.extend(
+        collect_local_blob_entries(manifest_root, repo_owner, repo_name, branch)
+    )
 
     for tool_manifest in sorted(manifest_root.glob("*/manifest.json")):
         entries.extend(
             collect_release_entries_for_tool(
-                tool_manifest, offline=offline, http_get_fn=http_get_fn,
+                tool_manifest,
+                offline=offline,
+                http_get_fn=http_get_fn,
             )
         )
 
