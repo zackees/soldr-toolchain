@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-13T07:25:12Z",
+  "generated_at": "2026-07-13T07:37:34Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -50,14 +50,6 @@
       "asset": "cargo-nextest-0.9.140-x86_64-pc-windows-msvc.tar.gz",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/windows-x86_64-msvc/cargo-nextest-0.9.140-x86_64-pc-windows-msvc.tar.gz",
       "sha256": "9df20c922b6f04bda12b7ae5c5cdf7944e4034b801eb425a7a5f94f26e372487"
-    },
-    {
-      "owner": "nextest-rs",
-      "repo": "nextest",
-      "tag": "0.9.140",
-      "asset": "cargo-nextest-0.9.140-x86_64-unknown-linux-gnu.tar.gz",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-x86_64-glibc/cargo-nextest-0.9.140-x86_64-unknown-linux-gnu.tar.gz",
-      "sha256": "c0e951a1f87ea6f542734f7362ce1b2ad796913a0fc605fb2249bf89c8674e44"
     },
     {
       "owner": "nextest-rs",
@@ -898,6 +890,14 @@
       "asset": "xwin-cache.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/xwin-cache/2026-06-22/windows-x86_64-msvc/xwin-cache.tar.zst",
       "sha256": "33c04d8026d99dab4d66f39ddbd93d75f64c68063d4ba58e5450626524bf348d"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-nextest-0.9.140-x86_64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-x86_64-glibc/cargo-nextest-0.9.140-x86_64-unknown-linux-gnu.tar.gz",
+      "sha256": "b0f691e80aadd652f06e1e5bb42a2ba4ba39a5512a80ee3df6e3be0bedb157b5"
     }
   ]
 }
