@@ -29,7 +29,6 @@ from __future__ import annotations
 import argparse
 import copy
 import json
-import shutil
 import sys
 from pathlib import Path
 from typing import Any
@@ -39,7 +38,7 @@ ONLINE_BASE = "https://zackees.github.io/soldr-toolchain"
 # Canonical pointer for IDE auto-validation and document self-verification.
 # Pinned to /v1/ so consumers stay valid forever as the schema evolves.
 SCHEMA_URL = "https://zackees.github.io/manifest.json/v1/manifest.schema.json"
-LOCAL_SUPPORT_TOOLS = {"cargo-chef", "crgx"}
+LOCAL_SUPPORT_TOOLS = {"cargo-chef", "crgx", "cargo-binstall", "cargo-nextest"}
 LOCAL_SUPPORT_URL_MARKER = "zackees/soldr-toolchain/assets/"
 
 # v5 short-arch -> v1 canonical arch
@@ -51,14 +50,16 @@ ARCH_MAP: dict[str, str] = {
 
 # v5 extra -> (v1 field, v1 value)
 EXTRA_MAP: dict[str, tuple[str, str]] = {
-    "gnu":     ("libc", "glibc"),
-    "musl":    ("libc", "musl"),
-    "msvc":    ("abi",  "msvc"),
-    "gnullvm": ("abi",  "gnullvm"),
+    "gnu": ("libc", "glibc"),
+    "musl": ("libc", "musl"),
+    "msvc": ("abi", "msvc"),
+    "gnullvm": ("abi", "gnullvm"),
 }
 
 
-def _collapse_darwin_universal2(platforms: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _collapse_darwin_universal2(
+    platforms: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     """Detect identical assets shipped under both `darwin/x86_64` and
     `darwin/aarch64` and collapse them into a single `darwin/universal2`
     entry.
@@ -111,7 +112,11 @@ def _collapse_darwin_universal2(platforms: list[dict[str, Any]]) -> list[dict[st
             continue
         plat = p["platform"]
         asset = p["asset"]
-        key = (asset.get("filename", ""), (asset.get("urls") or [""])[0], asset.get("sha256", ""))
+        key = (
+            asset.get("filename", ""),
+            (asset.get("urls") or [""])[0],
+            asset.get("sha256", ""),
+        )
         if key in universal_emitted:
             continue
         universal_emitted.add(key)
@@ -154,7 +159,9 @@ def split_platform_key(key: str) -> dict[str, str] | None:
     return out
 
 
-def index_assets_by_filename(asset_index: dict[str, Any]) -> dict[tuple[str, str, str], dict[str, Any]]:
+def index_assets_by_filename(
+    asset_index: dict[str, Any],
+) -> dict[tuple[str, str, str], dict[str, Any]]:
     """Build a (owner, repo, tag) -> {filename -> entry} lookup table."""
     out: dict[tuple[str, str, str], dict[str, Any]] = {}
     for entry in asset_index.get("entries", []):
@@ -177,47 +184,56 @@ def convert_per_tool_release(
         platform_tuple = split_platform_key(pkey)
         if platform_tuple is None:
             # Skip unparseable keys but log to stderr.
-            print(f"  skip {owner}/{repo}@{tag}: cannot parse platform key {pkey!r}",
-                  file=sys.stderr)
+            print(
+                f"  skip {owner}/{repo}@{tag}: cannot parse platform key {pkey!r}",
+                file=sys.stderr,
+            )
             continue
         filename = pval.get("filename") or ""
         # Prefer the sha embedded in the v5 platform entry (populated
         # from GitHub's per-asset `digest` field by build_manifest.py
         # since the universal2 / api-digest change). Fall back to the
         # asset-index for legacy data and locally-hosted blobs.
-        sha256 = pval.get("sha256") or (by_filename.get(filename) or {}).get("sha256", "")
+        sha256 = pval.get("sha256") or (by_filename.get(filename) or {}).get(
+            "sha256", ""
+        )
         url = pval.get("url") or ""
         asset_out: dict[str, Any] = {
-            "filename":   filename,
+            "filename": filename,
             "size_bytes": int(pval.get("size") or 0),
-            "urls":       [url] if url else [],
+            "urls": [url] if url else [],
         }
         if sha256:
             asset_out["sha256"] = sha256
-        platforms_out.append({
-            "platform": platform_tuple,
-            "asset":    asset_out,
-        })
+        platforms_out.append(
+            {
+                "platform": platform_tuple,
+                "asset": asset_out,
+            }
+        )
 
     platforms_out = _collapse_darwin_universal2(platforms_out)
 
-    # Use the upstream `tag` as the v1 version so it round-trips against the
+    # Use the upstream `tag` as the v1 version by default so it round-trips against the
     # v5 top-level `latest` / `pinned` pointers (which also use the tag).
     # `version` (normalized, no "v" prefix) is dropped — channels always
     # resolve through the same string the producer keyed everything by.
     release_out: dict[str, Any] = {
-        "schema_version":     V1_SCHEMA_VERSION,
-        "version":            tag or v5_release.get("version") or "",
-        "published_at":       v5_release.get("published_at", "") or "",
+        "schema_version": V1_SCHEMA_VERSION,
+        "version": v5_release.get("catalog_version")
+        or tag
+        or v5_release.get("version")
+        or "",
+        "published_at": v5_release.get("published_at", "") or "",
         "min_client_version": 1,
-        "platforms":          platforms_out,
+        "platforms": platforms_out,
     }
     # Source fallback: GitHub repo + tag, when the release came from GH.
     if owner and repo and tag and owner != "vendored":
         release_out["source"] = {
-            "vcs":         "git",
-            "repo_url":    f"https://github.com/{owner}/{repo}",
-            "ref":         tag,
+            "vcs": "git",
+            "repo_url": f"https://github.com/{owner}/{repo}",
+            "ref": tag,
             "archive_url": f"https://github.com/{owner}/{repo}/archive/refs/tags/{tag}.tar.gz",
         }
     return release_out
@@ -231,8 +247,15 @@ def convert_tool_catalog(
 ) -> dict[str, Any]:
     releases_v1 = [convert_per_tool_release(r, asset_lookup) for r in v5_releases]
     tool_meta = (top_level.get("tools") or {}).get(tool_name, {})
-    latest = tool_meta.get("latest", "")
-    pinned = tool_meta.get("pinned") or ""
+    versions_by_tag = {
+        release.get("tag"): release.get("catalog_version") or release.get("tag")
+        for release in v5_releases
+        if release.get("tag")
+    }
+    latest_tag = tool_meta.get("latest", "")
+    pinned_tag = tool_meta.get("pinned") or ""
+    latest = versions_by_tag.get(latest_tag, latest_tag)
+    pinned = versions_by_tag.get(pinned_tag, pinned_tag)
     channels: dict[str, str] = {}
     if latest:
         channels["latest-stable"] = latest
@@ -240,13 +263,13 @@ def convert_tool_catalog(
     if pinned and pinned not in channels.values():
         channels["pinned"] = pinned
     return {
-        "$schema":        SCHEMA_URL,
-        "kind":           "Catalog",
+        "$schema": SCHEMA_URL,
+        "kind": "Catalog",
         "schema_version": V1_SCHEMA_VERSION,
-        "tool":           tool_name,
-        "online_url":     f"{ONLINE_BASE}/{tool_name}/manifest.json",
-        "channels":       channels,
-        "releases":       releases_v1,
+        "tool": tool_name,
+        "online_url": f"{ONLINE_BASE}/{tool_name}/manifest.json",
+        "channels": channels,
+        "releases": releases_v1,
     }
 
 
@@ -325,9 +348,7 @@ def merge_local_support_assets(
         release = releases_by_version.get(version)
         if release is None:
             release = {
-                k: copy.deepcopy(v)
-                for k, v in old_release.items()
-                if k != "platforms"
+                k: copy.deepcopy(v) for k, v in old_release.items() if k != "platforms"
             }
             release.setdefault("schema_version", V1_SCHEMA_VERSION)
             release.setdefault("published_at", "")
@@ -338,12 +359,16 @@ def merge_local_support_assets(
 
         local_keys = {_platform_identity(p) for p in local_platforms}
         current_platforms = [
-            p for p in (release.get("platforms") or [])
+            p
+            for p in (release.get("platforms") or [])
             if _platform_identity(p) not in local_keys
         ]
         current_platforms.extend(local_platforms)
         _sort_platforms(current_platforms)
         release["platforms"] = current_platforms
+        old_source = old_release.get("source") or {}
+        if len(str(old_source.get("ref", ""))) == 40:
+            release["source"] = copy.deepcopy(old_source)
         preserved_count += len(local_platforms)
 
     if preserved_count:
@@ -380,7 +405,7 @@ def convert_index(
     for tool_name, meta in (v5_top_level.get("tools") or {}).items():
         sha, size = catalog_sha_lookup.get(tool_name, ("", 0))
         descriptor: dict[str, Any] = {
-            "url":        f"{tool_name}/manifest.json",
+            "url": f"{tool_name}/manifest.json",
             "size_bytes": size,
             "media_type": "application/vnd.manifest.v1+json",
         }
@@ -391,14 +416,14 @@ def convert_index(
         summary = f"{owner}/{repo}" if owner and owner != "vendored" else repo
         tools_out[tool_name] = {
             "descriptor": descriptor,
-            "summary":    summary,
-            "kind_hint":  _kind_hint_for(tool_name, meta),
+            "summary": summary,
+            "kind_hint": _kind_hint_for(tool_name, meta),
         }
     return {
-        "$schema":        SCHEMA_URL,
-        "kind":           "Index",
+        "$schema": SCHEMA_URL,
+        "kind": "Index",
         "schema_version": V1_SCHEMA_VERSION,
-        "tools":          tools_out,
+        "tools": tools_out,
     }
 
 
@@ -412,6 +437,7 @@ def write_json(path: Path, doc: dict[str, Any]) -> bytes:
 
 def hash_sha256(data: bytes) -> str:
     import hashlib
+
     return hashlib.sha256(data).hexdigest()
 
 
@@ -428,6 +454,7 @@ def _preserve_vendored_entries(
     vendored catalog is reflected without a separate manual step.
     """
     import hashlib
+
     index_path = dest / "manifest.json"
     if not index_path.is_file():
         return {}
@@ -451,7 +478,10 @@ def _preserve_vendored_entries(
                 desc["sha256"] = hashlib.sha256(blob).hexdigest()
                 desc["size_bytes"] = len(blob)
             else:
-                print(f"  warn: vendored {name} catalog missing: {cat_path}", file=sys.stderr)
+                print(
+                    f"  warn: vendored {name} catalog missing: {cat_path}",
+                    file=sys.stderr,
+                )
                 continue
         out[name] = {
             **entry,
@@ -463,12 +493,16 @@ def _preserve_vendored_entries(
 
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--src",  type=Path, required=True, help="v5 tree root (assets branch checkout)")
+    p.add_argument(
+        "--src", type=Path, required=True, help="v5 tree root (assets branch checkout)"
+    )
     p.add_argument("--dest", type=Path, required=True, help="output dir for v1 tree")
     args = p.parse_args()
 
     top_level_v5 = json.loads((args.src / "manifest.json").read_text(encoding="utf-8"))
-    asset_index = json.loads((args.src / "asset-index.json").read_text(encoding="utf-8"))
+    asset_index = json.loads(
+        (args.src / "asset-index.json").read_text(encoding="utf-8")
+    )
     asset_lookup = index_assets_by_filename(asset_index)
 
     args.dest.mkdir(parents=True, exist_ok=True)
@@ -480,18 +514,25 @@ def main() -> int:
     for tool_name in sorted(v5_tool_names):
         per_tool_path = args.src / tool_name / "manifest.json"
         if not per_tool_path.exists():
-            print(f"  warn: {per_tool_path} missing, skipping {tool_name}", file=sys.stderr)
+            print(
+                f"  warn: {per_tool_path} missing, skipping {tool_name}",
+                file=sys.stderr,
+            )
             continue
         v5_releases = json.loads(per_tool_path.read_text(encoding="utf-8"))
         if isinstance(v5_releases, dict):
             # apple-sdk and other vendored single-release manifests come as a list anyway,
             # but defensively accept dict too.
             v5_releases = [v5_releases]
-        catalog = convert_tool_catalog(tool_name, v5_releases, asset_lookup, top_level_v5)
+        catalog = convert_tool_catalog(
+            tool_name, v5_releases, asset_lookup, top_level_v5
+        )
         catalog = merge_local_support_assets(args.dest, tool_name, catalog)
         data = write_json(args.dest / tool_name / "manifest.json", catalog)
         catalog_sha[tool_name] = (hash_sha256(data), len(data))
-        print(f"  wrote {tool_name}/manifest.json ({len(data)} bytes, {len(catalog['releases'])} releases)")
+        print(
+            f"  wrote {tool_name}/manifest.json ({len(data)} bytes, {len(catalog['releases'])} releases)"
+        )
 
     # Preserve vendored entries from the destination tree (apple-sdk,
     # xwin-cache, etc.) — those live independently of the v5 pipeline.
@@ -504,8 +545,10 @@ def main() -> int:
     # Re-sort tools for stable output.
     index["tools"] = dict(sorted(index["tools"].items()))
     data = write_json(args.dest / "manifest.json", index)
-    print(f"  wrote manifest.json ({len(data)} bytes, {len(index['tools'])} tools, "
-          f"{len(vendored_entries)} vendored preserved)")
+    print(
+        f"  wrote manifest.json ({len(data)} bytes, {len(index['tools'])} tools, "
+        f"{len(vendored_entries)} vendored preserved)"
+    )
 
     # asset-index.json is no longer copied here. After the v1 migration
     # its attribution columns (owner, repo, tag) reflect v1 reality —

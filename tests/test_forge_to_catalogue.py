@@ -9,9 +9,12 @@ forge artifacts on a tmp dir — no live forge dispatch needed.
 from __future__ import annotations
 
 import io
+import hashlib
 import json
 import tarfile
 from pathlib import Path
+
+import pytest
 
 from scripts import forge_to_catalogue as fc
 
@@ -63,7 +66,9 @@ def _make_fake_forge_artifact(
         tf.addfile(meta_info, io.BytesIO(meta_bytes))
 
         # Payload files
-        for rel, content in (payload_files or {"package/sdk/usr/lib/libobjc.tbd": b"--- !tapi-tbd\n"}).items():
+        for rel, content in (
+            payload_files or {"package/sdk/usr/lib/libobjc.tbd": b"--- !tapi-tbd\n"}
+        ).items():
             info = tarfile.TarInfo(f"./{rel}")
             info.size = len(content)
             tf.addfile(info, io.BytesIO(content))
@@ -85,17 +90,133 @@ def test_find_forge_artifact_matches_name_and_version(tmp_path: Path) -> None:
     assert miss is None  # no matching recipe name
 
 
+def test_packages_forge_rust_artifact_for_catalogue(tmp_path: Path) -> None:
+    artifact = tmp_path / "forge-rust-cargo-nextest-0.9.140-linux-x64-musl"
+    artifact.mkdir()
+    binary = b"native-nextest"
+    (artifact / "cargo-nextest").write_bytes(binary)
+    manifest = {
+        "schema_version": 1,
+        "tool": "cargo-nextest",
+        "version": "0.9.140",
+        "binary": "cargo-nextest",
+        "target": "x86_64-unknown-linux-musl",
+        "platform": "linux-x64-musl",
+        "payload_sha256": hashlib.sha256(binary).hexdigest(),
+        "source_repo": "nextest-rs/nextest",
+        "source_ref": "a9fef2964e34f64ed4fceeee7c0c3559ce560920",
+        "resolution_mode": "source-build",
+        "smoke": {"command": "cargo-nextest --version", "result": "passed"},
+    }
+    (artifact / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    assert (
+        fc._find_forge_rust_artifact(
+            tmp_path, "cargo-nextest", "0.9.140", "linux-x64-musl"
+        )
+        == artifact
+    )
+    output = tmp_path / "bundle.tar.gz"
+    provenance = fc._package_forge_rust_artifact(
+        artifact,
+        output,
+        tool="cargo-nextest",
+        version="0.9.140",
+        shape="linux-x64-musl",
+    )
+
+    with tarfile.open(output, "r:gz") as archive:
+        assert archive.getnames() == ["manifest.json", "package/cargo-nextest"]
+        assert archive.extractfile("package/cargo-nextest").read() == binary
+    assert provenance["producer"] == "forge-rust"
+    assert provenance["smoke"]["result"] == "passed"
+
+
+def test_forge_rust_platform_names_cover_every_catalog_shape(tmp_path: Path) -> None:
+    expected = {
+        "windows-x64": "windows-x64-msvc",
+        "windows-arm64": "windows-arm64-msvc",
+        "darwin-x64": "macos-x64",
+        "darwin-arm64": "macos-arm64",
+        "linux-x64-gnu": "linux-x64-gnu",
+        "linux-arm64-gnu": "linux-arm64-gnu",
+        "linux-x64-musl": "linux-x64-musl",
+        "linux-arm64-musl": "linux-arm64-musl",
+    }
+    for shape, platform in expected.items():
+        artifact = tmp_path / f"forge-rust-cargo-nextest-0.9.140-{platform}"
+        artifact.mkdir()
+        (artifact / "manifest.json").write_text("{}", encoding="utf-8")
+        assert (
+            fc._find_forge_rust_artifact(tmp_path, "cargo-nextest", "0.9.140", shape)
+            == artifact
+        )
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("binary", "different-tool", "Rust binary"),
+        ("target", "aarch64-unknown-linux-musl", "manifest target"),
+    ],
+)
+def test_forge_rust_validation_binds_binary_and_target(
+    tmp_path: Path, field: str, value: str, message: str
+) -> None:
+    artifact = tmp_path / "artifact"
+    artifact.mkdir()
+    binary = b"native-nextest"
+    (artifact / "cargo-nextest").write_bytes(binary)
+    manifest = {
+        "tool": "cargo-nextest",
+        "version": "0.9.140",
+        "binary": "cargo-nextest",
+        "target": "x86_64-unknown-linux-musl",
+        "platform": "linux-x64-musl",
+        "payload_sha256": hashlib.sha256(binary).hexdigest(),
+        "source_repo": "nextest-rs/nextest",
+        "source_ref": "a9fef2964e34f64ed4fceeee7c0c3559ce560920",
+        "resolution_mode": "source-build",
+        "smoke": {"result": "passed"},
+    }
+    manifest[field] = value
+    (artifact / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(SystemExit, match=message):
+        fc._package_forge_rust_artifact(
+            artifact,
+            tmp_path / "out.tar.gz",
+            tool="cargo-nextest",
+            version="0.9.140",
+            shape="linux-x64-musl",
+        )
+
+
+def test_rust_asset_names_are_target_qualified() -> None:
+    for shape, target in fc.RUST_TARGET_BY_SHAPE.items():
+        name = fc._forge_rust_asset_name("cargo-nextest", "0.9.140", shape)
+        assert target in name
+        assert name.endswith(".tar.gz")
+
+
 def test_syslib_recipe_mapping_and_default_asset_names() -> None:
     assert fc._resolve_recipe_name("zstd", "linux-x64-musl") == "zstd-linux-x64-musl"
     assert fc._resolve_recipe_name("sqlite", "windows-arm64") == "sqlite-windows-arm64"
     assert fc._resolve_recipe_name("zstd", "windows-x64-gnu") == "zstd-windows-x64-gnu"
-    assert fc._resolve_recipe_name("bzip2", "windows-x64-gnu") == "bzip2-windows-x64-gnu"
+    assert (
+        fc._resolve_recipe_name("bzip2", "windows-x64-gnu") == "bzip2-windows-x64-gnu"
+    )
     assert fc.SHAPE_TO_PLATFORM["linux-arm64-gnu"] == "linux-arm64-gnu"
     assert fc.SHAPE_TO_PLATFORM["windows-x64-gnu"] == "windows-x64-gnu"
     assert fc.DEFAULT_ASSET_NAME["zstd"] == "bundle.tar.zst"
     assert fc.DEFAULT_ASSET_NAME["apple-sdk"] == "sdk.tar.zst"
-    assert fc._resolve_recipe_name("cargo-chef", "windows-arm64") == "cargo-chef-windows-arm64"
-    assert fc._resolve_recipe_name("crgx", "linux-arm64-musl") == "crgx-linux-arm64-musl"
+    assert (
+        fc._resolve_recipe_name("cargo-chef", "windows-arm64")
+        == "cargo-chef-windows-arm64"
+    )
+    assert (
+        fc._resolve_recipe_name("crgx", "linux-arm64-musl") == "crgx-linux-arm64-musl"
+    )
     assert fc.DEFAULT_ASSET_NAME["cargo-chef"] == "bundle.tar.zst"
     assert fc.DEFAULT_ASSET_NAME["crgx"] == "bundle.tar.zst"
     assert (
@@ -117,7 +238,10 @@ def test_jemalloc_windows_shapes_are_not_mapped() -> None:
 
 def test_extract_forge_payload_returns_package_and_provenance(tmp_path: Path) -> None:
     artifact = _make_fake_forge_artifact(
-        tmp_path, "apple-sdk-universal2", "14.5", "macos-arm64",
+        tmp_path,
+        "apple-sdk-universal2",
+        "14.5",
+        "macos-arm64",
         recipe_meta={"shape": "universal2", "captured_sdk_version": "14.5.0.21F77"},
     )
     package_root, provenance = fc._extract_forge_payload(artifact)
@@ -135,7 +259,10 @@ def test_stream_repack_to_zstd_round_trip(tmp_path: Path) -> None:
     #     tarfile.extractall on Windows but the streaming form never
     #     touches the FS namespace)
     artifact = _make_fake_forge_artifact(
-        tmp_path, "apple-sdk-universal2", "14.5", "macos-arm64",
+        tmp_path,
+        "apple-sdk-universal2",
+        "14.5",
+        "macos-arm64",
         payload_files={
             "package/sdk/usr/lib/libobjc.tbd": b"--- !tapi-tbd\narchs: [ x86_64 ]\n",
             "package/sdk/usr/share/man/mann/ttk::progressbar.ntcl": b".manpage\n",
@@ -154,6 +281,7 @@ def test_stream_repack_to_zstd_round_trip(tmp_path: Path) -> None:
     import io as _io
     import tarfile as _tarfile
     import zstandard as _zstd
+
     raw = out.read_bytes()
     dctx = _zstd.ZstdDecompressor()
     plain = dctx.decompress(raw, max_output_size=10 * 1024 * 1024)
@@ -161,14 +289,16 @@ def test_stream_repack_to_zstd_round_trip(tmp_path: Path) -> None:
     with _tarfile.open(fileobj=_io.BytesIO(plain), mode="r") as tf:
         for m in tf:
             names.append(m.name)
-    assert any("ttk::progressbar" in n for n in names), (
-        f"colon-bearing member missing from output: {names}"
-    )
+    assert any(
+        "ttk::progressbar" in n for n in names
+    ), f"colon-bearing member missing from output: {names}"
 
 
 def test_update_catalogue_idempotent_and_provenance_logged(tmp_path: Path) -> None:
     # Stand up a minimal valid catalogue + the real schema.
-    schema_src = Path(__file__).resolve().parent.parent / "schemas" / "catalogue.v1.schema.json"
+    schema_src = (
+        Path(__file__).resolve().parent.parent / "schemas" / "catalogue.v1.schema.json"
+    )
     schema_dst = tmp_path / "catalogue.v1.schema.json"
     schema_dst.write_text(schema_src.read_text(encoding="utf-8"))
 
@@ -266,4 +396,89 @@ def test_update_manifest_catalog_merges_rust_cli_platform(tmp_path: Path) -> Non
         }
     ]
     index = json.loads((assets_root / "manifest.json").read_text())
-    assert index["tools"]["cargo-chef"]["descriptor"]["url"] == "cargo-chef/manifest.json"
+    assert (
+        index["tools"]["cargo-chef"]["descriptor"]["url"] == "cargo-chef/manifest.json"
+    )
+
+
+def test_nextest_ingest_repoints_channels_to_logical_version(tmp_path: Path) -> None:
+    (tmp_path / "manifest.json").write_text(
+        json.dumps({"kind": "Index", "schema_version": 1, "tools": {}}),
+        encoding="utf-8",
+    )
+    catalog_dir = tmp_path / "cargo-nextest"
+    catalog_dir.mkdir()
+    (catalog_dir / "manifest.json").write_text(
+        json.dumps(
+            {
+                "kind": "Catalog",
+                "schema_version": 1,
+                "tool": "cargo-nextest",
+                "channels": {"pinned": "cargo-nextest-0.9.140"},
+                "releases": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    asset_name = "cargo-nextest-0.9.140-aarch64-pc-windows-msvc.tar.gz"
+    fc._update_manifest_catalog(
+        tmp_path,
+        tool="cargo-nextest",
+        package_version="0.9.140",
+        shape="windows-arm64",
+        asset_rel=Path(f"cargo-nextest/0.9.140/windows-aarch64-msvc/{asset_name}"),
+        asset_name=asset_name,
+        asset_size=123,
+        sha256="a" * 64,
+    )
+
+    catalog = json.loads((catalog_dir / "manifest.json").read_text())
+    assert catalog["channels"] == {
+        "pinned": "0.9.140",
+        "latest-stable": "0.9.140",
+        "stable": "0.9.140",
+    }
+
+
+def test_nextest_ingest_does_not_roll_back_newer_stable_channel(tmp_path: Path) -> None:
+    (tmp_path / "manifest.json").write_text(
+        json.dumps({"kind": "Index", "schema_version": 1, "tools": {}}),
+        encoding="utf-8",
+    )
+    catalog_dir = tmp_path / "cargo-nextest"
+    catalog_dir.mkdir()
+    (catalog_dir / "manifest.json").write_text(
+        json.dumps(
+            {
+                "kind": "Catalog",
+                "schema_version": 1,
+                "tool": "cargo-nextest",
+                "channels": {
+                    "pinned": "cargo-nextest-0.9.140",
+                    "latest-stable": "0.9.141",
+                    "stable": "0.9.141",
+                },
+                "releases": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    fc._update_manifest_catalog(
+        tmp_path,
+        tool="cargo-nextest",
+        package_version="0.9.140",
+        shape="linux-x64-musl",
+        asset_rel=Path("cargo-nextest/0.9.140/linux-x86_64-musl/nextest.tar.gz"),
+        asset_name="nextest.tar.gz",
+        asset_size=123,
+        sha256="b" * 64,
+    )
+
+    channels = json.loads((catalog_dir / "manifest.json").read_text())["channels"]
+    assert channels == {
+        "pinned": "0.9.140",
+        "latest-stable": "0.9.141",
+        "stable": "0.9.141",
+    }

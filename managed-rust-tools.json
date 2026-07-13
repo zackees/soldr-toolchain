@@ -4,12 +4,14 @@
     "cargo-binstall": {
       "version": "1.20.1",
       "source": "cargo-bins/cargo-binstall",
+      "source_ref": "732870f031d2fb36309d0deaf36abcc704a7be65",
       "binary": "cargo-binstall",
       "release_tag_prefix": "v"
     },
     "cargo-nextest": {
       "version": "0.9.140",
       "source": "nextest-rs/nextest",
+      "source_ref": "a9fef2964e34f64ed4fceeee7c0c3559ce560920",
       "binary": "cargo-nextest",
       "release_tag_prefix": "cargo-nextest-"
     }

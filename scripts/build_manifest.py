@@ -178,10 +178,19 @@ def build_release_entry(
     tool: str | None = None,
     owner: str | None = None,
     repo: str | None = None,
+    release_tag_prefix: str | None = None,
 ) -> dict[str, Any]:
     """Render one GitHub release into the per-tool entry shape."""
     resolved_tag: str = release["tag_name"]
-    version = resolved_tag[1:] if resolved_tag.startswith("v") else resolved_tag
+    if release_tag_prefix is not None:
+        if not resolved_tag.startswith(release_tag_prefix):
+            raise ValueError(
+                f"release tag {resolved_tag!r} does not start with "
+                f"{release_tag_prefix!r}"
+            )
+        version = resolved_tag[len(release_tag_prefix) :]
+    else:
+        version = resolved_tag[1:] if resolved_tag.startswith("v") else resolved_tag
     assets: dict[str, dict[str, Any]] = {}
     platforms: dict[str, dict[str, Any]] = {}
     for asset in release.get("assets", []):
@@ -234,6 +243,8 @@ def build_release_entry(
             "assets": dict(sorted(assets.items())),
         }
     )
+    if release_tag_prefix is not None:
+        entry["catalog_version"] = version
     return entry
 
 
@@ -280,6 +291,7 @@ def build_merged_tool_releases(
     token: str | None,
     existing: list[dict[str, Any]],
     *,
+    release_tag_prefix: str | None = None,
     list_releases_fn=list_releases,
 ) -> tuple[list[dict[str, Any]], str | None]:
     """Fetch + merge releases. ``list_releases_fn`` is overridable so
@@ -291,13 +303,27 @@ def build_merged_tool_releases(
     by_tag: dict[str, dict[str, Any]] = {}
     for prior in existing:
         prior_tag = prior.get("tag")
+        if release_tag_prefix is not None and not str(prior_tag).startswith(
+            release_tag_prefix
+        ):
+            continue
         if prior_tag:
             prior.setdefault("tool", name)
             prior.setdefault("owner", owner)
             prior.setdefault("repo", repo)
             by_tag[prior_tag] = prior
     for release in fetched:
-        entry = build_release_entry(release, tool=name, owner=owner, repo=repo)
+        if release_tag_prefix is not None and not str(
+            release.get("tag_name", "")
+        ).startswith(release_tag_prefix):
+            continue
+        entry = build_release_entry(
+            release,
+            tool=name,
+            owner=owner,
+            repo=repo,
+            release_tag_prefix=release_tag_prefix,
+        )
         by_tag[entry["tag"]] = entry
 
     def _key(entry: dict[str, Any]) -> tuple[int, str, str]:
@@ -400,7 +426,7 @@ def load_pinned_versions(repo_root: Path) -> dict[str, str | None]:
 
 def load_managed_rust_tools(
     path: Path = REPO_ROOT / "managed-rust-tools.json",
-) -> list[tuple[str, str, str, str]]:
+) -> list[tuple[str, str, str, str, str]]:
     """Read exact Rust-tool release pins from ``managed-rust-tools.json``.
 
     The nightly catalogue refresh used to omit these entries entirely, even
@@ -418,7 +444,7 @@ def load_managed_rust_tools(
     tools = document.get("tools")
     if not isinstance(tools, dict):
         raise RuntimeError(f"{path} must contain a tools object")
-    result: list[tuple[str, str, str, str]] = []
+    result: list[tuple[str, str, str, str, str]] = []
     for name, config in sorted(tools.items()):
         if not isinstance(config, dict):
             raise RuntimeError(f"{path}: tool {name!r} must be an object")
@@ -432,7 +458,7 @@ def load_managed_rust_tools(
         if not prefix:
             raise RuntimeError(f"{path}: tool {name!r} needs release_tag_prefix")
         owner, repo = source.split("/", 1)
-        result.append((name, owner, repo, f"{prefix}{version}"))
+        result.append((name, owner, repo, f"{prefix}{version}", prefix))
     return result
 
 
@@ -456,15 +482,15 @@ def main() -> int:
     repo_root = Path(args.repo_root).resolve()
     pins = load_pinned_versions(repo_root)
 
-    # (display_name, owner, repo, tag_or_None_for_latest).
+    # (display_name, owner, repo, tag_or_None_for_latest, managed tag prefix).
     # cargo-zigbuild and cargo-xwin are unpinned in `known_tools`
     # (soldr resolves "latest" at fetch time), so we mirror that here.
     tools = [
-        ("zccache", "zackees", "zccache", pins["zccache"]),
-        ("crgx", "yfedoseev", "crgx", pins["crgx"]),
-        ("cargo-chef", "LukeMathWalker", "cargo-chef", pins["cargo-chef"]),
-        ("cargo-zigbuild", "rust-cross", "cargo-zigbuild", None),
-        ("cargo-xwin", "rust-cross", "cargo-xwin", None),
+        ("zccache", "zackees", "zccache", pins["zccache"], None),
+        ("crgx", "yfedoseev", "crgx", pins["crgx"], None),
+        ("cargo-chef", "LukeMathWalker", "cargo-chef", pins["cargo-chef"], None),
+        ("cargo-zigbuild", "rust-cross", "cargo-zigbuild", None, None),
+        ("cargo-xwin", "rust-cross", "cargo-xwin", None, None),
     ]
     tools.extend(load_managed_rust_tools())
 
@@ -474,12 +500,18 @@ def main() -> int:
 
     per_tool_index: dict[str, dict[str, Any]] = {}
     changed_count = 0
-    for name, owner, repo, pinned_tag in tools:
+    for name, owner, repo, pinned_tag, release_tag_prefix in tools:
         tool_dir = output_dir / name
         tool_path = tool_dir / PER_TOOL_FILENAME
         existing = load_existing_per_tool(tool_path)
         entries, latest_tag = build_merged_tool_releases(
-            name, owner, repo, pinned_tag, token, existing
+            name,
+            owner,
+            repo,
+            pinned_tag,
+            token,
+            existing,
+            release_tag_prefix=release_tag_prefix,
         )
         per_tool_index[name] = {
             "path": f"{name}/{PER_TOOL_FILENAME}",

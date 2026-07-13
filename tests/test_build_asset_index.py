@@ -69,19 +69,28 @@ class ParseSha256SumsTest(unittest.TestCase):
 
     def test_strips_dot_slash_prefix(self) -> None:
         text = (
-            "deadbeef" + "0" * 56 + "  ./foo.tar.gz\n"
-            + "cafebabe" + "0" * 56 + "  bar.zip\n"
+            "deadbeef"
+            + "0" * 56
+            + "  ./foo.tar.gz\n"
+            + "cafebabe"
+            + "0" * 56
+            + "  bar.zip\n"
         )
         parsed = bai.parse_sha256sums(text)
         self.assertEqual(set(parsed.keys()), {"foo.tar.gz", "bar.zip"})
 
     def test_skips_self_and_installers_and_debug(self) -> None:
         text = (
-            "0" * 64 + "  SHA256SUMS\n"
-            + "1" * 64 + "  install.sh\n"
-            + "2" * 64 + "  install.ps1\n"
-            + "3" * 64 + "  zccache-v1.12.9-x86_64-pc-windows-msvc-debug.zip\n"
-            + "4" * 64 + "  zccache-v1.12.9-x86_64-pc-windows-msvc.zip\n"
+            "0" * 64
+            + "  SHA256SUMS\n"
+            + "1" * 64
+            + "  install.sh\n"
+            + "2" * 64
+            + "  install.ps1\n"
+            + "3" * 64
+            + "  zccache-v1.12.9-x86_64-pc-windows-msvc-debug.zip\n"
+            + "4" * 64
+            + "  zccache-v1.12.9-x86_64-pc-windows-msvc.zip\n"
         )
         parsed = bai.parse_sha256sums(text)
         self.assertEqual(
@@ -94,7 +103,8 @@ class ParseSha256SumsTest(unittest.TestCase):
             "not-a-hash  some.zip\n"
             + "# comment line\n"
             + "\n"
-            + ("a" * 64) + "  good.zip\n"
+            + ("a" * 64)
+            + "  good.zip\n"
         )
         parsed = bai.parse_sha256sums(text)
         self.assertEqual(parsed, {"good.zip": "a" * 64})
@@ -156,20 +166,23 @@ class BuildAssetIndexTest(unittest.TestCase):
         tool_dir = root / "fake-tool"
         tool_dir.mkdir()
         (tool_dir / "manifest.json").write_text(
-            json.dumps([
-                {
-                    "tool": "fake-tool",
-                    "owner": "someone",
-                    "repo": "fake-tool",
-                    "tag": "v0.0.1",
-                    "assets": {
-                        "fake-tool-linux.tar.gz": {
-                            "url": "https://example.invalid/fake-tool-linux.tar.gz",
-                            "size": 1,
-                        }
-                    },
-                }
-            ], indent=2),
+            json.dumps(
+                [
+                    {
+                        "tool": "fake-tool",
+                        "owner": "someone",
+                        "repo": "fake-tool",
+                        "tag": "v0.0.1",
+                        "assets": {
+                            "fake-tool-linux.tar.gz": {
+                                "url": "https://example.invalid/fake-tool-linux.tar.gz",
+                                "size": 1,
+                            }
+                        },
+                    }
+                ],
+                indent=2,
+            ),
             encoding="utf-8",
         )
 
@@ -197,10 +210,7 @@ class BuildAssetIndexTest(unittest.TestCase):
             # The locally-hosted SDK file: attributed via apple-sdk's
             # per-tool manifest to (vendored, messense/cargo-zigbuild,
             # MacOSX11.3); sha and URL come from on-disk state.
-            sdk_entries = [
-                e for e in index["entries"]
-                if e["asset"] == "sdk.tar.zstd"
-            ]
+            sdk_entries = [e for e in index["entries"] if e["asset"] == "sdk.tar.zstd"]
             self.assertEqual(len(sdk_entries), 1, msg=index)
             entry = sdk_entries[0]
             self.assertEqual(entry["owner"], "vendored")
@@ -230,12 +240,54 @@ class BuildAssetIndexTest(unittest.TestCase):
             )
 
             self_attributed = [
-                e for e in index["entries"]
-                if e["owner"] == "zackees" and e["repo"] == "soldr-toolchain"
+                e
+                for e in index["entries"]
+                if e["owner"] == "zackees"
+                and e["repo"] == "soldr-toolchain"
                 and e["tag"] == "assets"
             ]
             assets = {e["asset"] for e in self_attributed}
             self.assertIn("sdk.tar.zstd", assets)
+
+    def test_v1_catalog_attributes_forge_blob_to_source_repo(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            blob_dir = root / "cargo-nextest" / "0.9.140" / "linux-x86_64-musl"
+            blob_dir.mkdir(parents=True)
+            payload = b"forge-nextest"
+            (blob_dir / "bundle.tar.gz").write_bytes(payload)
+            (root / "cargo-nextest" / "manifest.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "Catalog",
+                        "releases": [
+                            {
+                                "version": "0.9.140",
+                                "source": {
+                                    "repo_url": "https://github.com/nextest-rs/nextest",
+                                    "ref": "a9fef2964e34f64ed4fceeee7c0c3559ce560920",
+                                },
+                                "platforms": [],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            index = bai.build_asset_index(
+                root,
+                repo_owner="zackees",
+                repo_name="soldr-toolchain",
+                branch="assets",
+                offline=True,
+            )
+
+            entry = next(e for e in index["entries"] if e["asset"] == "bundle.tar.gz")
+            self.assertEqual(entry["owner"], "nextest-rs")
+            self.assertEqual(entry["repo"], "nextest")
+            self.assertEqual(entry["tag"], "0.9.140")
+            self.assertEqual(entry["sha256"], hashlib.sha256(payload).hexdigest())
 
     def test_variants_flat_inside_platform_folder(self) -> None:
         """Variants for the same OS+arch (e.g. gnu/musl on linux-x64)
@@ -249,18 +301,25 @@ class BuildAssetIndexTest(unittest.TestCase):
             blob_dir.mkdir(parents=True)
             gnu_payload = b"gnu-build-content\n" * 100
             musl_payload = b"musl-build-content\n" * 100
-            (blob_dir / "zccache-v1.12.9-x86_64-unknown-linux-gnu.tar.gz").write_bytes(gnu_payload)
-            (blob_dir / "zccache-v1.12.9-x86_64-unknown-linux-musl.tar.gz").write_bytes(musl_payload)
+            (blob_dir / "zccache-v1.12.9-x86_64-unknown-linux-gnu.tar.gz").write_bytes(
+                gnu_payload
+            )
+            (blob_dir / "zccache-v1.12.9-x86_64-unknown-linux-musl.tar.gz").write_bytes(
+                musl_payload
+            )
             (tool_dir / "manifest.json").write_text(
-                json.dumps([
-                    {
-                        "tool": "zccache",
-                        "owner": "zackees",
-                        "repo": "zccache",
-                        "tag": "1.12.9",
-                        "assets": {},
-                    }
-                ], indent=2),
+                json.dumps(
+                    [
+                        {
+                            "tool": "zccache",
+                            "owner": "zackees",
+                            "repo": "zccache",
+                            "tag": "1.12.9",
+                            "assets": {},
+                        }
+                    ],
+                    indent=2,
+                ),
                 encoding="utf-8",
             )
 
@@ -272,8 +331,11 @@ class BuildAssetIndexTest(unittest.TestCase):
                 offline=True,
             )
             zccache_entries = sorted(
-                (e for e in index["entries"]
-                 if e["owner"] == "zackees" and e["repo"] == "zccache"),
+                (
+                    e
+                    for e in index["entries"]
+                    if e["owner"] == "zackees" and e["repo"] == "zccache"
+                ),
                 key=lambda e: e["asset"],
             )
             self.assertEqual(len(zccache_entries), 2)
@@ -320,10 +382,7 @@ class BuildAssetIndexTest(unittest.TestCase):
                 offline=True,
             )
 
-            sdk_entries = [
-                e for e in index["entries"]
-                if e["asset"] == "sdk.tar.zst"
-            ]
+            sdk_entries = [e for e in index["entries"] if e["asset"] == "sdk.tar.zst"]
             self.assertEqual(len(sdk_entries), 3, msg=index)
             self.assertEqual(
                 {
@@ -344,24 +403,27 @@ class BuildAssetIndexTest(unittest.TestCase):
             self._make_tree(root)
             (root / "evil-tool").mkdir()
             (root / "evil-tool" / "manifest.json").write_text(
-                json.dumps([
-                    {
-                        "tool": "evil",
-                        "owner": "evil",
-                        "repo": "evil",
-                        "tag": "v1.0.0",
-                        "assets": {
-                            "SHA256SUMS": {
-                                "url": "https://example.invalid/SHA256SUMS",
-                                "size": 1,
+                json.dumps(
+                    [
+                        {
+                            "tool": "evil",
+                            "owner": "evil",
+                            "repo": "evil",
+                            "tag": "v1.0.0",
+                            "assets": {
+                                "SHA256SUMS": {
+                                    "url": "https://example.invalid/SHA256SUMS",
+                                    "size": 1,
+                                },
+                                "evil-payload.zip": {
+                                    "url": "https://example.invalid/evil-payload.zip",
+                                    "size": 1,
+                                },
                             },
-                            "evil-payload.zip": {
-                                "url": "https://example.invalid/evil-payload.zip",
-                                "size": 1,
-                            },
-                        },
-                    }
-                ], indent=2),
+                        }
+                    ],
+                    indent=2,
+                ),
                 encoding="utf-8",
             )
 
@@ -373,7 +435,8 @@ class BuildAssetIndexTest(unittest.TestCase):
                 offline=True,
             )
             evil_entries = [
-                e for e in index["entries"]
+                e
+                for e in index["entries"]
                 if e["owner"] == "evil" or e["asset"].startswith("evil-")
             ]
             self.assertEqual(evil_entries, [], msg=index)
@@ -412,35 +475,41 @@ class BuildAssetIndexTest(unittest.TestCase):
             tool_dir = root / "real-tool"
             tool_dir.mkdir()
             (tool_dir / "manifest.json").write_text(
-                json.dumps([
-                    {
-                        "tool": "real-tool",
-                        "owner": "vendor",
-                        "repo": "real-tool",
-                        "tag": "v2.3.4",
-                        "assets": {
-                            "SHA256SUMS": {
-                                "url": "https://example.invalid/SHA256SUMS",
-                                "size": 1,
+                json.dumps(
+                    [
+                        {
+                            "tool": "real-tool",
+                            "owner": "vendor",
+                            "repo": "real-tool",
+                            "tag": "v2.3.4",
+                            "assets": {
+                                "SHA256SUMS": {
+                                    "url": "https://example.invalid/SHA256SUMS",
+                                    "size": 1,
+                                },
+                                "real-tool-linux.tar.gz": {
+                                    "url": "https://example.invalid/real-tool-linux.tar.gz",
+                                    "size": 1,
+                                },
+                                "real-tool-windows.zip": {
+                                    "url": "https://example.invalid/real-tool-windows.zip",
+                                    "size": 1,
+                                },
                             },
-                            "real-tool-linux.tar.gz": {
-                                "url": "https://example.invalid/real-tool-linux.tar.gz",
-                                "size": 1,
-                            },
-                            "real-tool-windows.zip": {
-                                "url": "https://example.invalid/real-tool-windows.zip",
-                                "size": 1,
-                            },
-                        },
-                    }
-                ], indent=2),
+                        }
+                    ],
+                    indent=2,
+                ),
                 encoding="utf-8",
             )
 
             fake_sums = (
-                ("a" * 64) + "  real-tool-linux.tar.gz\n"
-                + ("b" * 64) + "  real-tool-windows.zip\n"
-                + ("c" * 64) + "  install.sh\n"  # excluded
+                ("a" * 64)
+                + "  real-tool-linux.tar.gz\n"
+                + ("b" * 64)
+                + "  real-tool-windows.zip\n"
+                + ("c" * 64)
+                + "  install.sh\n"  # excluded
             )
 
             def fake_http_get(url: str) -> str:
@@ -471,11 +540,15 @@ class BuildAssetIndexTest(unittest.TestCase):
             root = Path(tmp)
             self._make_tree(root)
             out = Path(tmp) / "out" / "asset-index.json"
-            rc = bai.main([
-                "--manifest-checkout", str(root),
-                "--output", str(out),
-                "--offline",
-            ])
+            rc = bai.main(
+                [
+                    "--manifest-checkout",
+                    str(root),
+                    "--output",
+                    str(out),
+                    "--offline",
+                ]
+            )
             self.assertEqual(rc, 0)
             self.assertTrue(out.is_file())
             payload = json.loads(out.read_text(encoding="utf-8"))
