@@ -57,8 +57,8 @@
         "url": {
           "type": "string",
           "format": "uri",
-          "pattern": "^https://(github\\.com|.*\\.githubusercontent\\.com|zackees\\.github\\.io)/",
-          "description": "Direct download URL. MUST be on a github.com / *.githubusercontent.com / zackees.github.io origin. The producer (scripts/build_asset_index.py) emits one of three URL shapes — see docs/ASSET_CATALOG.md 'URL convention'."
+          "pattern": "^https://[^\\s]+$",
+          "description": "Direct immutable HTTPS download URL. Providers are host-agnostic; producer records retain upstream provenance separately."
         },
         "sha256": {
           "type": "string",

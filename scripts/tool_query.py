@@ -30,6 +30,7 @@ import argparse
 import json
 import urllib.error
 import urllib.request
+from urllib.parse import urljoin
 from typing import Any
 
 DEFAULT_MANIFEST_URL = (
@@ -108,6 +109,45 @@ def find_release(per_tool: list[dict[str, Any]], requested: str) -> dict[str, An
     )
 
 
+def _v1_platform_key(platform: dict[str, Any]) -> str:
+    os_key = str(platform.get("os", "")).lower()
+    arch = str(platform.get("arch", "")).lower()
+    arch = {"x86_64": "x64", "aarch64": "arm64"}.get(arch, arch)
+    extra = platform.get("libc") or platform.get("abi")
+    return f"{os_key}-{arch}" + (f"-{str(extra).lower()}" if extra else "")
+
+
+def resolve_v1(root: dict[str, Any], manifest_url: str, tool: str,
+               os_key: str, arch_key: str, extra: str | None,
+               requested: str) -> dict[str, Any]:
+    """Resolve one v1 Index/Catalog row and return complete metadata."""
+    entry = (root.get("tools") or {}).get(tool)
+    if not isinstance(entry, dict) or not isinstance(entry.get("descriptor"), dict):
+        raise SystemExit(f"tool '{tool}' has no v1 descriptor")
+    descriptor = entry["descriptor"]
+    catalog_url = urljoin(manifest_url.rsplit("/", 1)[0] + "/", str(descriptor.get("url", "")))
+    catalog = fetch_json(catalog_url)
+    release = next((r for r in catalog.get("releases", [])
+                    if requested in ("", "latest") or r.get("version") == requested), None)
+    if release is None:
+        raise SystemExit(f"no release '{requested}' in {tool} Catalog")
+    wanted = set(build_candidate_keys(os_key, arch_key, extra))
+    matches = [p for p in release.get("platforms", [])
+               if _v1_platform_key(p.get("platform") or {}) in wanted]
+    if len(matches) != 1:
+        raise SystemExit(f"expected one {tool}/{release.get('version')}/{sorted(wanted)}, found {len(matches)}")
+    asset = matches[0].get("asset") or {}
+    urls = asset.get("urls") or ([asset["url"]] if asset.get("url") else [])
+    digest = asset.get("sha256")
+    if not urls or not isinstance(digest, str) or len(digest) != 64:
+        raise SystemExit("v1 asset must contain urls and a 64-character sha256")
+    return {"tool": tool, "version": release.get("version"),
+            "platform": _v1_platform_key(matches[0].get("platform") or {}),
+            "filename": asset.get("filename"), "urls": urls,
+            "sha256": digest, "size_bytes": asset.get("size_bytes"),
+            "catalog_url": catalog_url, "source": release.get("source")}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -137,6 +177,7 @@ def main() -> int:
         "--version", default="latest",
         help="Release tag (e.g. ``1.12.9``) or ``latest`` (default).",
     )
+    parser.add_argument("--json", action="store_true", help="emit complete v1 asset metadata as JSON")
     args = parser.parse_args()
 
     os_key = OS_ALIASES.get(args.platform.lower())
@@ -158,6 +199,10 @@ def main() -> int:
     if tool_entry is None:
         known = ", ".join(sorted(tools.keys()))
         raise SystemExit(f"tool '{args.tool}' not in manifest. Known: {known}")
+    if isinstance(tool_entry, dict) and "descriptor" in tool_entry:
+        result = resolve_v1(root, args.manifest_url, args.tool, os_key, arch_key, args.extra, args.version)
+        print(json.dumps(result, sort_keys=True) if args.json else result["urls"][0])
+        return 0
     per_tool_path = tool_entry["path"]
     base = args.manifest_url.rsplit("/", 1)[0]
     per_tool_url = f"{base}/{per_tool_path}"
@@ -175,7 +220,12 @@ def main() -> int:
     for candidate in build_candidate_keys(os_key, arch_key, args.extra):
         entry = platforms.get(candidate)
         if entry is not None:
-            print(entry["url"])
+            if args.json:
+                print(json.dumps({"tool": args.tool, "version": tag, "platform": candidate,
+                                  "filename": entry.get("filename"), "url": entry["url"],
+                                  "sha256": entry.get("sha256")}, sort_keys=True))
+            else:
+                print(entry["url"])
             return 0
 
     available = ", ".join(sorted(platforms.keys())) or "(none)"

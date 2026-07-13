@@ -71,11 +71,17 @@ appear in stored values.
 
 ## URL convention
 
-Vendored binaries are served from one of three soldr-toolchain CDNs:
+Vendored binaries are served from one of the soldr-toolchain CDNs or from a
+provider-neutral immutable HTTPS blob origin configured by Forge:
 
 - `https://zackees.github.io/soldr-toolchain/<rel>`              (Pages)
 - `https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/<rel>`  (raw)
 - `https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/<rel>`  (LFS-backed)
+
+Off-site objects use the content-addressed form
+`https://<origin>/sha256/<first-two>/<sha256>/<filename>`. Forge performs an
+unauthenticated GET and verifies the digest before publishing the catalogue;
+the upstream URL and build provenance are retained in `forge-assets.json`.
 
 Where `<rel>` MUST equal `<tool>/<version>/<platform>/<filename>` (per the
 naming rules above). The linter rejects any URL whose path diverges from

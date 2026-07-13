@@ -103,5 +103,23 @@ class FindReleaseTest(unittest.TestCase):
             tq.find_release([], "latest")
 
 
+class V1CatalogTest(unittest.TestCase):
+    def test_v1_resolver_returns_digest_and_urls(self) -> None:
+        catalog = {
+            "releases": [{"version": "0.9.140", "platforms": [{
+                "platform": {"os": "linux", "arch": "aarch64", "libc": "musl"},
+                "asset": {"filename": "nextest.tar.gz", "urls": ["https://cdn.example/nextest.tar.gz"], "sha256": "a" * 64, "size_bytes": 12},
+            }]}]
+        }
+        old = tq.fetch_json
+        try:
+            tq.fetch_json = lambda _: catalog
+            result = tq.resolve_v1({"tools": {"cargo-nextest": {"descriptor": {"url": "cargo-nextest/manifest.json"}}}}, "https://example/manifest.json", "cargo-nextest", "linux", "arm64", "musl", "0.9.140")
+        finally:
+            tq.fetch_json = old
+        self.assertEqual(result["sha256"], "a" * 64)
+        self.assertEqual(result["platform"], "linux-arm64-musl")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
