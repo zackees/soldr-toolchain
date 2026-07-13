@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import unittest
 
-import tool_query as tq
+from scripts import tool_query as tq
 
 
 class AliasMapsTest(unittest.TestCase):

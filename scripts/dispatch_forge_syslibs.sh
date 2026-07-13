@@ -12,7 +12,7 @@
 # locally with:
 #
 #   gh run download <FORGE_RUN_ID> --repo zackees/forge --dir /tmp/<lib>-<shape>
-#   python scripts/forge_to_catalogue.py \
+#   python -m scripts.forge_to_catalogue \
 #       --forge-dir /tmp/<lib>-<shape> \
 #       --tool <lib> --version <ver> --shape <shape> \
 #       --forge-run-id <FORGE_RUN_ID> \

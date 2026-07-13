@@ -1,11 +1,5 @@
-import sys
+from recipes import _syslib
 from pathlib import Path
-
-
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "recipes"))
-
-import _syslib  # noqa: E402
 
 
 def test_windows_gnu_shape_is_available_for_core_syslibs() -> None:

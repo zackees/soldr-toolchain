@@ -103,7 +103,7 @@ url    = latest["platforms"]["linux-x64-musl"]["url"]
 Or via the bundled helper:
 
 ```sh
-uv run python scripts/tool_query.py --platform linux --arch x86 --extra musl zccache
+uv run --group dev python -m scripts.tool_query --platform linux --arch x86 --extra musl zccache
 ```
 
 ## Platform key shape
@@ -184,11 +184,11 @@ the parity tests skip — the pure-function tests still run.
 ```sh
 # Needs both a soldr checkout (for pinned versions) and an assets-branch
 # checkout (the destination tree).
-uv run python scripts/build_manifest.py \
+uv run --group dev python -m scripts.build_manifest \
     --output-dir ../soldr-toolchain-assets \
     --repo-root ../soldr
 
-uv run python scripts/build_asset_index.py \
+uv run --group dev python -m scripts.build_asset_index \
     --manifest-checkout ../soldr-toolchain-assets \
     --output ../soldr-toolchain-assets/asset-index.json \
     --branch assets \

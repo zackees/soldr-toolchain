@@ -39,8 +39,8 @@ import os
 import unittest
 from pathlib import Path
 
-import build_asset_index as bai
-import build_manifest as bm
+from scripts import build_asset_index as bai
+from scripts import build_manifest as bm
 from manifest_json import (
     ChannelNotFoundError,
     ValidationError,

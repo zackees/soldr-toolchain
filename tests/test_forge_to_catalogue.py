@@ -13,7 +13,7 @@ import json
 import tarfile
 from pathlib import Path
 
-import forge_to_catalogue as fc
+from scripts import forge_to_catalogue as fc
 
 
 def _make_fake_forge_artifact(

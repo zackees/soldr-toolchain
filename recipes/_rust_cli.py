@@ -25,6 +25,7 @@ from pathlib import Path
 RUST_CLI_SHAPES = (
     "windows-x64",
     "windows-arm64",
+    "darwin-x64",
     "darwin-arm64",
     "linux-x64-gnu",
     "linux-arm64-gnu",
@@ -43,11 +44,22 @@ TOOL_CONFIG = {
         "binary": "crgx",
         "versions": ("0.1.0",),
     },
+    "cargo-binstall": {
+        "crate": "cargo-binstall",
+        "binary": "cargo-binstall",
+        "versions": ("1.20.1",),
+    },
+    "cargo-nextest": {
+        "crate": "cargo-nextest",
+        "binary": "cargo-nextest",
+        "versions": ("0.9.140",),
+    },
 }
 
 TARGET_TRIPLES = {
     "windows-x64": "x86_64-pc-windows-msvc",
     "windows-arm64": "aarch64-pc-windows-msvc",
+    "darwin-x64": "x86_64-apple-darwin",
     "darwin-arm64": "aarch64-apple-darwin",
     "linux-x64-gnu": "x86_64-unknown-linux-gnu",
     "linux-arm64-gnu": "aarch64-unknown-linux-gnu",

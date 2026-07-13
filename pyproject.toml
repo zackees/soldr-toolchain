@@ -17,8 +17,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-# Add scripts/ to sys.path so tests can `import build_manifest` etc.
-# without per-file sys.path.insert hacks.
-pythonpath = ["scripts"]
+# Tests import repository tooling through the `scripts` package. Keeping the
+# repository root as the import boundary avoids per-test path mutation.
 testpaths = ["tests"]
 addopts = "-v"

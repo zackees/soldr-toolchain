@@ -16,7 +16,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import build_manifest as bm
+from scripts import build_manifest as bm
 
 
 class DerivePlatformKeyTest(unittest.TestCase):

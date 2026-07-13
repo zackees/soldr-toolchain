@@ -16,7 +16,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import build_zig_manifest as bzm
+from scripts import build_zig_manifest as bzm
 from manifest_json import validate_document
 
 

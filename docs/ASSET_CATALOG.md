@@ -89,7 +89,7 @@ this convention.
 
 ## Validation
 
-Run `python scripts/lint_assets.py --assets-dir path/to/assets/` to check.
+Run `uv run --group dev python -m scripts.lint_assets --assets-dir path/to/assets/` to check.
 The linter enforces every rule in this document. Exit code 0 = clean.
 
 ## Schema: `catalogue.v1.json` (soldr#988 Phase 1)
@@ -102,7 +102,7 @@ their unique identity is the URL:
 
 - **Schema**: [`schemas/catalogue.v1.schema.json`](../schemas/catalogue.v1.schema.json) (JSON Schema Draft 2020-12)
 - **Sample**: [`examples/catalogue.v1.json`](../examples/catalogue.v1.json)
-- **Validator**: `python scripts/validate_catalogue.py <path>` (requires
+- **Validator**: `uv run --group dev python -m scripts.validate_catalogue <path>` (requires
   `jsonschema`, installed in CI via `uv pip install jsonschema`)
 - **CI gate**: [`.github/workflows/catalogue-schema.yml`](../.github/workflows/catalogue-schema.yml)
 
