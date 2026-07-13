@@ -120,6 +120,50 @@ class V1CatalogTest(unittest.TestCase):
         self.assertEqual(result["sha256"], "a" * 64)
         self.assertEqual(result["platform"], "linux-arm64-musl")
 
+    def test_v1_linux_gnu_alias_resolves_glibc(self) -> None:
+        catalog = {
+            "releases": [
+                {
+                    "version": "0.9.140",
+                    "platforms": [
+                        {
+                            "platform": {
+                                "os": "linux",
+                                "arch": "aarch64",
+                                "libc": "glibc",
+                            },
+                            "asset": {
+                                "filename": "nextest-linux-gnu.tar.gz",
+                                "urls": ["https://cdn.example/nextest.tar.gz"],
+                                "sha256": "b" * 64,
+                            },
+                        }
+                    ],
+                }
+            ]
+        }
+        old = tq.fetch_json
+        try:
+            tq.fetch_json = lambda _: catalog
+            result = tq.resolve_v1(
+                {
+                    "tools": {
+                        "cargo-nextest": {
+                            "descriptor": {"url": "cargo-nextest/manifest.json"}
+                        }
+                    }
+                },
+                "https://example/manifest.json",
+                "cargo-nextest",
+                "linux",
+                "arm64",
+                "gnu",
+                "0.9.140",
+            )
+        finally:
+            tq.fetch_json = old
+        self.assertEqual(result["platform"], "linux-arm64-glibc")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

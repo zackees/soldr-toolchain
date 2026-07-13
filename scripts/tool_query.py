@@ -131,7 +131,12 @@ def resolve_v1(root: dict[str, Any], manifest_url: str, tool: str,
                     if requested in ("", "latest") or r.get("version") == requested), None)
     if release is None:
         raise SystemExit(f"no release '{requested}' in {tool} Catalog")
-    wanted = set(build_candidate_keys(os_key, arch_key, extra))
+    wanted = {
+        key.removesuffix("-gnu") + "-glibc"
+        if key.startswith("linux-") and key.endswith("-gnu")
+        else key
+        for key in build_candidate_keys(os_key, arch_key, extra)
+    }
     matches = [p for p in release.get("platforms", [])
                if _v1_platform_key(p.get("platform") or {}) in wanted]
     if len(matches) != 1:
