@@ -62,6 +62,10 @@ class DerivePlatformKeyTest(unittest.TestCase):
             "tool-universal2-apple-darwin.tar.gz",
             "darwin-universal2",
         )
+        self.assert_key(
+            "tool-universal-apple-darwin.tar.gz",
+            "darwin-universal2",
+        )
 
     def test_windows_variants(self) -> None:
         self.assert_key(
@@ -170,7 +174,9 @@ class BuildReleaseEntryTest(unittest.TestCase):
         # SHA256SUMS is NOT a runnable platform — it lives in `assets`
         # but must not appear in `platforms`.
         self.assertIn("SHA256SUMS", entry["assets"])
-        self.assertNotIn("SHA256SUMS", {v.get("filename") for v in entry["platforms"].values()})
+        self.assertNotIn(
+            "SHA256SUMS", {v.get("filename") for v in entry["platforms"].values()}
+        )
 
     def test_platforms_deterministically_sorted(self) -> None:
         """`platforms` is keyed by platform string; the dict iteration
@@ -179,18 +185,37 @@ class BuildReleaseEntryTest(unittest.TestCase):
         ``write_if_changed``)."""
         release = {
             "tag_name": "v1.0.0",
-            "name": None, "draft": False, "prerelease": False,
-            "created_at": None, "published_at": None, "html_url": None,
+            "name": None,
+            "draft": False,
+            "prerelease": False,
+            "created_at": None,
+            "published_at": None,
+            "html_url": None,
             "assets": [
-                {"name": "tool-x86_64-pc-windows-msvc.zip",
-                 "browser_download_url": "u1", "size": 1,
-                 "content_type": None, "created_at": None, "updated_at": None},
-                {"name": "tool-x86_64-unknown-linux-gnu.tar.gz",
-                 "browser_download_url": "u2", "size": 1,
-                 "content_type": None, "created_at": None, "updated_at": None},
-                {"name": "tool-aarch64-apple-darwin.tar.gz",
-                 "browser_download_url": "u3", "size": 1,
-                 "content_type": None, "created_at": None, "updated_at": None},
+                {
+                    "name": "tool-x86_64-pc-windows-msvc.zip",
+                    "browser_download_url": "u1",
+                    "size": 1,
+                    "content_type": None,
+                    "created_at": None,
+                    "updated_at": None,
+                },
+                {
+                    "name": "tool-x86_64-unknown-linux-gnu.tar.gz",
+                    "browser_download_url": "u2",
+                    "size": 1,
+                    "content_type": None,
+                    "created_at": None,
+                    "updated_at": None,
+                },
+                {
+                    "name": "tool-aarch64-apple-darwin.tar.gz",
+                    "browser_download_url": "u3",
+                    "size": 1,
+                    "content_type": None,
+                    "created_at": None,
+                    "updated_at": None,
+                },
             ],
         }
         entry = bm.build_release_entry(release)
@@ -205,26 +230,35 @@ class LoadExistingPerToolTest(unittest.TestCase):
     def test_v5_flat_array(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             p = Path(tmp) / "m.json"
-            p.write_text(json.dumps([
-                {"tag": "v1", "tool": "t"}, {"tag": "v2", "tool": "t"},
-            ]))
+            p.write_text(
+                json.dumps(
+                    [
+                        {"tag": "v1", "tool": "t"},
+                        {"tag": "v2", "tool": "t"},
+                    ]
+                )
+            )
             entries = bm.load_existing_per_tool(p)
             self.assertEqual([e["tag"] for e in entries], ["v1", "v2"])
 
     def test_v4_dict_with_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             p = Path(tmp) / "m.json"
-            p.write_text(json.dumps({
-                "schema_version": 4,
-                "name": "t",
-                "owner": "o",
-                "repo": "r",
-                "pinned": None,
-                "tracked_tags": ["v1.0", "v2.0"],
-                "latest": "v2.0",
-                "v1.0": {"tag": "v1.0", "platforms": {}},
-                "v2.0": {"tag": "v2.0", "platforms": {}},
-            }))
+            p.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 4,
+                        "name": "t",
+                        "owner": "o",
+                        "repo": "r",
+                        "pinned": None,
+                        "tracked_tags": ["v1.0", "v2.0"],
+                        "latest": "v2.0",
+                        "v1.0": {"tag": "v1.0", "platforms": {}},
+                        "v2.0": {"tag": "v2.0", "platforms": {}},
+                    }
+                )
+            )
             entries = bm.load_existing_per_tool(p)
             tags = sorted(e["tag"] for e in entries)
             self.assertEqual(tags, ["v1.0", "v2.0"])
@@ -232,13 +266,17 @@ class LoadExistingPerToolTest(unittest.TestCase):
     def test_v3_releases_wrapper(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             p = Path(tmp) / "m.json"
-            p.write_text(json.dumps({
-                "schema_version": 3,
-                "releases": {
-                    "v1.0": {"tag": "v1.0", "platforms": {}},
-                    "v2.0": {"tag": "v2.0", "platforms": {}},
-                },
-            }))
+            p.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 3,
+                        "releases": {
+                            "v1.0": {"tag": "v1.0", "platforms": {}},
+                            "v2.0": {"tag": "v2.0", "platforms": {}},
+                        },
+                    }
+                )
+            )
             entries = bm.load_existing_per_tool(p)
             tags = sorted(e["tag"] for e in entries)
             self.assertEqual(tags, ["v1.0", "v2.0"])
@@ -260,15 +298,26 @@ class BuildMergedToolReleasesTest(unittest.TestCase):
 
     def test_merges_preserving_history(self) -> None:
         existing = [
-            {"tag": "v1.0", "published_at": "2020-01-01T00:00:00Z",
-             "platforms": {}, "assets": {}},
-            {"tag": "v2.0", "published_at": "2021-01-01T00:00:00Z",
-             "platforms": {}, "assets": {}, "stale_field": "preserved"},
+            {
+                "tag": "v1.0",
+                "published_at": "2020-01-01T00:00:00Z",
+                "platforms": {},
+                "assets": {},
+            },
+            {
+                "tag": "v2.0",
+                "published_at": "2021-01-01T00:00:00Z",
+                "platforms": {},
+                "assets": {},
+                "stale_field": "preserved",
+            },
         ]
         fetched = [
             {
                 "tag_name": "v3.0",
-                "name": None, "draft": False, "prerelease": False,
+                "name": None,
+                "draft": False,
+                "prerelease": False,
                 "created_at": None,
                 "published_at": "2022-01-01T00:00:00Z",
                 "html_url": None,
@@ -277,7 +326,9 @@ class BuildMergedToolReleasesTest(unittest.TestCase):
             {
                 # Overwrites v2.0 — fresh from API.
                 "tag_name": "v2.0",
-                "name": None, "draft": False, "prerelease": False,
+                "name": None,
+                "draft": False,
+                "prerelease": False,
                 "created_at": None,
                 "published_at": "2021-01-01T00:00:00Z",
                 "html_url": None,
@@ -290,8 +341,13 @@ class BuildMergedToolReleasesTest(unittest.TestCase):
             return fetched
 
         entries, latest = bm.build_merged_tool_releases(
-            "t", "o", "r", pinned_tag="v2.0", token=None,
-            existing=existing, list_releases_fn=fake_list,
+            "t",
+            "o",
+            "r",
+            pinned_tag="v2.0",
+            token=None,
+            existing=existing,
+            list_releases_fn=fake_list,
         )
 
         # v1.0 is preserved from existing; v2.0 is overwritten (no
@@ -310,9 +366,15 @@ class BuildMergedToolReleasesTest(unittest.TestCase):
     def test_empty_history(self) -> None:
         def fake_list(*args, **kwargs):
             return []
+
         entries, latest = bm.build_merged_tool_releases(
-            "t", "o", "r", pinned_tag=None, token=None,
-            existing=[], list_releases_fn=fake_list,
+            "t",
+            "o",
+            "r",
+            pinned_tag=None,
+            token=None,
+            existing=[],
+            list_releases_fn=fake_list,
         )
         self.assertEqual(entries, [])
         self.assertIsNone(latest)
@@ -364,9 +426,9 @@ class ReadConstantTest(unittest.TestCase):
             p = Path(tmp) / "src.rs"
             p.write_text(
                 "// noise\n"
-                "pub const OTHER: &str = \"x\";\n"
-                "pub const MANAGED_ZCCACHE_VERSION: &str = \"1.12.9\";\n"
-                "pub const ANOTHER: &str = \"y\";\n"
+                'pub const OTHER: &str = "x";\n'
+                'pub const MANAGED_ZCCACHE_VERSION: &str = "1.12.9";\n'
+                'pub const ANOTHER: &str = "y";\n'
             )
             self.assertEqual(
                 bm.read_constant(p, "MANAGED_ZCCACHE_VERSION"),
@@ -388,18 +450,22 @@ class PreserveVendoredTopLevelEntriesTest(unittest.TestCase):
             root = Path(tmp)
             (root / "deps" / "mac").mkdir(parents=True)
             (root / "deps" / "mac" / "manifest.json").write_text("[]")
-            (root / "manifest.json").write_text(json.dumps({
-                "schema_version": 5,
-                "tools": {
-                    "apple-sdk": {
-                        "path": "deps/mac/manifest.json",
-                        "kind": "vendored-sdk",
-                    },
-                    "stale-tool": {
-                        "path": "stale/missing.json",
-                    },
-                },
-            }))
+            (root / "manifest.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": 5,
+                        "tools": {
+                            "apple-sdk": {
+                                "path": "deps/mac/manifest.json",
+                                "kind": "vendored-sdk",
+                            },
+                            "stale-tool": {
+                                "path": "stale/missing.json",
+                            },
+                        },
+                    }
+                )
+            )
             per_tool_index: dict = {}
             bm.preserve_vendored_top_level_entries(root, per_tool_index)
             self.assertIn("apple-sdk", per_tool_index)
@@ -410,15 +476,19 @@ class PreserveVendoredTopLevelEntriesTest(unittest.TestCase):
             root = Path(tmp)
             (root / "deps" / "mac").mkdir(parents=True)
             (root / "deps" / "mac" / "manifest.json").write_text("[]")
-            (root / "manifest.json").write_text(json.dumps({
-                "schema_version": 5,
-                "tools": {
-                    "apple-sdk": {
-                        "path": "deps/mac/manifest.json",
-                        "marker": "OLD",
-                    },
-                },
-            }))
+            (root / "manifest.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": 5,
+                        "tools": {
+                            "apple-sdk": {
+                                "path": "deps/mac/manifest.json",
+                                "marker": "OLD",
+                            },
+                        },
+                    }
+                )
+            )
             per_tool_index = {"apple-sdk": {"marker": "NEW"}}
             bm.preserve_vendored_top_level_entries(root, per_tool_index)
             # NEW must stay — the freshly-built index wins for known names.
@@ -435,16 +505,64 @@ class LoadPinnedVersionsTest(unittest.TestCase):
             fetch_dir = root / "crates" / "soldr-cli" / "src" / "fetch"
             fetch_dir.mkdir(parents=True)
             (fetch_dir / "mod.rs").write_text(
-                "pub const MANAGED_ZCCACHE_VERSION: &str = \"1.12.9\";\n"
-                "pub const MANAGED_CRGX_VERSION: &str = \"0.3.4\";\n"
+                'pub const MANAGED_ZCCACHE_VERSION: &str = "1.12.9";\n'
+                'pub const MANAGED_CRGX_VERSION: &str = "0.3.4";\n'
             )
             (fetch_dir / "known_tools.rs").write_text(
-                "pub const CARGO_CHEF_PINNED_VERSION: &str = \"0.1.73\";\n"
+                'pub const CARGO_CHEF_PINNED_VERSION: &str = "0.1.73";\n'
             )
             pins = bm.load_pinned_versions(root)
             self.assertEqual(pins["zccache"], "1.12.9")
             self.assertEqual(pins["crgx"], "v0.3.4")
             self.assertEqual(pins["cargo-chef"], "v0.1.73")
+
+    def test_supports_split_soldr_fetch_and_embedded_zccache(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            fetch_dir = root / "crates" / "soldr-fetch" / "src" / "fetch"
+            fetch_dir.mkdir(parents=True)
+            (fetch_dir / "mod.rs").write_text(
+                'pub const MANAGED_CRGX_VERSION: &str = "0.3.4";\n'
+            )
+            (fetch_dir / "known_tools.rs").write_text(
+                'pub const CARGO_CHEF_PINNED_VERSION: &str = "0.1.73";\n'
+            )
+            pins = bm.load_pinned_versions(root)
+            self.assertIsNone(pins["zccache"])
+            self.assertEqual(pins["crgx"], "v0.3.4")
+            self.assertEqual(pins["cargo-chef"], "v0.1.73")
+
+
+class LoadManagedRustToolsTest(unittest.TestCase):
+    def test_reads_release_tag_conventions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "managed-rust-tools.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "tools": {
+                            "cargo-binstall": {
+                                "version": "1.20.1",
+                                "source": "cargo-bins/cargo-binstall",
+                                "release_tag_prefix": "v",
+                            },
+                            "cargo-nextest": {
+                                "version": "0.9.140",
+                                "source": "nextest-rs/nextest",
+                                "release_tag_prefix": "cargo-nextest-",
+                            },
+                        },
+                    }
+                )
+            )
+            self.assertEqual(
+                bm.load_managed_rust_tools(path),
+                [
+                    ("cargo-binstall", "cargo-bins", "cargo-binstall", "v1.20.1"),
+                    ("cargo-nextest", "nextest-rs", "nextest", "cargo-nextest-0.9.140"),
+                ],
+            )
 
 
 if __name__ == "__main__":

@@ -79,7 +79,7 @@ def gh_request(url: str, token: str | None) -> Any:
         except urllib.error.HTTPError as exc:
             last_exc = exc
             if exc.code in (403, 429):
-                wait = int(exc.headers.get("Retry-After") or 2 ** attempt)
+                wait = int(exc.headers.get("Retry-After") or 2**attempt)
                 print(
                     f"  github API {exc.code} for {url}; sleeping {wait}s",
                     file=sys.stderr,
@@ -89,7 +89,7 @@ def gh_request(url: str, token: str | None) -> Any:
             raise
         except urllib.error.URLError as exc:
             last_exc = exc
-            time.sleep(2 ** attempt)
+            time.sleep(2**attempt)
     raise RuntimeError(f"github API failed after retries: {last_exc}")
 
 
@@ -142,7 +142,7 @@ def derive_platform_key(filename: str) -> str | None:
     else:
         return None
 
-    if "universal2" in name:
+    if "universal2" in name or "universal-apple-darwin" in name:
         arch = "universal2"
     elif "x86_64" in name or "windows-x64" in name or "amd64" in name:
         arch = "x64"
@@ -192,7 +192,7 @@ def build_release_entry(
         digest_raw = asset.get("digest") or ""
         sha256 = ""
         if digest_raw.startswith("sha256:"):
-            sha256 = digest_raw[len("sha256:"):].lower()
+            sha256 = digest_raw[len("sha256:") :].lower()
         entry = {
             "url": asset["browser_download_url"],
             "size": asset.get("size"),
@@ -220,18 +220,20 @@ def build_release_entry(
         entry["owner"] = owner
     if repo is not None:
         entry["repo"] = repo
-    entry.update({
-        "tag": resolved_tag,
-        "version": version,
-        "name": release.get("name"),
-        "draft": release.get("draft"),
-        "prerelease": release.get("prerelease"),
-        "created_at": release.get("created_at"),
-        "published_at": release.get("published_at"),
-        "release_html_url": release.get("html_url"),
-        "platforms": dict(sorted(platforms.items())),
-        "assets": dict(sorted(assets.items())),
-    })
+    entry.update(
+        {
+            "tag": resolved_tag,
+            "version": version,
+            "name": release.get("name"),
+            "draft": release.get("draft"),
+            "prerelease": release.get("prerelease"),
+            "created_at": release.get("created_at"),
+            "published_at": release.get("published_at"),
+            "release_html_url": release.get("html_url"),
+            "platforms": dict(sorted(platforms.items())),
+            "assets": dict(sorted(assets.items())),
+        }
+    )
     return entry
 
 
@@ -252,8 +254,15 @@ def load_existing_per_tool(path: Path) -> list[dict[str, Any]]:
     nested = parsed.get("releases")
     if isinstance(nested, dict):
         return [e for e in nested.values() if isinstance(e, dict) and "tag" in e]
-    legacy_metadata = {"schema_version", "name", "owner", "repo",
-                       "pinned", "tracked_tags", "latest"}
+    legacy_metadata = {
+        "schema_version",
+        "name",
+        "owner",
+        "repo",
+        "pinned",
+        "tracked_tags",
+        "latest",
+    }
     entries: list[dict[str, Any]] = []
     for key, value in parsed.items():
         if key in legacy_metadata:
@@ -299,7 +308,7 @@ def build_merged_tool_releases(
     latest_tag = ordered[0]["tag"] if ordered else None
     if pinned_tag is not None:
         for entry in ordered:
-            entry["is_pinned"] = (entry.get("tag") == pinned_tag)
+            entry["is_pinned"] = entry.get("tag") == pinned_tag
     return ordered, latest_tag
 
 
@@ -364,8 +373,22 @@ def load_pinned_versions(repo_root: Path) -> dict[str, str | None]:
     are omitted; the caller treats absence as "latest".
     """
     fetch_mod = repo_root / "crates" / "soldr-cli" / "src" / "fetch" / "mod.rs"
-    known_tools = repo_root / "crates" / "soldr-cli" / "src" / "fetch" / "known_tools.rs"
-    zccache_version = read_constant(fetch_mod, "MANAGED_ZCCACHE_VERSION")
+    known_tools = (
+        repo_root / "crates" / "soldr-cli" / "src" / "fetch" / "known_tools.rs"
+    )
+    if not fetch_mod.is_file():
+        fetch_mod = repo_root / "crates" / "soldr-fetch" / "src" / "fetch" / "mod.rs"
+    if not known_tools.is_file():
+        known_tools = (
+            repo_root / "crates" / "soldr-fetch" / "src" / "fetch" / "known_tools.rs"
+        )
+    try:
+        zccache_version = read_constant(fetch_mod, "MANAGED_ZCCACHE_VERSION")
+    except (OSError, RuntimeError):
+        # soldr#1368 embeds zccache instead of downloading a managed binary.
+        # Keep the catalogue's zccache release stream current, but do not
+        # require a removed managed-version constant from new consumers.
+        zccache_version = None
     crgx_version = read_constant(fetch_mod, "MANAGED_CRGX_VERSION")
     cargo_chef_version = read_constant(known_tools, "CARGO_CHEF_PINNED_VERSION")
     return {
@@ -373,6 +396,44 @@ def load_pinned_versions(repo_root: Path) -> dict[str, str | None]:
         "crgx": f"v{crgx_version}",
         "cargo-chef": f"v{cargo_chef_version}",
     }
+
+
+def load_managed_rust_tools(
+    path: Path = REPO_ROOT / "managed-rust-tools.json",
+) -> list[tuple[str, str, str, str]]:
+    """Read exact Rust-tool release pins from ``managed-rust-tools.json``.
+
+    The nightly catalogue refresh used to omit these entries entirely, even
+    though soldr's runtime resolver was already configured to consume them.
+    Keep the release-tag convention explicit in the data file because
+    cargo-nextest uses ``cargo-nextest-<version>`` while cargo-binstall uses
+    ``v<version>``.
+    """
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(
+            f"cannot read managed Rust tools from {path}: {exc}"
+        ) from exc
+    tools = document.get("tools")
+    if not isinstance(tools, dict):
+        raise RuntimeError(f"{path} must contain a tools object")
+    result: list[tuple[str, str, str, str]] = []
+    for name, config in sorted(tools.items()):
+        if not isinstance(config, dict):
+            raise RuntimeError(f"{path}: tool {name!r} must be an object")
+        version = str(config.get("version", "")).strip()
+        source = str(config.get("source", "")).strip()
+        prefix = str(config.get("release_tag_prefix", "v"))
+        if not version or not source or "/" not in source:
+            raise RuntimeError(
+                f"{path}: tool {name!r} needs version and owner/repo source"
+            )
+        if not prefix:
+            raise RuntimeError(f"{path}: tool {name!r} needs release_tag_prefix")
+        owner, repo = source.split("/", 1)
+        result.append((name, owner, repo, f"{prefix}{version}"))
+    return result
 
 
 def main() -> int:
@@ -399,12 +460,13 @@ def main() -> int:
     # cargo-zigbuild and cargo-xwin are unpinned in `known_tools`
     # (soldr resolves "latest" at fetch time), so we mirror that here.
     tools = [
-        ("zccache",        "zackees",         "zccache",        pins["zccache"]),
-        ("crgx",           "yfedoseev",       "crgx",           pins["crgx"]),
-        ("cargo-chef",     "LukeMathWalker",  "cargo-chef",     pins["cargo-chef"]),
-        ("cargo-zigbuild", "rust-cross",      "cargo-zigbuild", None),
-        ("cargo-xwin",     "rust-cross",      "cargo-xwin",     None),
+        ("zccache", "zackees", "zccache", pins["zccache"]),
+        ("crgx", "yfedoseev", "crgx", pins["crgx"]),
+        ("cargo-chef", "LukeMathWalker", "cargo-chef", pins["cargo-chef"]),
+        ("cargo-zigbuild", "rust-cross", "cargo-zigbuild", None),
+        ("cargo-xwin", "rust-cross", "cargo-xwin", None),
     ]
+    tools.extend(load_managed_rust_tools())
 
     token = os.environ.get("GITHUB_TOKEN") or None
     output_dir = Path(args.output_dir).resolve()
