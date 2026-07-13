@@ -68,8 +68,8 @@
           },
           "asset": {
             "filename": "cargo-nextest-0.9.140-aarch64-unknown-linux-gnu.tar.gz",
-            "size_bytes": 10490627,
-            "sha256": "09c267040ade9540ca782c5ec49e4030b557c395e026e7434e894d24bff9f7ac",
+            "size_bytes": 10484374,
+            "sha256": "e2e465f45d71331361c14b66649ae8b49fa0b5c7cf2c32a54f901249a22993a8",
             "urls": [
               "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-aarch64-glibc/cargo-nextest-0.9.140-aarch64-unknown-linux-gnu.tar.gz",
               "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-aarch64-glibc/cargo-nextest-0.9.140-aarch64-unknown-linux-gnu.tar.gz"
