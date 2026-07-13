@@ -23,7 +23,7 @@
       "tag": "0.9.140",
       "asset": "cargo-nextest-0.9.140-aarch64-unknown-linux-gnu.tar.gz",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-aarch64-glibc/cargo-nextest-0.9.140-aarch64-unknown-linux-gnu.tar.gz",
-      "sha256": "09c267040ade9540ca782c5ec49e4030b557c395e026e7434e894d24bff9f7ac"
+      "sha256": "e2e465f45d71331361c14b66649ae8b49fa0b5c7cf2c32a54f901249a22993a8"
     },
     {
       "owner": "nextest-rs",
@@ -55,7 +55,7 @@
       "tag": "0.9.140",
       "asset": "cargo-nextest-0.9.140-x86_64-unknown-linux-gnu.tar.gz",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-x86_64-glibc/cargo-nextest-0.9.140-x86_64-unknown-linux-gnu.tar.gz",
-      "sha256": "c0e951a1f87ea6f542734f7362ce1b2ad796913a0fc605fb2249bf89c8674e44"
+      "sha256": "b0f691e80aadd652f06e1e5bb42a2ba4ba39a5512a80ee3df6e3be0bedb157b5"
     },
     {
       "owner": "nextest-rs",
