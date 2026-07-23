@@ -17,7 +17,8 @@ package/
 │   ├── llvm-lib              ← MSVC lib.exe replacement
 │   ├── llvm-rc / llvm-dlltool ← rc.exe / dlltool replacements
 │   ├── llvm-strip            ← strip replacement
-│   └── llvm-objcopy          ← rust-objcopy underlying tool (closes #934 strip-fail)
+│   ├── llvm-objcopy          ← rust-objcopy underlying tool (closes #934 strip-fail)
+│   └── llvm-dsymutil         ← packed Darwin DWARF materialization
 ├── lib/libLLVM.so.<ver>      ← runtime lib rust-objcopy needs at exec time
 └── include/clang/...          ← C/C++ headers cc-rs uses when compiling deps
 ```
