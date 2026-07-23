@@ -80,7 +80,8 @@ jobs:
           # the repository LFS budget before ingestion even starts.
           export GIT_LFS_SKIP_SMUDGE=1
           unexpected=$(find assets -type f -not -path 'assets/.git/*' \
-            ! -name '.gitattributes' ! -name 'catalogue.v1.json' -print)
+            ! -name '.gitattributes' ! -name 'catalogue.v1.json' \
+            ! -name '.forge-ingest.log.jsonl' -print)
           if [[ -n "$unexpected" ]]; then
             echo "unexpected pre-existing asset materialized:" >&2
             echo "$unexpected" >&2
