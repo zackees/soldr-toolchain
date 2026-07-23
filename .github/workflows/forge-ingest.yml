@@ -137,7 +137,7 @@ jobs:
           # Keep the sparse tree intact. Force-add only the generated version
           # subtree so its new LFS pointer is staged despite skip-worktree;
           # staging the whole index would turn omitted files into deletions.
-          git add --sparse -u -- catalogue.v1.json .forge-ingest.log.jsonl
+          git add --sparse -- catalogue.v1.json .forge-ingest.log.jsonl
           git add --sparse -f -- "${{ inputs.tool }}/${{ inputs.version }}"
           if git diff --cached --quiet; then
             echo "no diff; nothing to ingest"
