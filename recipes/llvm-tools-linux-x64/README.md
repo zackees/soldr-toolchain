@@ -31,9 +31,9 @@ gh workflow run forge-conan.yml --repo zackees/forge \
     -f recipe_ref=main \
     -f recipe_path=recipes/llvm-tools-linux-x64 \
     -f name=llvm-tools-linux-x64 \
-    -f version=18.1.8 \
+    -f version=20.1.7 \
     -f linux_x64=true \
     -f windows_x64=false -f macos_arm64=false
 ```
 
-Ingested catalogue path: `llvm-tools/18.1.8/linux-x86_64-gnu/bundle.tar.zst`
+Ingested catalogue path: `llvm-tools/20.1.7/linux-x64-gnu/bundle.tar.zst`

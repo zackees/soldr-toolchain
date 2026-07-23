@@ -54,7 +54,7 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.files import copy
 
 
-LLVM_VERSION_DEFAULT = "22.1.8"
+LLVM_VERSION_DEFAULT = "20.1.7"
 # LLVM upstream renamed the linux archives in the 21.x cycle:
 #   old (≤ 20.x): clang+llvm-<ver>-x86_64-linux-gnu-ubuntu-<distro>.tar.xz
 #   new (≥ 21.x): LLVM-<ver>-Linux-X64.tar.xz
