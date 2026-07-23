@@ -105,6 +105,7 @@ def thin_sdk_tree(sdk_root: Path, arch: str, dest: Path, log) -> None:
     if dest.exists():
         shutil.rmtree(dest)
     shutil.copytree(sdk_root, dest, symlinks=True)
+    prune_manpages(dest, log)
 
     files_walked = 0
     files_thinned = 0
@@ -124,6 +125,25 @@ def thin_sdk_tree(sdk_root: Path, arch: str, dest: Path, log) -> None:
         f"thinned {files_thinned} Mach-O files and pruned {files_pruned} "
         f".tbd files across {files_walked} total entries (target arch: {arch})"
     )
+
+
+def prune_manpages(sdk_root: Path, log) -> int:
+    """Remove optional manpage documentation from a copied SDK tree.
+
+    The Apple SDK's manpage filenames include colon-bearing names such as
+    ``ttk::progressbar.ntcl``.  Those names are valid on macOS but cannot be
+    materialized by Windows tar extraction.  Headers, libraries, frameworks,
+    and every other SDK build input remain untouched.
+    """
+    import shutil
+
+    man_dir = sdk_root / "usr" / "share" / "man"
+    if not man_dir.exists():
+        return 0
+    removed = sum(1 for _ in man_dir.rglob("*"))
+    shutil.rmtree(man_dir)
+    log.info(f"removed {removed} optional Apple SDK manpage entries")
+    return removed
 
 
 def write_meta(build_folder: str, shape: str, captured: dict, log) -> None:
