@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-23T03:47:45Z",
+  "generated_at": "2026-07-23T04:33:52Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -888,14 +888,6 @@
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "sdk.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/14.5/darwin-universal2/sdk.tar.zst",
-      "sha256": "f01e634a43eaa64288b807f9174faddfe98da6aa0144469a13338129f54193e0"
-    },
-    {
-      "owner": "zackees",
-      "repo": "soldr-toolchain",
-      "tag": "assets",
-      "asset": "sdk.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/14.5/darwin-x86_64/sdk.tar.zst",
       "sha256": "785e3362f9548940f13f287c3e387186f8e9e5520211f3e04a887b666b2e6587"
     },
@@ -906,6 +898,14 @@
       "asset": "sdk.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/14.5/darwin-aarch64/sdk.tar.zst",
       "sha256": "0163c4bac3f38283bddbe4c86d9cb404b078f8a1dada4ea8ab8848e567b88967"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "sdk.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/14.5/darwin-universal2/sdk.tar.zst",
+      "sha256": "f01e634a43eaa64288b807f9174faddfe98da6aa0144469a13338129f54193e0"
     }
   ]
 }
