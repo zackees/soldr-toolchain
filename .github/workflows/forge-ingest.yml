@@ -69,6 +69,7 @@ jobs:
           sparse-checkout: |
             .gitattributes
             catalogue.v1.json
+            .forge-ingest.log.jsonl
 
       - name: Assert selective LFS checkout
         shell: bash
