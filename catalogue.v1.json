@@ -898,6 +898,14 @@
       "asset": "sdk.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/14.5/darwin-x86_64/sdk.tar.zst",
       "sha256": "785e3362f9548940f13f287c3e387186f8e9e5520211f3e04a887b666b2e6587"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "sdk.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/14.5/darwin-aarch64/sdk.tar.zst",
+      "sha256": "0163c4bac3f38283bddbe4c86d9cb404b078f8a1dada4ea8ab8848e567b88967"
     }
   ]
 }
