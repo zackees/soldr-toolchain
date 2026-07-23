@@ -58,11 +58,17 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.files import copy
+
+_RECIPES_ROOT = Path(__file__).resolve().parent.parent
+if str(_RECIPES_ROOT) not in sys.path:
+    sys.path.insert(0, str(_RECIPES_ROOT))
+from _apple_sdk_thin import prune_manpages  # noqa: E402
 
 
 SUPPORTED_SDK_VERSIONS = ("auto", "11.3", "13.3", "14.5", "15.2")
@@ -102,6 +108,7 @@ class AppleSDKUniversal2(ConanFile):
         if dest.exists():
             shutil.rmtree(dest)
         shutil.copytree(sdk_root, dest, symlinks=True)
+        prune_manpages(dest, self.output)
 
         # Provenance metadata for the catalogue ingest.
         meta = {
