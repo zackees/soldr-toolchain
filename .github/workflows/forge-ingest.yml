@@ -65,6 +65,7 @@ jobs:
           path: assets
           fetch-depth: 1
           lfs: false
+          sparse-checkout-cone-mode: false
           sparse-checkout: |
             .gitattributes
             catalogue.v1.json
