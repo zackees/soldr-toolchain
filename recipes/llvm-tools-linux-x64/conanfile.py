@@ -89,6 +89,7 @@ class LlvmToolsLinuxX64(ConanFile):
         "llvm-objcopy",
         "llvm-ar",
         "llvm-readobj",
+        "llvm-dsymutil",
     )
 
     def build(self):
