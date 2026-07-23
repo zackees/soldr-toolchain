@@ -77,15 +77,11 @@ jobs:
           # assets must remain pointer files; downloading them here can exhaust
           # the repository LFS budget before ingestion even starts.
           export GIT_LFS_SKIP_SMUDGE=1
-          if git -C assets lfs ls-files --name-only | while IFS= read -r path; do
-            [[ -z "$path" ]] && continue
-            if [[ -f "assets/$path" ]] && ! grep -q '^version https://git-lfs.github.com/spec/' "assets/$path"; then
-              echo "pre-existing LFS blob was materialized: $path" >&2
-              exit 1
-            fi
-          done; then
-            :
-          else
+          unexpected=$(find assets -type f -not -path 'assets/.git/*' \
+            ! -name '.gitattributes' ! -name 'catalogue.v1.json' -print)
+          if [[ -n "$unexpected" ]]; then
+            echo "unexpected pre-existing asset materialized:" >&2
+            echo "$unexpected" >&2
             exit 1
           fi
 
