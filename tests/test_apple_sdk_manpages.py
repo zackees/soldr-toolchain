@@ -1,8 +1,12 @@
+import importlib.util
 from pathlib import Path
-import sys
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "recipes"))
-import _apple_sdk_thin as thin  # noqa: E402
+
+_HELPER = Path(__file__).resolve().parents[1] / "recipes" / "_apple_sdk_thin.py"
+_SPEC = importlib.util.spec_from_file_location("soldr_recipe__apple_sdk_thin", _HELPER)
+assert _SPEC is not None and _SPEC.loader is not None
+thin = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(thin)
 
 
 class _Log:
