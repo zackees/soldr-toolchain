@@ -271,7 +271,7 @@
       "tag": "assets",
       "asset": "bundle.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/llvm-tools/20.1.7/linux-x64-gnu/bundle.tar.zst",
-      "sha256": "7e68dfc7261b81126e4b24e35dc17317d239238bfec29e8977daef3542403b08"
+      "sha256": "a359fdba95ab7529a03c3e72410e2bb5aab523c21c1816a96daa2c6fff82d44a"
     },
     {
       "owner": "zackees",
@@ -855,7 +855,7 @@
       "tag": "assets",
       "asset": "sdk.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/14.5/darwin-aarch64/sdk.tar.zst",
-      "sha256": "ffd6ecf192c7c0a93d09b74bfd1c7c5b4ffd3f28da32a8852714fb8f6abbbc5c"
+      "sha256": "0163c4bac3f38283bddbe4c86d9cb404b078f8a1dada4ea8ab8848e567b88967"
     },
     {
       "owner": "zackees",
@@ -863,7 +863,7 @@
       "tag": "assets",
       "asset": "sdk.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/14.5/darwin-universal2/sdk.tar.zst",
-      "sha256": "6f9dec0ac082309c4a2ee25733c2c40324f5d059e89b1e073db53462d62d2ff4"
+      "sha256": "f01e634a43eaa64288b807f9174faddfe98da6aa0144469a13338129f54193e0"
     },
     {
       "owner": "zackees",
@@ -871,7 +871,7 @@
       "tag": "assets",
       "asset": "sdk.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/14.5/darwin-x86_64/sdk.tar.zst",
-      "sha256": "5c10958c0b941c05c6b70c9c1c78ff54c51815363053622891336848037b853d"
+      "sha256": "785e3362f9548940f13f287c3e387186f8e9e5520211f3e04a887b666b2e6587"
     },
     {
       "owner": "zackees",

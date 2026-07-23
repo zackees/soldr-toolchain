@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-23T06:23:38Z",
+  "generated_at": "2026-07-23T09:08:11Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -266,6 +266,14 @@
       "asset": "bundle.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/jemalloc/5.3.0/linux-x64-gnu/bundle.tar.zst",
       "sha256": "e9d581db185aec58a9bfc490ba0b058506a15debd732b18284afc72f613136e3"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/llvm-tools/20.1.7/linux-x64-gnu/bundle.tar.zst",
+      "sha256": "a359fdba95ab7529a03c3e72410e2bb5aab523c21c1816a96daa2c6fff82d44a"
     },
     {
       "owner": "zackees",
@@ -847,25 +855,9 @@
       "owner": "zackees",
       "repo": "soldr-toolchain",
       "tag": "assets",
-      "asset": "sdk.tar.zstd",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/MacOSX11.3/darwin-universal2/sdk.tar.zstd",
-      "sha256": "053ac5617f5e6afd5218bec4e871cc55a6a9ab2c0b1f2f77e336dbdd48eabe56"
-    },
-    {
-      "owner": "zackees",
-      "repo": "soldr-toolchain",
-      "tag": "assets",
-      "asset": "xwin-cache.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/xwin-cache/2026-06-22/windows-aarch64-msvc/xwin-cache.tar.zst",
-      "sha256": "cb7fa0e68ce173a54f0dbc116d3e8f04c7013953529ada8284b0ac149139b9da"
-    },
-    {
-      "owner": "zackees",
-      "repo": "soldr-toolchain",
-      "tag": "assets",
-      "asset": "xwin-cache.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/xwin-cache/2026-06-22/windows-x86_64-msvc/xwin-cache.tar.zst",
-      "sha256": "33c04d8026d99dab4d66f39ddbd93d75f64c68063d4ba58e5450626524bf348d"
+      "asset": "sdk.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/14.5/darwin-aarch64/sdk.tar.zst",
+      "sha256": "0163c4bac3f38283bddbe4c86d9cb404b078f8a1dada4ea8ab8848e567b88967"
     },
     {
       "owner": "zackees",
@@ -887,17 +879,25 @@
       "owner": "zackees",
       "repo": "soldr-toolchain",
       "tag": "assets",
-      "asset": "sdk.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/14.5/darwin-aarch64/sdk.tar.zst",
-      "sha256": "0163c4bac3f38283bddbe4c86d9cb404b078f8a1dada4ea8ab8848e567b88967"
+      "asset": "sdk.tar.zstd",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/MacOSX11.3/darwin-universal2/sdk.tar.zstd",
+      "sha256": "053ac5617f5e6afd5218bec4e871cc55a6a9ab2c0b1f2f77e336dbdd48eabe56"
     },
     {
       "owner": "zackees",
       "repo": "soldr-toolchain",
       "tag": "assets",
-      "asset": "bundle.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/llvm-tools/20.1.7/linux-x64-gnu/bundle.tar.zst",
-      "sha256": "a359fdba95ab7529a03c3e72410e2bb5aab523c21c1816a96daa2c6fff82d44a"
+      "asset": "xwin-cache.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/xwin-cache/2026-06-22/windows-aarch64-msvc/xwin-cache.tar.zst",
+      "sha256": "cb7fa0e68ce173a54f0dbc116d3e8f04c7013953529ada8284b0ac149139b9da"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "xwin-cache.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/xwin-cache/2026-06-22/windows-x86_64-msvc/xwin-cache.tar.zst",
+      "sha256": "33c04d8026d99dab4d66f39ddbd93d75f64c68063d4ba58e5450626524bf348d"
     }
   ]
 }
