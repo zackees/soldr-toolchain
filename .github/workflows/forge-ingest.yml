@@ -125,6 +125,7 @@ jobs:
 
       - name: Commit + open PR against assets
         env:
+          GIT_LFS_SKIP_SMUDGE: "1"
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
@@ -132,6 +133,11 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           branch="ingest/${{ inputs.tool }}-${{ inputs.version }}-${{ inputs.shape }}-run${{ inputs.forge_run_id }}"
+          # The sparse checkout intentionally omitted all existing blobs. Turn
+          # sparse mode off before staging so the newly-created asset is not
+          # left with a skip-worktree bit. LFS smudge remains disabled, so this
+          # expands only pointer files and never downloads old payloads.
+          git sparse-checkout disable
           git checkout -B "$branch"
           git add -A
           if git diff --cached --quiet; then
