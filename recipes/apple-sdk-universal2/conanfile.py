@@ -55,20 +55,34 @@ slices (the recipe just doesn't strip anything).
 from __future__ import annotations
 
 import json
+import importlib.util
 import os
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.files import copy
 
-_RECIPES_ROOT = Path(__file__).resolve().parent.parent
-if str(_RECIPES_ROOT) not in sys.path:
-    sys.path.insert(0, str(_RECIPES_ROOT))
-from _apple_sdk_thin import prune_manpages  # noqa: E402
+def _load_recipe_helper(module_name: str, filename: str):
+    recipe_dir = Path(__file__).resolve().parent
+    for candidate in (recipe_dir, recipe_dir.parent):
+        helper_path = candidate / filename
+        if not helper_path.is_file():
+            continue
+        spec = importlib.util.spec_from_file_location(module_name, helper_path)
+        if spec is None or spec.loader is None:
+            continue
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    raise ImportError(f"Conan recipe helper {filename} was not exported beside the recipe")
+
+
+prune_manpages = _load_recipe_helper(
+    "soldr_recipe__apple_sdk_thin", "_apple_sdk_thin.py"
+).prune_manpages
 
 
 SUPPORTED_SDK_VERSIONS = ("auto", "11.3", "13.3", "14.5", "15.2")
@@ -88,6 +102,14 @@ class AppleSDKUniversal2(ConanFile):
     settings = "os", "arch"
     options = {"sdk_version": SUPPORTED_SDK_VERSIONS}
     default_options = {"sdk_version": "auto"}
+
+    def export(self):
+        copy(
+            self,
+            "_apple_sdk_thin.py",
+            src=Path(__file__).resolve().parent.parent.as_posix(),
+            dst=self.export_folder,
+        )
 
     def validate(self):
         if str(self.settings.os) != "Macos":
