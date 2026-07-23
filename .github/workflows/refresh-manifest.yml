@@ -31,7 +31,7 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 60
     steps:
       - name: Checkout soldr-toolchain main (scripts)
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -124,6 +124,19 @@ jobs:
           python3 main/scripts/build_catalogue_v1.py \
               --asset-index assets/asset-index.json \
               --output assets/catalogue.v1.json
+
+      - name: Refresh Rust nightly version map
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 main/scripts/build_rust_nightly_versions.py \
+              --output assets/rust-nightly-versions.v1.json \
+              --catalogue assets/catalogue.v1.json \
+              --seed 2026-01-18 \
+              --seed 2026-03-26 \
+              --seed 2026-05-26 \
+              --backfill-start 2025-12-06 \
+              --max-backfill-checks 8
 
       - name: Build index.html landing page
         shell: bash

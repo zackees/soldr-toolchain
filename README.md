@@ -83,6 +83,22 @@ new (the script uses content equality, not timestamps). `git log` on
 the `assets` branch is the source of truth for "when did this tool's
 release set last change."
 
+The same daily refresh publishes `rust-nightly-versions.v1.json`, a
+metadata-only map from `nightly-YYYY-MM-DD` to the corresponding rustc
+release and full commit identity. The map is a SHA-bearing asset in
+`catalogue.v1.json`; it contains no toolchain archives and is stored as
+ordinary Git JSON rather than LFS. Only a newly observed nightly is
+downloaded with the minimal profile and queried for its verbose version;
+known nightlies are never downloaded or probed again. The reverse
+`versions` index lists nightlies newest-first and selects index zero.
+If a scheduled run is missed, each later refresh checks up to eight
+oldest unprocessed dates, records dates on which no nightly was
+published, and eventually closes the gap without repeating prior work.
+The incremental backfill begins at `nightly-2025-12-06`, the first observed
+nightly in the Rust 1.94 train, and includes `nightly-2026-01-18`, its newest
+observed nightly, so consumers pinned to Rust 1.94.x can
+use the map immediately.
+
 ## Getting an asset by platform (dead simple, schema v5)
 
 Each release in the per-tool manifest carries a normalized `platforms`
