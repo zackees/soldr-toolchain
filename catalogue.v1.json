@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-23T05:46:10Z",
+  "generated_at": "2026-07-23T06:23:38Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -897,7 +897,7 @@
       "tag": "assets",
       "asset": "bundle.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/llvm-tools/20.1.7/linux-x64-gnu/bundle.tar.zst",
-      "sha256": "35448774568304f50d7dbfe7dd79468836a83c9eb010f3eb9a1bda37e03d8cd8"
+      "sha256": "a359fdba95ab7529a03c3e72410e2bb5aab523c21c1816a96daa2c6fff82d44a"
     }
   ]
 }
