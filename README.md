@@ -132,9 +132,9 @@ extra ∈ { gnu, musl, msvc, gnullvm, … }    # only when meaningful
 
 | Key | Meaning |
 |---|---|
-| `linux-x64-gnu` | Standard Linux x64 glibc build |
+| `linux-x64-gnu` | Standard Linux x64 glibc build — **floor must be glibc 2.17** |
 | `linux-x64-musl` | Linux x64 musl (static; runs on glibc hosts too) |
-| `linux-arm64-gnu` | Linux aarch64 glibc |
+| `linux-arm64-gnu` | Linux aarch64 glibc — **floor must be glibc 2.17** |
 | `linux-arm64-musl` | Linux aarch64 musl |
 | `darwin-x64` | macOS x86_64 |
 | `darwin-arm64` | macOS Apple Silicon |
@@ -148,6 +148,34 @@ Modern arch names (`x64` not `x86_64`; `arm64` not `aarch64`) match
 the npm/Node.js convention. **32-bit binaries (i686 / armv7) are not
 surfaced** — every modern process is 64-bit, the schema doesn't need
 to fragment to track them.
+
+## Linux glibc floor: 2.17, always
+
+**Every catalogued Linux `-gnu` asset MUST have a glibc floor of 2.17 or
+lower.** This applies to assets this repo builds *and* to prebuilt ones it
+merely fetches and republishes.
+
+This repo is the middle of a chain — `zackees/forge` builds the tools,
+soldr-toolchain catalogues them, and `zackees/soldr` bundles them into its
+release archive. The floor of that archive is the **highest** floor of any
+binary in it, so a single 2.39 asset here caps everything downstream. That is
+exactly what happened: `crgx` and `cargo-chef` are fetched prebuilt at glibc
+2.39, which pins soldr's Linux archive at 2.39 no matter how soldr compiles
+itself, and makes it unusable on RHEL 8 / Debian 10 (both 2.28).
+
+**Deps currently above the floor must be recompiled**, not documented around.
+Rebuilding them is upstream work in `zackees/forge`, whose recipes are now
+required to build against glibc 2.17 — see that repo's README.
+
+Rules:
+
+- **musl assets are exempt** — statically linked, no glibc to floor.
+- **Verify before cataloguing.** `readelf -V <binary> | grep -o 'GLIBC_[0-9.]*'
+  | sort -Vu | tail -1` must print `GLIBC_2.17` or lower for every `-gnu`
+  asset. Asserting the floor in a manifest is not the same as measuring it.
+- **No zig, no `cargo-zigbuild`.** Both are being purged in favour of the
+  blessed toolchain. Reaching 2.17 is a matter of building in an old sysroot,
+  which needs no zig.
 
 ## Tracked tools
 
