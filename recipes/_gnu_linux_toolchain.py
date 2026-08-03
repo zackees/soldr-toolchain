@@ -109,6 +109,16 @@ def build_bundle(*, version, shape, build_folder, output):
         detail = exc.stderr.strip() or exc.stdout.strip() or str(exc)
         raise RuntimeError(f"micromamba materialization failed: {detail}") from exc
     payload = json.loads(result.stdout)
+    subprocess.run(
+        [
+            "docker", "run", "--rm", "--user", "0", "-v", f"{work}:/work",
+            "--entrypoint", "/bin/chmod", MICROMAMBA_IMAGE,
+            "-R", "a+rX,u+w", "/work/package",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
     rows = _locked_rows(payload, shape)
     plan.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
