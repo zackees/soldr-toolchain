@@ -28,6 +28,7 @@ on:
           - ninja
           - uv
           - mingw-w64-gcc
+          - gnu-linux-toolchain
           - cargo-chef
           - crgx
       version:
@@ -115,6 +116,7 @@ jobs:
               "linux-arm64-musl",
           ]
           mingw_shapes = ["windows-x64-gnu"]
+          gnu_toolchain_shapes = ["linux-x64-gnu", "linux-arm64-gnu"]
           supported = {
               "apple-sdk": apple_shapes,
               "zstd": syslib_shapes,
@@ -128,6 +130,7 @@ jobs:
               "ninja": prebuilt_shapes,
               "uv": legacy_syslib_shapes,
               "mingw-w64-gcc": mingw_shapes,
+              "gnu-linux-toolchain": gnu_toolchain_shapes,
               "cargo-chef": rust_cli_shapes,
               "crgx": rust_cli_shapes,
           }
@@ -150,6 +153,9 @@ jobs:
     timeout-minutes: 360
     strategy:
       fail-fast: false
+      # Forge run discovery is global; serialize shapes so one dispatch cannot
+      # claim its sibling run while waiting for the workflow id.
+      max-parallel: 1
       matrix:
         shape: ${{ fromJson(needs.plan.outputs.shapes) }}
     steps:
@@ -178,7 +184,7 @@ jobs:
           macos_x64=false
           macos_arm64=false
           case "${{ inputs.tool }}" in
-            cmake|ninja|uv|mingw-w64-gcc)
+            cmake|ninja|uv|mingw-w64-gcc|gnu-linux-toolchain)
               # Pure download+repackage recipes: the artifact is
               # identical no matter which runner builds it, so every
               # shape runs on the cheap Linux x64 runner (same trick
@@ -241,12 +247,14 @@ jobs:
         run: |
           set -euo pipefail
           run_id="${{ steps.dispatch.outputs.forge_run_id }}"
-          for _ in $(seq 1 60); do
+          completed=false
+          for _ in $(seq 1 600); do
             status=$(gh run view "$run_id" --repo zackees/forge --json status,conclusion --jq '.status')
             if [ "$status" = "completed" ]; then
               conclusion=$(gh run view "$run_id" --repo zackees/forge --json conclusion --jq '.conclusion')
               if [ "$conclusion" = "success" ]; then
                 echo "forge run $run_id completed successfully"
+                completed=true
                 break
               else
                 echo "::error::forge run $run_id concluded $conclusion"
@@ -255,6 +263,10 @@ jobs:
             fi
             sleep 30
           done
+          if [ "$completed" != true ]; then
+            echo "::error::forge run $run_id did not complete within 5 hours"
+            exit 1
+          fi
 
       - name: Trigger ingest
         env:

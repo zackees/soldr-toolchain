@@ -178,6 +178,10 @@ TOOL_RECIPE_NAME["uv"] = {
 TOOL_RECIPE_NAME["mingw-w64-gcc"] = {
     "windows-x64-gnu": "mingw-w64-gcc-windows-x64-gnu",
 }
+TOOL_RECIPE_NAME["gnu-linux-toolchain"] = {
+    shape: f"gnu-linux-toolchain-{shape}"
+    for shape in ("linux-x64-gnu", "linux-arm64-gnu")
+}
 
 # Rust CLI support binaries. Keep all eight native leaves, including Intel
 # macOS, even when an upstream universal archive backs both Darwin rows.
@@ -242,6 +246,7 @@ DEFAULT_ASSET_NAME = {
     "ninja": "bundle.tar.zst",
     "uv": "bundle.tar.zst",
     "mingw-w64-gcc": "bundle.tar.zst",
+    "gnu-linux-toolchain": "bundle.tar.zst",
     # Rust CLI support bundles.
     "cargo-chef": "bundle.tar.zst",
     "crgx": "bundle.tar.zst",

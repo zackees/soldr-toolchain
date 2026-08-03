@@ -177,6 +177,13 @@ Rules:
   blessed toolchain. Reaching 2.17 is a matter of building in an old sysroot,
   which needs no zig.
 
+The `gnu-linux-toolchain` Forge recipes are that blessed source. They build GCC
+13.3.0 and binutils 2.42 with crosstool-NG 1.27.0 in a digest-pinned
+manylinux2014 x86_64 producer, for x86_64 and aarch64 targets. Each package
+contains its crosstool-NG config, license files, and downloaded corresponding
+source archives. The recipe measures both target `libc.so.6` and host tool ELF
+version requirements and refuses any result above GLIBC 2.17.
+
 ## Tracked tools
 
 | Tool | Upstream | Pin source |
@@ -187,6 +194,7 @@ Rules:
 | cargo-zigbuild | `rust-cross/cargo-zigbuild` | latest |
 | cargo-xwin | `rust-cross/cargo-xwin` | latest |
 | mingw-w64-gcc | `brechtsanders/winlibs_mingw` | pinned WinLibs release |
+| gnu-linux-toolchain | crosstool-NG-built GCC/binutils/glibc/Linux | `gcc-13.3.0-glibc-2.17-1`; reproducible config + source archives included |
 | apple-sdk | vendored under `apple-sdk/MacOSX11.3/darwin/` | manual |
 
 The `scripts/build_manifest.py` script reads the three pinned versions
