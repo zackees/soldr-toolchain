@@ -113,7 +113,7 @@ def build_bundle(*, version, shape, build_folder, output):
         [
             "docker", "run", "--rm", "--user", "0", "-v", f"{work}:/work",
             "--entrypoint", "/bin/chmod", MICROMAMBA_IMAGE,
-            "-R", "a+rX,u+w", "/work/package",
+            "-R", "a+rwX", "/work/package",
         ],
         check=True,
         capture_output=True,
