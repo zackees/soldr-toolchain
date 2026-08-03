@@ -98,12 +98,16 @@ def build_bundle(*, version, shape, build_folder, output):
     work.mkdir(parents=True, exist_ok=True)
     plan = work / "conda-plan.json"
     command = [
-        "docker", "run", "--rm", "-v", f"{work}:/work", MICROMAMBA_IMAGE,
-        "micromamba", "create", "--yes", "--prefix", "/work/package",
-        "--channel", "conda-forge", "--json", *cfg["specs"],
+        "docker", "run", "--rm", "--user", "0", "-v", f"{work}:/work",
+        MICROMAMBA_IMAGE, "micromamba", "create", "--yes", "--prefix",
+        "/work/package", "--channel", "conda-forge", "--json", *cfg["specs"],
     ]
     output.info(f"materializing locked conda-forge artifacts for {cfg['target']}")
-    result = subprocess.run(command, check=True, capture_output=True, text=True)
+    try:
+        result = subprocess.run(command, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as exc:
+        detail = exc.stderr.strip() or exc.stdout.strip() or str(exc)
+        raise RuntimeError(f"micromamba materialization failed: {detail}") from exc
     payload = json.loads(result.stdout)
     rows = _locked_rows(payload, shape)
     plan.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
