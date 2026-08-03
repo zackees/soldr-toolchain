@@ -168,6 +168,36 @@ def _is_elf(path):
         return False
 
 
+def _elf_machine(path, readelf):
+    result = subprocess.run(
+        [readelf, "--file-header", str(path)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    for line in result.stdout.splitlines():
+        if line.strip().startswith("Machine:"):
+            return line.split(":", 1)[1].strip()
+    raise RuntimeError(f"could not identify ELF machine for {path}")
+
+
+def _link_smoke(package, compiler, language):
+    suffix = "cc" if language == "c++" else "c"
+    source = package / f"soldr-glibc-smoke.{suffix}"
+    output = package / f"soldr-glibc-smoke-{language.replace('+', 'x')}"
+    source.write_text(
+        "#include <stdio.h>\n#include <stdlib.h>\n"
+        "int main(void) { puts(\"soldr\"); return EXIT_SUCCESS; }\n",
+        encoding="utf-8",
+    )
+    driver = package / "bin" / f"{compiler}-{'g++' if language == 'c++' else 'gcc'}"
+    try:
+        subprocess.run([str(driver), str(source), "-o", str(output)], check=True)
+    finally:
+        source.unlink(missing_ok=True)
+    return output
+
+
 def validate_package(package, compiler):
     missing = [
         f"bin/{compiler}-{tool}"
@@ -182,14 +212,22 @@ def validate_package(package, compiler):
         raise RuntimeError("toolchain missing required paths: " + ", ".join(missing))
 
     target_readelf = str(package / "bin" / f"{compiler}-readelf")
-    libc_versions = set()
-    for libc in sysroot.rglob("libc.so.6"):
-        libc_versions.update(_versions(libc, target_readelf))
-    if not libc_versions:
-        raise RuntimeError("could not measure target libc GLIBC versions")
-    measured = max(libc_versions)
+    linked_versions = set()
+    expected_machine = "AArch64" if compiler.startswith("aarch64-") else "Advanced Micro Devices X86-64"
+    for language in ("c", "c++"):
+        artifact = _link_smoke(package, compiler, language)
+        machine = _elf_machine(artifact, target_readelf)
+        if machine != expected_machine:
+            raise RuntimeError(
+                f"{language} smoke target is {machine}; expected {expected_machine}"
+            )
+        linked_versions.update(_versions(artifact, target_readelf))
+        artifact.unlink()
+    if not linked_versions:
+        raise RuntimeError("linked target smoke artifacts have no GLIBC requirements")
+    measured = max(linked_versions)
     if measured > (2, 17):
-        raise RuntimeError(f"target libc exports GLIBC_{measured}; required <= GLIBC_2.17")
+        raise RuntimeError(f"linked target requires GLIBC_{measured}; required <= GLIBC_2.17")
 
     host_readelf = shutil.which("readelf")
     if not host_readelf:
