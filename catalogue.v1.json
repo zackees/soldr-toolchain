@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-03T09:58:58Z",
+  "generated_at": "2026-08-03T10:13:12Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -234,6 +234,14 @@
       "asset": "bundle.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/crgx/v0.1.0/windows-aarch64-msvc/bundle.tar.zst",
       "sha256": "66a3d7de73fdcbc18c944c1fe6632ce99cb1698c5a41b499606ecf116b046b5b"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/gnu-linux-toolchain/gcc-13.3.0-glibc-2.17-1/linux-x64-gnu/bundle.tar.zst",
+      "sha256": "e7569a221a05da92686f4d106d83a62095653f7b5d8c1b7b7b6e06dd250f3293"
     },
     {
       "owner": "zackees",
@@ -857,7 +865,7 @@
       "tag": "assets",
       "asset": "rust-nightly-versions.v1.json",
       "url": "https://zackees.github.io/soldr-toolchain/rust-nightly-versions.v1.json",
-      "sha256": "8612400e7939e935a3a1887bf7150e6ed1d218d6a742a1fb79f5e029850216c5"
+      "sha256": "0e6c27b36099ed08ffe3624dbc0c6a26f6015dc7d4714989cea8e69874b85bda"
     },
     {
       "owner": "zackees",
@@ -906,14 +914,6 @@
       "asset": "xwin-cache.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/xwin-cache/2026-06-22/windows-x86_64-msvc/xwin-cache.tar.zst",
       "sha256": "33c04d8026d99dab4d66f39ddbd93d75f64c68063d4ba58e5450626524bf348d"
-    },
-    {
-      "owner": "zackees",
-      "repo": "soldr-toolchain",
-      "tag": "assets",
-      "asset": "bundle.tar.zst",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/gnu-linux-toolchain/gcc-13.3.0-glibc-2.17-1/linux-x64-gnu/bundle.tar.zst",
-      "sha256": "e7569a221a05da92686f4d106d83a62095653f7b5d8c1b7b7b6e06dd250f3293"
     }
   ]
 }

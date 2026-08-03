@@ -238,6 +238,14 @@
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/gnu-linux-toolchain/gcc-13.3.0-glibc-2.17-1/linux-x64-gnu/bundle.tar.zst",
+      "sha256": "e7569a221a05da92686f4d106d83a62095653f7b5d8c1b7b7b6e06dd250f3293"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/jemalloc/5.3.0/darwin-arm64/bundle.tar.zst",
       "sha256": "30aaf9945c962ff7fb367a83a5b79be2b66116673c546f4701cf51b3ae5f353b"
     },
