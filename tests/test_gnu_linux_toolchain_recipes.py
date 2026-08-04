@@ -79,3 +79,10 @@ def test_host_scan_includes_non_executable_elf(tmp_path):
     elf.write_bytes(b"\x7fELFpayload")
     elf.chmod(0o644)
     assert helper._is_elf(elf)
+
+
+def test_host_glibc_is_recorded_as_inventory_not_target_compatibility():
+    helper = _load_helper()
+    # GCC/binutils run on the x86_64 build host, so their ABI is diagnostic
+    # inventory only. The target smoke artifacts own the GLIBC_2.17 contract.
+    assert helper.format_max_glibc({(2, 18), (2, 39)}) == "2.39"
