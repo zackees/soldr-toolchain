@@ -81,10 +81,8 @@ def test_host_scan_includes_non_executable_elf(tmp_path):
     assert helper._is_elf(elf)
 
 
-def test_target_glibc_ceiling_does_not_apply_to_host_compiler_tools():
+def test_host_glibc_is_recorded_as_inventory_not_target_compatibility():
     helper = _load_helper()
-    # The conda compiler is a host executable. It may need a newer host GLIBC
-    # than the *target* sysroot baseline without changing target artifact ABI.
-    # The target smoke artifacts are the only meaningful floor contract.
-    assert helper.host_tool_glibc_is_compatible({(2, 18)})
-    assert helper.host_tool_glibc_is_compatible({(2, 39)})
+    # GCC/binutils run on the x86_64 build host, so their ABI is diagnostic
+    # inventory only. The target smoke artifacts own the GLIBC_2.17 contract.
+    assert helper.format_max_glibc({(2, 18), (2, 39)}) == "2.39"
