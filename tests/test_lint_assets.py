@@ -86,6 +86,22 @@ def test_flat_catalogue_reference_allows_unindexed_tool_directory(tmp_path: Path
     assert not [i for i in issues if i.severity == "ERROR"], [str(i) for i in issues]
 
 
+def test_generated_nightly_catalogue_is_a_reserved_top_level_file(tmp_path: Path) -> None:
+    _write_json(tmp_path / "manifest.json", _index({}))
+    _write_json(tmp_path / "rust-nightly-versions.v1.json", {"schema_version": 1})
+
+    issues = lint_assets.lint(tmp_path)
+    assert not [issue for issue in issues if issue.rule == "R9"], [str(issue) for issue in issues]
+
+
+def test_unrelated_top_level_file_is_still_an_r9_warning(tmp_path: Path) -> None:
+    _write_json(tmp_path / "manifest.json", _index({}))
+    (tmp_path / "unexpected.json").write_text("{}\n", encoding="utf-8")
+
+    issues = lint_assets.lint(tmp_path)
+    assert any(issue.rule == "R9" and issue.where == "unexpected.json" for issue in issues)
+
+
 def test_index_descriptor_sha256_must_match_catalog_bytes(tmp_path: Path) -> None:
     _write_json(tmp_path / "tool" / "manifest.json", _catalog("tool"))
     _write_json(
