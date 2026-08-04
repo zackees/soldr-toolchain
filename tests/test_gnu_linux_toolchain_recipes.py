@@ -79,3 +79,12 @@ def test_host_scan_includes_non_executable_elf(tmp_path):
     elf.write_bytes(b"\x7fELFpayload")
     elf.chmod(0o644)
     assert helper._is_elf(elf)
+
+
+def test_target_glibc_ceiling_does_not_apply_to_host_compiler_tools():
+    helper = _load_helper()
+    # The conda compiler is a host executable. It may need a newer host GLIBC
+    # than the *target* sysroot baseline without changing target artifact ABI.
+    # The target smoke artifacts are the only meaningful floor contract.
+    assert helper.host_tool_glibc_is_compatible({(2, 18)})
+    assert helper.host_tool_glibc_is_compatible({(2, 39)})
