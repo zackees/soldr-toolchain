@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-05T09:19:51Z",
+  "generated_at": "2026-08-05T17:35:14Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -922,6 +922,22 @@
       "asset": "xwin-cache.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/xwin-cache/2026-06-22/windows-x86_64-msvc/xwin-cache.tar.zst",
       "sha256": "33c04d8026d99dab4d66f39ddbd93d75f64c68063d4ba58e5450626524bf348d"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/musl-linux-toolchain/gcc-11.2.1-musl-20211123-1/linux-x64-musl/bundle.tar.zst",
+      "sha256": "1745c1e609b3f02ce0cdea989735b88beb91a613ff90b00f35c236acd6318fa0"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/musl-linux-toolchain/gcc-11.2.1-musl-20211123-1/linux-arm64-musl/bundle.tar.zst",
+      "sha256": "d9f9cf668c401505936d8be03a1417058a7f463d4150775c54f31b258dfa4d5a"
     }
   ]
 }
