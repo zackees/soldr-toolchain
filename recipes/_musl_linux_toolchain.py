@@ -57,9 +57,33 @@ def _safe_extract(archive: Path, destination: Path, expected_root: str) -> None:
             path = PurePosixPath(member.name)
             if path.is_absolute() or ".." in path.parts or not path.parts or path.parts[0] != expected_root:
                 raise RuntimeError(f"unsafe or unexpected path in musl toolchain archive: {member.name!r}")
-            if (member.issym() or member.islnk()) and PurePosixPath(member.linkname).is_absolute():
+            if (member.issym() or member.islnk()) and PurePosixPath(member.linkname).is_absolute() and not _is_musl_loader_link(member, expected_root):
                 raise RuntimeError(f"absolute link in musl toolchain archive: {member.name!r}")
         tar.extractall(destination)
+
+
+def _is_musl_loader_link(member: tarfile.TarInfo, expected_root: str) -> bool:
+    """Allow musl.cc's known loader alias, which is normalized after extraction."""
+    path = PurePosixPath(member.name)
+    return (
+        member.linkname == "/lib/libc.so"
+        and len(path.parts) == 4
+        and path.parts[0] == expected_root
+        and path.parts[1].endswith("-linux-musl")
+        and path.parts[2] == "lib"
+        and path.name.startswith("ld-musl-")
+        and path.name.endswith(".so.1")
+    )
+
+
+def _normalize_loader_link(package: Path, compiler: str) -> None:
+    loader = next((package / compiler / "lib").glob("ld-musl-*.so.1"), None)
+    if loader is None or not loader.is_symlink():
+        raise RuntimeError("musl toolchain is missing its dynamic-loader link")
+    if loader.readlink().as_posix() != "/lib/libc.so":
+        raise RuntimeError(f"unexpected musl dynamic-loader link: {loader.readlink()}")
+    loader.unlink()
+    loader.symlink_to("libc.so")
 
 
 def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
@@ -106,6 +130,7 @@ def build_bundle(*, version: str, shape: str, build_folder: Path, output) -> dic
     _download_verified(url, config["sha256"], archive)
     _safe_extract(archive, staging, f"{config['compiler']}-cross")
     shutil.move(str(staging / f"{config['compiler']}-cross"), package); archive.unlink(missing_ok=True)
+    _normalize_loader_link(package, config["compiler"])
     validate_package(package, config)
     meta = {"tool": "musl-linux-toolchain", "version": version, "shape": shape, "host_triple": "x86_64-unknown-linux-gnu", "target_triple": config["target"], "compiler_triple": config["compiler"], "gcc_version": GCC_VERSION, "libc": "musl", "musl_version": MUSL_VERSION, "source_url": url, "source_sha256": config["sha256"], "static_link_verified": True, "no_zig": True}
     (work / "meta.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
