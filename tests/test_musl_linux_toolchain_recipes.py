@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import sys
 from pathlib import Path
+import tarfile
 from scripts import forge_to_catalogue as fc
 
 RECIPES_DIR = Path(__file__).resolve().parents[1] / "recipes"
@@ -35,3 +36,14 @@ def test_recipe_and_catalogue_wiring_exists_for_both_musl_targets():
         assert f'SHAPE = "{shape}"' in text
     assert set(fc.TOOL_RECIPE_NAME["musl-linux-toolchain"]) == EXPECTED_SHAPES
     assert fc.DEFAULT_ASSET_NAME["musl-linux-toolchain"] == "bundle.tar.zst"
+
+def test_known_musl_loader_alias_is_the_only_allowed_absolute_link():
+    helper = _load_helper()
+    allowed = tarfile.TarInfo("x86_64-linux-musl-cross/x86_64-linux-musl/lib/ld-musl-x86_64.so.1")
+    allowed.type = tarfile.SYMTYPE
+    allowed.linkname = "/lib/libc.so"
+    assert helper._is_musl_loader_link(allowed, "x86_64-linux-musl-cross")
+    denied = tarfile.TarInfo("x86_64-linux-musl-cross/x86_64-linux-musl/lib/other")
+    denied.type = tarfile.SYMTYPE
+    denied.linkname = "/lib/libc.so"
+    assert not helper._is_musl_loader_link(denied, "x86_64-linux-musl-cross")
