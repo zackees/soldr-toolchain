@@ -178,6 +178,11 @@ TOOL_RECIPE_NAME["uv"] = {
 TOOL_RECIPE_NAME["mingw-w64-gcc"] = {
     "windows-x64-gnu": "mingw-w64-gcc-windows-x64-gnu",
 }
+# soldr-toolchain#114 — host-neutral sysroot (no host executables) so
+# Linux/macOS consumers can link win-gnu. Slug names the target.
+TOOL_RECIPE_NAME["mingw-w64-sysroot"] = {
+    "windows-x64-gnu": "mingw-w64-sysroot-windows-x64-gnu",
+}
 TOOL_RECIPE_NAME["gnu-linux-toolchain"] = {
     shape: f"gnu-linux-toolchain-{shape}"
     for shape in ("linux-x64-gnu", "linux-arm64-gnu")
@@ -250,6 +255,7 @@ DEFAULT_ASSET_NAME = {
     "ninja": "bundle.tar.zst",
     "uv": "bundle.tar.zst",
     "mingw-w64-gcc": "bundle.tar.zst",
+    "mingw-w64-sysroot": "bundle.tar.zst",
     "gnu-linux-toolchain": "bundle.tar.zst",
     "musl-linux-toolchain": "bundle.tar.zst",
     # Rust CLI support bundles.
