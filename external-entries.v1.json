@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain-private",
+      "tag": "msvc-14.44.35207",
+      "asset": "bundle.tar.zst",
+      "url": "https://api.github.com/repos/zackees/soldr-toolchain-private/releases/assets/505002676",
+      "sha256": "932d9e36cbad6243b6ca9e50332b258f7efeb086d2f21c80447738064418c714"
+    }
+  ]
+}

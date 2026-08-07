@@ -118,12 +118,19 @@ jobs:
         # `schemas/catalogue.v1.schema.json`. soldr's Phase 2 resolver
         # reads this file from
         # `https://zackees.github.io/soldr-toolchain/catalogue.v1.json`.
+        #
+        # --external-entries merges main/external-entries.v1.json —
+        # curated entries for tools whose bytes aren't public (e.g.
+        # msvc) — verbatim into the generated output. This is the
+        # mechanism that makes those entries survive this nightly
+        # regeneration: see docs/ASSET_CATALOG.md.
         shell: bash
         run: |
           set -euo pipefail
           python3 main/scripts/build_catalogue_v1.py \
               --asset-index assets/asset-index.json \
-              --output assets/catalogue.v1.json
+              --output assets/catalogue.v1.json \
+              --external-entries main/external-entries.v1.json
 
       - name: Refresh Rust nightly version map
         shell: bash
