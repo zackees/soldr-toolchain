@@ -173,6 +173,21 @@ def test_load_external_entries_rejects_missing_field(tmp_path: Path) -> None:
         raise AssertionError("expected ValueError for missing field")
 
 
+def test_load_external_entries_rejects_schema_invalid_entry(tmp_path: Path) -> None:
+    """Field-complete but schema-invalid (63-char sha256) must fail loudly
+    at generation time, not only in the separate catalogue-schema.yml gate."""
+    bad_entry = _external_entry(sha256="a" * 63)  # one short of the required 64
+    doc = {"schema_version": 1, "entries": [bad_entry]}
+    path = tmp_path / "external-entries.v1.json"
+    path.write_text(json.dumps(doc), encoding="utf-8")
+    try:
+        bc.load_external_entries(path)
+    except ValueError as exc:
+        assert "schema violation" in str(exc)
+    else:
+        raise AssertionError("expected ValueError for schema-invalid sha256")
+
+
 def test_load_external_entries_drops_unknown_fields(tmp_path: Path) -> None:
     entry = _external_entry(extra="should-be-dropped")  # type: ignore[arg-type]
     doc = {"schema_version": 1, "entries": [entry]}

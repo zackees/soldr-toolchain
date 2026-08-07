@@ -60,6 +60,32 @@ import sys
 from pathlib import Path
 from typing import Any
 
+try:
+    # Normal case: invoked as `python -m scripts.build_catalogue_v1` (or
+    # with the repo root already on PYTHONPATH), so `scripts` resolves as
+    # a package.
+    from scripts.validate_catalogue import DEFAULT_SCHEMA_PATH, iter_schema_errors
+except ImportError:
+    # refresh-manifest.yml invokes this file directly
+    # (`python3 main/scripts/build_catalogue_v1.py`) with no PYTHONPATH
+    # set, so `scripts` isn't importable as a package from there. Rather
+    # than mutate `sys.path` (forbidden by
+    # scripts/lint_python_import_paths.py — repo tooling is a package
+    # rooted at the checkout), load the sibling module directly by path,
+    # exactly the "explicit importlib loading" escape hatch that
+    # linter's docstring calls out for Conan-style entrypoints.
+    import importlib.util
+
+    _spec = importlib.util.spec_from_file_location(
+        "_validate_catalogue_standalone",
+        Path(__file__).resolve().parent / "validate_catalogue.py",
+    )
+    assert _spec is not None and _spec.loader is not None
+    _validate_catalogue = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(_validate_catalogue)
+    DEFAULT_SCHEMA_PATH = _validate_catalogue.DEFAULT_SCHEMA_PATH
+    iter_schema_errors = _validate_catalogue.iter_schema_errors
+
 CATALOGUE_SCHEMA_VERSION = 1
 DEFAULT_ORIGIN = "https://zackees.github.io/soldr-toolchain/catalogue.v1.json"
 
@@ -119,17 +145,20 @@ def transform(
 
 
 def load_external_entries(path: Path) -> list[dict[str, Any]]:
-    """Load + shape-check curated entries from an external-entries.v1.json.
+    """Load + validate curated entries from an external-entries.v1.json.
 
     The document uses the same top-level shape as this script's output
-    (``{"schema_version": 1, "entries": [...]}]``) so it validates
-    against the same ``schemas/catalogue.v1.schema.json`` via
-    ``scripts/validate_catalogue.py``. This function additionally
+    (``{"schema_version": 1, "entries": [...]}]``). This function
     enforces, ahead of the schema check, that every entry carries all
     of ``COPIED_ENTRY_FIELDS`` and drops any unexpected extra fields
-    (mirroring the asset-index round-trip above) so a malformed
-    curated entry fails loudly at merge time rather than silently
-    losing a field.
+    (mirroring the asset-index round-trip above); it then runs the
+    *filtered* document through the exact same jsonschema validation
+    routine (:func:`scripts.validate_catalogue.iter_schema_errors`
+    against ``schemas/catalogue.v1.schema.json``) that
+    ``scripts/validate_catalogue.py``'s CLI and the
+    ``catalogue-schema.yml`` CI gate use. That means a wrong-length
+    ``sha256`` or a malformed ``url`` fails loudly right here, at
+    generation time, not only in the separate CI gate.
     """
     doc = json.loads(path.read_text(encoding="utf-8"))
     raw_entries = doc.get("entries", [])
@@ -146,6 +175,20 @@ def load_external_entries(path: Path) -> list[dict[str, Any]]:
                 f"{path}: entries[{i}] missing required field(s): {missing}"
             )
         out.append({k: entry[k] for k in COPIED_ENTRY_FIELDS})
+
+    schema = json.loads(DEFAULT_SCHEMA_PATH.read_text(encoding="utf-8"))
+    filtered_doc = {"schema_version": CATALOGUE_SCHEMA_VERSION, "entries": out}
+    errors = iter_schema_errors(filtered_doc, schema)
+    if errors:
+        detail = "; ".join(
+            f"at {'/'.join(str(p) for p in err.absolute_path) or '<root>'}: {err.message}"
+            for err in errors
+        )
+        raise ValueError(
+            f"{path}: {len(errors)} schema violation(s) against "
+            f"catalogue.v1.schema.json: {detail}"
+        )
+
     return out
 
 

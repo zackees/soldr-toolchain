@@ -26,6 +26,27 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any
+
+DEFAULT_SCHEMA_PATH = (
+    Path(__file__).resolve().parent.parent / "schemas" / "catalogue.v1.schema.json"
+)
+
+
+def iter_schema_errors(document: dict[str, Any], schema: dict[str, Any]) -> list[Any]:
+    """Return the sorted list of jsonschema ``ValidationError``s for ``document``
+    against ``schema`` (Draft 2020-12). Empty list means the document is valid.
+
+    This is the single validation routine for the ``catalogue.v1.json`` shape —
+    both this script's CLI and ``scripts/build_catalogue_v1.py``'s
+    ``load_external_entries()`` call it, so a wrong-length ``sha256`` or a
+    malformed ``url`` is caught the same way in both places rather than by
+    two independently-maintained checks.
+    """
+    from jsonschema import Draft202012Validator
+
+    validator = Draft202012Validator(schema)
+    return sorted(validator.iter_errors(document), key=lambda e: list(e.absolute_path))
 
 
 def main() -> int:
@@ -38,9 +59,7 @@ def main() -> int:
     parser.add_argument(
         "--schema",
         type=Path,
-        default=Path(__file__).resolve().parent.parent
-        / "schemas"
-        / "catalogue.v1.schema.json",
+        default=DEFAULT_SCHEMA_PATH,
         help="Path to the schema file (default: schemas/catalogue.v1.schema.json next to scripts/).",
     )
     args = parser.parse_args()
@@ -54,7 +73,6 @@ def main() -> int:
 
     try:
         import jsonschema  # noqa: F401 — proves import works
-        from jsonschema import Draft202012Validator
     except ImportError:
         sys.stderr.write(
             "validate_catalogue.py: missing `jsonschema` — install via "
@@ -65,8 +83,7 @@ def main() -> int:
     schema = json.loads(args.schema.read_text(encoding="utf-8"))
     document = json.loads(args.document.read_text(encoding="utf-8"))
 
-    validator = Draft202012Validator(schema)
-    errors = sorted(validator.iter_errors(document), key=lambda e: list(e.absolute_path))
+    errors = iter_schema_errors(document, schema)
     if errors:
         sys.stderr.write(
             f"validate_catalogue.py: {len(errors)} schema violation(s) in "

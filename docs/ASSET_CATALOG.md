@@ -210,9 +210,15 @@ must be authenticated:
 - On success, the API responds with a `302` redirect to a signed,
   time-limited `objects.githubusercontent.com` URL. **Do not forward the
   `Authorization` header when following that redirect** — GitHub's signed
-  object URLs reject requests that carry it, and most HTTP clients will
-  replay the header across the redirect unless told not to (e.g. strip
-  `Authorization` on cross-host redirects, or issue the redirected GET as
-  a fresh unauthenticated request).
+  object URLs reject requests that carry it. Modern HTTP clients strip
+  `Authorization` by default on a cross-host redirect (curl ≥7.58's
+  built-in redirect handling, Python `requests`, and fetch-spec-compliant
+  clients all do this), so the common case is already safe. Still verify
+  your client actually does this before relying on it, especially if
+  you're using a raw/manual redirect follower (e.g. reading the `Location`
+  header and issuing the second request yourself) rather than the
+  client's built-in redirect handling — in that case you must explicitly
+  drop the header on the second request rather than assuming it's
+  stripped for you.
 - Verify the downloaded bytes against the catalogue entry's `sha256`
   before use, exactly as for any other catalogue entry.
