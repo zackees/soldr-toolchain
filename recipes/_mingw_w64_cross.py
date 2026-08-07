@@ -55,9 +55,67 @@ SHAPE_CONFIG = {
 # the plan. Hardened in a follow-up once the SHAs are known.
 EXPECTED_LOCK_SHA256: dict[str, dict[str, str]] = {}
 
-# The cross tools a win-gnu compile + link consumes. Discovered under the
-# conda prefix as `bin/<compiler>-<tool>`; validation is lenient on pass 1.
-REQUIRED_TOOLS = ("gcc", "g++", "ar", "ranlib", "dlltool", "windres")
+# The cross tools a win-gnu compile + link consumes, confirmed present as
+# `bin/x86_64-w64-mingw32-<tool>` by the discovery build.
+REQUIRED_TOOLS = ("gcc", "g++", "ar", "ranlib", "dlltool", "windres", "ld")
+
+# PE\0\0 machine id for x86-64 (IMAGE_FILE_MACHINE_AMD64), little-endian.
+_PE_MACHINE_AMD64 = 0x8664
+
+
+def _validate_package(package: Path, compiler: str, output) -> None:
+    """Assert the cross tools exist and that the toolchain actually
+    cross-compiles + links a Windows PE from this Linux host."""
+    bin_dir = package / "bin"
+    missing = [
+        f"bin/{compiler}-{tool}"
+        for tool in REQUIRED_TOOLS
+        if not (bin_dir / f"{compiler}-{tool}").is_file()
+    ]
+    if missing:
+        raise RuntimeError(
+            "mingw cross toolchain missing required tools: " + ", ".join(missing)
+        )
+
+    # Link smoke: compile a tiny program to a PE .exe with the cross gcc.
+    src = package / "soldr-mingw-smoke.c"
+    exe = package / "soldr-mingw-smoke.exe"
+    src.write_text(
+        "#include <stdio.h>\nint main(void){puts(\"soldr\");return 0;}\n",
+        encoding="utf-8",
+    )
+    gcc = bin_dir / f"{compiler}-gcc"
+    try:
+        subprocess.run(
+            [str(gcc), str(src), "-o", str(exe)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        machine = _pe_machine(exe)
+        if machine != _PE_MACHINE_AMD64:
+            raise RuntimeError(
+                f"link smoke produced machine 0x{machine:04x}; expected 0x{_PE_MACHINE_AMD64:04x} (amd64 PE)"
+            )
+        output.info(f"PE link smoke OK: {exe.name} is an x86-64 PE")
+    except subprocess.CalledProcessError as exc:
+        detail = exc.stderr.strip() or exc.stdout.strip() or str(exc)
+        raise RuntimeError(f"mingw cross link smoke failed: {detail}") from exc
+    finally:
+        src.unlink(missing_ok=True)
+        exe.unlink(missing_ok=True)
+
+
+def _pe_machine(path: Path) -> int:
+    """Read the COFF machine field from a PE file. DOS header at 0x00
+    (`MZ`), PE header offset at 0x3C, `PE\\0\\0` then the 2-byte machine."""
+    data = path.read_bytes()
+    if data[:2] != b"MZ":
+        raise RuntimeError(f"{path.name} is not a PE/MZ image")
+    pe_off = int.from_bytes(data[0x3C:0x40], "little")
+    if data[pe_off : pe_off + 4] != b"PE\x00\x00":
+        raise RuntimeError(f"{path.name} has no PE signature at 0x{pe_off:x}")
+    return int.from_bytes(data[pe_off + 4 : pe_off + 6], "little")
 
 
 def supported_shapes():
@@ -144,6 +202,10 @@ def build_bundle(*, version, shape, build_folder, output):
             "the conda-forge mingw cross package layout is not as expected"
         )
     output.info(f"discovered cross gcc driver(s): {discovered_gcc}")
+
+    # Functional gate (confirmed layout `bin/x86_64-w64-mingw32-*`): the
+    # tools exist AND the toolchain links a real x86-64 PE from Linux.
+    _validate_package(package, cfg["compiler"], output)
 
     meta = {
         "tool": "mingw-w64-cross",
