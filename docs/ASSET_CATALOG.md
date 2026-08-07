@@ -124,3 +124,95 @@ flips soldr's resolver from `asset-index.json` over to `catalogue.v1.json`.
    - Use the producer pipeline if the tool is GitHub-derived.
 4. Add the tool to top-level `manifest.json` (Index) if not already present.
 5. Run `scripts/lint_assets.py` to confirm.
+
+## External / curated entries (private-bytes tools)
+
+`catalogue.v1.json` is the single public discovery manifest for **every**
+soldr tool, including tools whose bytes cannot be publicly redistributed.
+The manifest entry (owner/repo/tag/asset/url/sha256) is not sensitive —
+it's a pointer plus a checksum — so it is safe to publish even when the
+`url` resolves to a private release asset that a request without a token
+cannot download.
+
+### Why `msvc` is like this
+
+The MSVC toolchain (cl.exe, link.exe, the MSVC STL, Windows SDK headers)
+is licensed by Microsoft and cannot be redistributed from a public
+location under the terms soldr-toolchain otherwise vendors tools with.
+The bundle is instead published as a **private** GitHub release asset on
+`zackees/soldr-toolchain-private`, and only the manifest row — including
+its sha256 — is exposed via the public `catalogue.v1.json`. This keeps
+`msvc` discoverable and verifiable through the same catalogue every other
+tool uses, without redistributing bytes soldr-toolchain doesn't have the
+right to host publicly. Consumers who are entitled to the toolchain (e.g.
+via their own Visual Studio / Build Tools license) authenticate with a
+token to fetch the private asset; everyone else can still see that the
+tool exists, which version, and what its verified hash is.
+
+### Mechanism: `external-entries.v1.json` on `main`
+
+`.github/workflows/refresh-manifest.yml` regenerates `catalogue.v1.json`
+every night from two sources: GitHub-release inventories
+(`build_manifest.py`) and locally vendored blobs discovered by walking the
+`assets` tree. Neither source can produce a curated entry like `msvc` — it
+has no public release inventory and no on-disk blob. A hand-edit of the
+generated `assets/catalogue.v1.json` would therefore be **silently dropped
+by the next nightly run**.
+
+Instead, curated entries are checked into
+[`external-entries.v1.json`](../external-entries.v1.json) on `main`. It
+uses the exact same top-level shape as `catalogue.v1.json`
+(`{"schema_version": 1, "entries": [...]}]`) and validates against the
+same [`schemas/catalogue.v1.schema.json`](../schemas/catalogue.v1.schema.json)
+via the same validator: `uv run --group dev python -m scripts.validate_catalogue external-entries.v1.json`.
+
+`scripts/build_catalogue_v1.py` accepts an optional `--external-entries
+<path>` flag. When given, it loads the document
+(`load_external_entries()`), and `transform()` appends each entry after
+the generated entries — **inside the generator**, not as a post-hoc patch
+— so curated entries survive the nightly regeneration by construction.
+`refresh-manifest.yml` always passes
+`--external-entries main/external-entries.v1.json` (the `main` checkout
+of this repo is already available in that job).
+
+Duplicate safety: `transform()` tracks every generated entry's `url` and
+raises `ValueError` (the CLI then exits 1) if an external entry's `url`
+collides with one already produced by the generator, rather than silently
+emitting a duplicate row. Add a new curated entry by appending to
+`external-entries.v1.json`'s `entries` array; CI
+(`.github/workflows/catalogue-schema.yml`) schema-validates the file on
+every PR, and `tests/test_build_catalogue_v1.py` covers the merge +
+duplicate-rejection contract plus a drift guard on the checked-in file's
+current contents.
+
+Note for `scripts/lint_assets.py`: its R8/R9 rules only resolve URLs that
+point at a soldr-toolchain CDN host (`CDN_HOSTS` in that script). A
+private `api.github.com` URL like the `msvc` entry's doesn't match any of
+those hosts, so `_url_to_rel()` returns `None` and the entry is skipped as
+"external URL — out of scope" — the linter already tolerates
+catalogue entries with no corresponding on-disk file, no changes needed.
+
+### Consumer auth contract
+
+A request for a private release asset URL
+(`https://api.github.com/repos/<owner>/<repo>/releases/assets/<id>`)
+must be authenticated:
+
+- Set `SOLDR_TOOLCHAIN_AUTH_TOKEN` to a GitHub token with read access to
+  the private repo (e.g. a fine-grained PAT scoped to
+  `zackees/soldr-toolchain-private`, or a GitHub App installation token).
+- Send `Authorization: Bearer $SOLDR_TOOLCHAIN_AUTH_TOKEN` and
+  `Accept: application/octet-stream` on the request to the `url` field.
+- Without a token (or with an unauthorized one), GitHub returns `404 Not
+  Found` — not `401`/`403` — for private release assets. Treat any
+  non-2xx response from this endpoint as "not entitled," not as a broken
+  catalogue entry.
+- On success, the API responds with a `302` redirect to a signed,
+  time-limited `objects.githubusercontent.com` URL. **Do not forward the
+  `Authorization` header when following that redirect** — GitHub's signed
+  object URLs reject requests that carry it, and most HTTP clients will
+  replay the header across the redirect unless told not to (e.g. strip
+  `Authorization` on cross-host redirects, or issue the redirected GET as
+  a fresh unauthenticated request).
+- Verify the downloaded bytes against the catalogue entry's `sha256`
+  before use, exactly as for any other catalogue entry.

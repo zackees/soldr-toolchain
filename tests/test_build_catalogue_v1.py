@@ -101,6 +101,94 @@ def test_transform_rejects_non_dict_entry_element() -> None:
         raise AssertionError("expected ValueError for non-dict entry")
 
 
+def _external_entry(**overrides: str) -> dict[str, str]:
+    base = {
+        "owner": "zackees",
+        "repo": "soldr-toolchain-private",
+        "tag": "msvc-14.44.35207",
+        "asset": "bundle.tar.zst",
+        "url": "https://api.github.com/repos/zackees/soldr-toolchain-private/releases/assets/505002676",
+        "sha256": "932d9e36cbad6243b6ca9e50332b258f7efeb086d2f21c80447738064418c714",
+    }
+    base.update(overrides)
+    return base
+
+
+def test_transform_merges_external_entries_after_generated() -> None:
+    generated = _asset_index_entry()
+    external = _external_entry()
+    payload = bc.transform(
+        {"entries": [generated]}, origin="x", external_entries=[external]
+    )
+    assert payload["entries"] == [generated, external]
+
+
+def test_transform_external_entries_none_is_noop() -> None:
+    generated = _asset_index_entry()
+    payload = bc.transform({"entries": [generated]}, origin="x", external_entries=None)
+    assert payload["entries"] == [generated]
+
+
+def test_transform_rejects_external_entry_duplicating_generated_url() -> None:
+    generated = _asset_index_entry()
+    dup = _external_entry(url=generated["url"])
+    try:
+        bc.transform({"entries": [generated]}, origin="x", external_entries=[dup])
+    except ValueError as exc:
+        assert "duplicates" in str(exc)
+    else:
+        raise AssertionError("expected ValueError for duplicate url")
+
+
+def test_transform_rejects_external_entry_missing_url() -> None:
+    bad = _external_entry()
+    del bad["url"]
+    try:
+        bc.transform({"entries": []}, origin="x", external_entries=[bad])
+    except ValueError as exc:
+        assert "url" in str(exc)
+    else:
+        raise AssertionError("expected ValueError for missing url")
+
+
+def test_load_external_entries_round_trips(tmp_path: Path) -> None:
+    doc = {"schema_version": 1, "entries": [_external_entry()]}
+    path = tmp_path / "external-entries.v1.json"
+    path.write_text(json.dumps(doc), encoding="utf-8")
+    entries = bc.load_external_entries(path)
+    assert entries == [_external_entry()]
+
+
+def test_load_external_entries_rejects_missing_field(tmp_path: Path) -> None:
+    bad_entry = _external_entry()
+    del bad_entry["sha256"]
+    doc = {"schema_version": 1, "entries": [bad_entry]}
+    path = tmp_path / "external-entries.v1.json"
+    path.write_text(json.dumps(doc), encoding="utf-8")
+    try:
+        bc.load_external_entries(path)
+    except ValueError as exc:
+        assert "sha256" in str(exc)
+    else:
+        raise AssertionError("expected ValueError for missing field")
+
+
+def test_load_external_entries_drops_unknown_fields(tmp_path: Path) -> None:
+    entry = _external_entry(extra="should-be-dropped")  # type: ignore[arg-type]
+    doc = {"schema_version": 1, "entries": [entry]}
+    path = tmp_path / "external-entries.v1.json"
+    path.write_text(json.dumps(doc), encoding="utf-8")
+    entries = bc.load_external_entries(path)
+    assert "extra" not in entries[0]
+
+
+def test_repo_external_entries_v1_json_has_expected_msvc_entry() -> None:
+    """Guard against silent drift of the checked-in curated entry."""
+    path = Path(__file__).parents[1] / "external-entries.v1.json"
+    entries = bc.load_external_entries(path)
+    assert entries == [_external_entry()]
+
+
 def test_now_iso_is_z_suffixed_utc() -> None:
     out = bc._now_iso()
     assert out.endswith("Z")

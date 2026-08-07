@@ -32,6 +32,10 @@ jobs:
         run: python -m pip install --quiet jsonschema
       - name: Validate examples/catalogue.v1.json
         run: uv run --group dev python -m scripts.validate_catalogue examples/catalogue.v1.json
+      - name: Validate external-entries.v1.json
+        # Curated entries (soldr-toolchain#msvc) use the same top-level
+        # shape as catalogue.v1.json, so the same validator + schema apply.
+        run: uv run --group dev python -m scripts.validate_catalogue external-entries.v1.json
       - name: Schema is itself parseable JSON
         run: python -c "import json,sys; json.load(open('schemas/catalogue.v1.schema.json'))"
       # Re-validate the live catalogue document on the `assets`
