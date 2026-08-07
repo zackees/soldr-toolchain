@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-07T16:48:09Z",
+  "generated_at": "2026-08-07T17:24:26Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -954,6 +954,14 @@
       "asset": "bundle.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/mingw-w64-sysroot/15.3.0posix-14.0.0-msvcrt-r1/windows-x64-gnu/bundle.tar.zst",
       "sha256": "497dec4e3ddf17521814fa87a3b0b2c875681faf775349845f17d4c5e2667d86"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/mingw-w64-cross/mingw-w64-gcc-15.3.0/linux-x64-gnu/bundle.tar.zst",
+      "sha256": "ec5dfa59e43c87fc1c76562596f04168f5933ca115ba73e463ddb7776f85fb21"
     }
   ]
 }
