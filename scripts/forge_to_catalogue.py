@@ -191,6 +191,11 @@ TOOL_RECIPE_NAME["musl-linux-toolchain"] = {
     shape: f"musl-linux-toolchain-{shape}"
     for shape in ("linux-x64-musl", "linux-arm64-musl")
 }
+# soldr-toolchain#114 Phase 2 — Linux-hosted mingw cross gcc. Shape is the
+# HOST platform (where the toolchain runs), like gnu-linux-toolchain.
+TOOL_RECIPE_NAME["mingw-w64-cross"] = {
+    "linux-x64-gnu": "mingw-w64-cross-linux-x64-gnu",
+}
 
 # Rust CLI support binaries. Keep all eight native leaves, including Intel
 # macOS, even when an upstream universal archive backs both Darwin rows.
@@ -257,6 +262,7 @@ DEFAULT_ASSET_NAME = {
     "mingw-w64-gcc": "bundle.tar.zst",
     "mingw-w64-sysroot": "bundle.tar.zst",
     "gnu-linux-toolchain": "bundle.tar.zst",
+    "mingw-w64-cross": "bundle.tar.zst",
     "musl-linux-toolchain": "bundle.tar.zst",
     # Rust CLI support bundles.
     "cargo-chef": "bundle.tar.zst",
