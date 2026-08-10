@@ -57,7 +57,7 @@ jobs:
             curl --fail --location --retry 3 --output "$name" "$url"
             tar -xzf "$name"
             test -x "package/$tool${{ matrix.suffix }}"
-            "package/$tool${{ matrix.suffix }}" --version
+            "package/$tool${{ matrix.suffix }}" --help
             rm -rf package manifest.json "$name"
           done
       - name: Verify Linux binary compatibility
