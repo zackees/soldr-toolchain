@@ -1,0 +1,77 @@
+name: validate published Dylint assets
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2022
+            platform: windows-x86_64-msvc
+            target: x86_64-pc-windows-msvc
+            suffix: .exe
+          - runner: windows-2022
+            platform: windows-aarch64-msvc
+            target: aarch64-pc-windows-msvc
+            suffix: .exe
+          - runner: macos-14
+            platform: darwin-x86_64
+            target: x86_64-apple-darwin
+            suffix: ''
+          - runner: macos-14
+            platform: darwin-aarch64
+            target: aarch64-apple-darwin
+            suffix: ''
+          - runner: ubuntu-22.04
+            platform: linux-x86_64-glibc
+            target: x86_64-unknown-linux-gnu
+            suffix: ''
+          - runner: ubuntu-24.04-arm
+            platform: linux-aarch64-glibc
+            target: aarch64-unknown-linux-gnu
+            suffix: ''
+          - runner: ubuntu-22.04
+            platform: linux-x86_64-musl
+            target: x86_64-unknown-linux-musl
+            suffix: ''
+          - runner: ubuntu-24.04-arm
+            platform: linux-aarch64-musl
+            target: aarch64-unknown-linux-musl
+            suffix: ''
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Fetch and verify both published bundles
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://raw.githubusercontent.com/zackees/soldr-toolchain/assets"
+          for tool in cargo-dylint dylint-link; do
+            name="$tool-6.0.3-${{ matrix.target }}.tar.gz"
+            url="$base/$tool/v6.0.3/${{ matrix.platform }}/$name"
+            curl --fail --location --retry 3 --output "$name" "$url"
+            tar -xzf "$name"
+            test -x "package/$tool${{ matrix.suffix }}"
+            "package/$tool${{ matrix.suffix }}" --version
+            rm -rf package manifest.json "$name"
+          done
+      - name: Verify Linux binary compatibility
+        if: startsWith(matrix.platform, 'linux-')
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/${{ matrix.platform }}"
+          name="cargo-dylint-6.0.3-${{ matrix.target }}.tar.gz"
+          curl --fail --location --output "$name" "$base/$name"
+          tar -xzf "$name"
+          if [[ '${{ matrix.platform }}' == *musl ]]; then
+            ! readelf -l package/cargo-dylint | grep -q 'INTERP'
+          else
+            max_glibc="$(readelf -V package/cargo-dylint | grep -o 'GLIBC_[0-9.]*' | sort -Vu | tail -1)"
+            test "$(printf '%s\n%s\n' "$max_glibc" GLIBC_2.17 | sort -V | head -1)" = "$max_glibc"
+          fi
