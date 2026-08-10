@@ -58,7 +58,15 @@ jobs:
             tar -xzf "$name"
             test -x "package/$tool${{ matrix.suffix }}"
             if [ "$tool" = dylint-link ]; then
-              RUSTUP_TOOLCHAIN=stable "package/$tool${{ matrix.suffix }}" --help
+              if [ '${{ matrix.target }}' = aarch64-pc-windows-msvc ]; then
+                # No hosted Windows ARM64 runner is available: extraction and
+                # PE layout are still verified above, but it cannot execute here.
+                true
+              elif [ '${{ matrix.target }}' = x86_64-pc-windows-msvc ]; then
+                RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-msvc "package/$tool${{ matrix.suffix }}" --help
+              else
+                RUSTUP_TOOLCHAIN=stable "package/$tool${{ matrix.suffix }}" --help
+              fi
             else
               "package/$tool${{ matrix.suffix }}" --help
             fi
@@ -69,7 +77,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          base="https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/${{ matrix.platform }}"
+          base="https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/${{ matrix.platform }}"
           name="cargo-dylint-6.0.3-${{ matrix.target }}.tar.gz"
           curl --fail --location --output "$name" "$base/$name"
           tar -xzf "$name"
