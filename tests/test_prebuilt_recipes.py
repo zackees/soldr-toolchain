@@ -155,7 +155,10 @@ def test_forge_to_catalogue_wiring():
             # Every ingest shape must resolve to a catalogue platform.
             assert shape in fc.SHAPE_TO_PLATFORM
         assert fc.DEFAULT_ASSET_NAME[tool] == "bundle.tar.zst"
-    for tool in ("cargo-chef", "crgx", "cargo-binstall", "cargo-nextest"):
+    for tool in (
+        "cargo-chef", "crgx", "cargo-binstall", "cargo-nextest",
+        "cargo-dylint", "dylint-link",
+    ):
         assert set(fc.TOOL_RECIPE_NAME[tool]) == RUST_CLI_EXPECTED_SHAPES
         for shape, recipe_name in fc.TOOL_RECIPE_NAME[tool].items():
             assert recipe_name == f"{tool}-{shape}"

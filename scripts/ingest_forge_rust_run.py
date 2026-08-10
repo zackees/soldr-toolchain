@@ -13,7 +13,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--forge-dir", type=Path, required=True)
     parser.add_argument(
-        "--tool", choices=("cargo-binstall", "cargo-nextest"), required=True
+        "--tool",
+        choices=("cargo-binstall", "cargo-nextest", "cargo-dylint", "dylint-link"),
+        required=True,
     )
     parser.add_argument("--version", required=True)
     parser.add_argument("--forge-run-id", required=True)
