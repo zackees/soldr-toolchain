@@ -38,7 +38,10 @@ ONLINE_BASE = "https://zackees.github.io/soldr-toolchain"
 # Canonical pointer for IDE auto-validation and document self-verification.
 # Pinned to /v1/ so consumers stay valid forever as the schema evolves.
 SCHEMA_URL = "https://zackees.github.io/manifest.json/v1/manifest.schema.json"
-LOCAL_SUPPORT_TOOLS = {"cargo-chef", "crgx", "cargo-binstall", "cargo-nextest"}
+LOCAL_SUPPORT_TOOLS = {
+    "cargo-chef", "crgx", "cargo-binstall", "cargo-nextest",
+    "cargo-dylint", "dylint-link",
+}
 LOCAL_SUPPORT_URL_MARKER = "zackees/soldr-toolchain/assets/"
 
 # v5 short-arch -> v1 canonical arch

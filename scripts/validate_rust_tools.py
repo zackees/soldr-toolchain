@@ -18,8 +18,13 @@ def validate(path: Path) -> dict:
     ):
         raise ValueError("managed Rust tools must list eight unique platforms")
     tools = doc.get("tools") or {}
-    for name in ("cargo-binstall", "cargo-nextest"):
-        item = tools.get(name) or {}
+    required_tools = {"cargo-binstall", "cargo-nextest", "cargo-dylint", "dylint-link"}
+    missing_tools = sorted(required_tools - set(tools))
+    if missing_tools:
+        raise ValueError(f"managed Rust tools missing required entries: {missing_tools}")
+    for name, item in tools.items():
+        if not isinstance(item, dict):
+            raise ValueError(f"{name} must be an object")
         version = str(item.get("version", ""))
         if not version or version.lower() in {"latest", "*"}:
             raise ValueError(f"{name} must have an exact version")
@@ -29,6 +34,10 @@ def validate(path: Path) -> dict:
             or not item.get("source_ref")
         ):
             raise ValueError(f"{name} is missing source/binary/source_ref")
+        if "catalogue_from_release" in item and not isinstance(
+            item["catalogue_from_release"], bool
+        ):
+            raise ValueError(f"{name} catalogue_from_release must be boolean")
         source_ref = str(item["source_ref"])
         if len(source_ref) != 40 or any(
             c not in "0123456789abcdef" for c in source_ref

@@ -231,6 +231,32 @@ checkout in this order:
 If none of those resolves to a directory containing `manifest.json`,
 the parity tests skip — the pure-function tests still run.
 
+### Producing Dylint 6.0.3 on Windows x64
+
+Dylint is the exception to the target-native Forge recipe model: its two
+compatibility-paired executables are built from the immutable upstream workspace
+on one Windows x64 producer. Clone `trailofbits/dylint` at exact tag `v6.0.3`
+(commit `9adfa398661273ca7dc99df9bf2c26ae6f61b1c5`), then use Soldr's blessed
+cross-build path:
+
+```sh
+uv run --group dev python -m scripts.produce_dylint \
+    --dylint-checkout C:/src/dylint \
+    --output-dir C:/build/dylint-artifacts \
+    --assets-root C:/src/soldr-toolchain-assets \
+    --runtime-validation C:/build/dylint-runtime-validation.json
+```
+
+The producer invokes `soldr build --locked --release --target <target> -p
+cargo-dylint -p dylint-link --features=dylint/__driver_from_crates_io` for all
+eight canonical targets. It rejects dirty or mismatched source, missing output,
+partial matrices, bad checksums, and incomplete runtime-fixture evidence. The
+validation JSON must record a passing small Dylint lint fixture for every target
+and both binaries; it is intentionally required before local outputs can be
+catalogued. Add `--publish` only after reviewing the assets checkout: that is
+the explicit operation which creates one assets PR for all 16 bundles. Use
+`--dry-run` to print the hermetic, network-free build plan.
+
 ### Rebuilding the catalogue locally
 
 ```sh

@@ -235,7 +235,11 @@ def _forge_rust_asset_name(tool: str, version: str, shape: str) -> str:
     return f"{tool}-{version}-{RUST_TARGET_BY_SHAPE[shape]}.tar.gz"
 
 
-for _tool in ("cargo-chef", "crgx", "cargo-binstall", "cargo-nextest"):
+MANAGED_RUST_TOOLS = (
+    "cargo-chef", "crgx", "cargo-binstall", "cargo-nextest",
+    "cargo-dylint", "dylint-link",
+)
+for _tool in MANAGED_RUST_TOOLS:
     TOOL_RECIPE_NAME[_tool] = {shape: f"{_tool}-{shape}" for shape in RUST_CLI_SHAPES}
 
 
@@ -269,6 +273,8 @@ DEFAULT_ASSET_NAME = {
     "crgx": "bundle.tar.zst",
     "cargo-binstall": "bundle.tar.zst",
     "cargo-nextest": "bundle.tar.zst",
+    "cargo-dylint": "bundle.tar.zst",
+    "dylint-link": "bundle.tar.zst",
 }
 
 V1_SCHEMA_URL = "https://zackees.github.io/manifest.json/v1/manifest.schema.json"
@@ -278,6 +284,8 @@ TOOL_SUMMARY = {
     "crgx": "yfedoseev/crgx",
     "cargo-binstall": "cargo-bins/cargo-binstall",
     "cargo-nextest": "nextest-rs/nextest",
+    "cargo-dylint": "trailofbits/dylint",
+    "dylint-link": "trailofbits/dylint",
 }
 
 SHAPE_TO_PLATFORM_TUPLE = {
@@ -367,7 +375,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     rust_artifact = None
-    if args.tool in {"cargo-binstall", "cargo-nextest"}:
+    if args.tool in {"cargo-binstall", "cargo-nextest", "cargo-dylint", "dylint-link"}:
         rust_artifact = _find_forge_rust_artifact(
             args.forge_dir, args.tool, args.version, args.shape
         )
@@ -818,7 +826,7 @@ def _update_catalogue(
 
 
 def _catalog_version(tool: str, package_version: str) -> str:
-    if tool in {"cargo-chef", "crgx"} and not package_version.startswith("v"):
+    if tool in {"cargo-chef", "crgx", "cargo-dylint", "dylint-link"} and not package_version.startswith("v"):
         return f"v{package_version}"
     return package_version
 
@@ -833,7 +841,7 @@ def _flatten_platform(platform: dict[str, str]) -> str:
 
 
 def _asset_platform_dir(tool: str, shape: str) -> str:
-    if tool in {"cargo-chef", "crgx", "cargo-binstall", "cargo-nextest"}:
+    if tool in MANAGED_RUST_TOOLS:
         platform = SHAPE_TO_PLATFORM_TUPLE.get(shape)
         if platform is None:
             raise SystemExit(

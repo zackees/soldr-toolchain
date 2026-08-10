@@ -448,6 +448,11 @@ def load_managed_rust_tools(
     for name, config in sorted(tools.items()):
         if not isinstance(config, dict):
             raise RuntimeError(f"{path}: tool {name!r} must be an object")
+        if config.get("catalogue_from_release", True) is False:
+            # Locally built, version-locked tools (Dylint) are ingested into
+            # the assets catalogue by their dedicated producer; querying the
+            # incomplete upstream release matrix would overwrite their intent.
+            continue
         version = str(config.get("version", "")).strip()
         source = str(config.get("source", "")).strip()
         prefix = str(config.get("release_tag_prefix", "v"))

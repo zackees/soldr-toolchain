@@ -6,9 +6,11 @@ from scripts.validate_rust_tools import validate
 ROOT = Path(__file__).parents[1]
 
 
-def test_pinned_vertical_slice_has_two_tools_and_eight_platforms():
+def test_pinned_vertical_slice_has_dylint_pair_and_eight_platforms():
     doc = validate(ROOT / "managed-rust-tools.json")
-    assert set(doc["tools"]) == {"cargo-binstall", "cargo-nextest"}
+    assert set(doc["tools"]) == {
+        "cargo-binstall", "cargo-nextest", "cargo-dylint", "dylint-link"
+    }
     assert len(doc["platforms"]) == 8
 
 
