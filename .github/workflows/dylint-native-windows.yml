@@ -1,0 +1,54 @@
+name: build Dylint native Windows artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      dylint_ref:
+        description: Immutable Dylint commit
+        required: true
+        default: 9adfa398661273ca7dc99df9bf2c26ae6f61b1c5
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            shape: windows-x64
+          - target: aarch64-pc-windows-msvc
+            shape: windows-arm64
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          repository: trailofbits/dylint
+          ref: ${{ inputs.dylint_ref }}
+          path: dylint
+      - name: Verify immutable source
+        shell: bash
+        working-directory: dylint
+        run: |
+          test "$(git rev-parse HEAD)" = "${{ inputs.dylint_ref }}"
+          test -z "$(git status --porcelain)"
+      - name: Build locked Dylint pair
+        shell: bash
+        working-directory: dylint
+        run: |
+          rustup target add '${{ matrix.target }}'
+          cargo build --locked --release --target '${{ matrix.target }}' \
+            -p cargo-dylint -p dylint-link \
+            --features=dylint/__driver_from_crates_io
+          mkdir -p '../out/${{ matrix.shape }}'
+          cp "target/${{ matrix.target }}/release/cargo-dylint.exe" '../out/${{ matrix.shape }}/'
+          cp "target/${{ matrix.target }}/release/dylint-link.exe" '../out/${{ matrix.shape }}/'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dylint-6.0.3-${{ matrix.shape }}
+          path: out/${{ matrix.shape }}
+          if-no-files-found: error
