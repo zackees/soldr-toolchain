@@ -43,10 +43,30 @@ jobs:
             set -euo pipefail
             curl --proto =https --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
             source "$HOME/.cargo/env"
-            rustup target add ${{ matrix.target }}
-            cargo build --locked --release --target ${{ matrix.target }} -p cargo-dylint -p dylint-link --features=dylint/__driver_from_crates_io
-            max_glibc="$(readelf -V target/${{ matrix.target }}/release/cargo-dylint | grep -o "GLIBC_[0-9.]*" | sort -Vu | tail -1)"
-            test "$(printf '%s\n%s\n' "$max_glibc" GLIBC_2.17 | sort -V | head -1)" = "$max_glibc"
+            rustup toolchain install 1.97.1 --profile minimal
+            rustup target add ${{ matrix.target }} --toolchain 1.97.1
+            cargo +1.97.1 build --locked --release --target ${{ matrix.target }} -p cargo-dylint -p dylint-link --features=dylint/__driver_from_crates_io
+            required_glibc=GLIBC_2.17
+            max_glibc="$(LC_ALL=C readelf -V target/${{ matrix.target }}/release/cargo-dylint | grep -o "GLIBC_[0-9.]*" | LC_ALL=C sort -Vu | tail -1)"
+            printf "cargo-dylint maximum GLIBC requirement: %s (allowed: <= %s)\n" "$max_glibc" "$required_glibc"
+            test -n "$max_glibc"
+            glibc_version_at_most() {
+              local observed="${1#GLIBC_}" required="${2#GLIBC_}" part index
+              local IFS=.
+              local -a observed_parts required_parts
+              read -r -a observed_parts <<< "$observed"
+              read -r -a required_parts <<< "$required"
+              for ((index = 0; index < ${#observed_parts[@]} || index < ${#required_parts[@]}; index++)); do
+                part="${observed_parts[index]:-0}"
+                if ((10#$part < 10#${required_parts[index]:-0})); then
+                  return 0
+                elif ((10#$part > 10#${required_parts[index]:-0})); then
+                  return 1
+                fi
+              done
+              return 0
+            }
+            glibc_version_at_most "$max_glibc" "$required_glibc"
           '
           mkdir -p 'out/${{ matrix.shape }}'
           cp 'dylint/target/${{ matrix.target }}/release/cargo-dylint' 'out/${{ matrix.shape }}/'
