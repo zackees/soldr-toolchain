@@ -50,7 +50,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          base="https://raw.githubusercontent.com/zackees/soldr-toolchain/assets"
+          base="https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets"
           for tool in cargo-dylint dylint-link; do
             name="$tool-6.0.3-${{ matrix.target }}.tar.gz"
             url="$base/$tool/v6.0.3/${{ matrix.platform }}/$name"
