@@ -45,7 +45,8 @@ jobs:
             source "$HOME/.cargo/env"
             rustup target add ${{ matrix.target }}
             cargo build --locked --release --target ${{ matrix.target }} -p cargo-dylint -p dylint-link --features=dylint/__driver_from_crates_io
-            readelf -V target/${{ matrix.target }}/release/cargo-dylint | grep -o "GLIBC_[0-9.]*" | sort -Vu | tail -1 | grep -Fx GLIBC_2.17
+            max_glibc="$(readelf -V target/${{ matrix.target }}/release/cargo-dylint | grep -o "GLIBC_[0-9.]*" | sort -Vu | tail -1)"
+            test "$(printf '%s\n%s\n' "$max_glibc" GLIBC_2.17 | sort -V | head -1)" = "$max_glibc"
           '
           mkdir -p 'out/${{ matrix.shape }}'
           cp 'dylint/target/${{ matrix.target }}/release/cargo-dylint' 'out/${{ matrix.shape }}/'
