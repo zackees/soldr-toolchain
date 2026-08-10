@@ -1,0 +1,57 @@
+name: rebuild Dylint GNU Linux artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      dylint_ref:
+        description: Immutable Dylint commit
+        required: true
+        default: 9adfa398661273ca7dc99df9bf2c26ae6f61b1c5
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            image: quay.io/pypa/manylinux2014_x86_64
+            target: x86_64-unknown-linux-gnu
+            shape: linux-x64-gnu
+          - runner: ubuntu-24.04-arm
+            image: quay.io/pypa/manylinux2014_aarch64
+            target: aarch64-unknown-linux-gnu
+            shape: linux-arm64-gnu
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          repository: trailofbits/dylint
+          ref: ${{ inputs.dylint_ref }}
+          path: dylint
+      - name: Build in manylinux2014
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C dylint rev-parse HEAD)" = "${{ inputs.dylint_ref }}"
+          docker run --rm -v "$PWD:/workspace" -w /workspace/dylint '${{ matrix.image }}' bash -lc '
+            set -euo pipefail
+            curl --proto =https --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+            source "$HOME/.cargo/env"
+            rustup target add ${{ matrix.target }}
+            cargo build --locked --release --target ${{ matrix.target }} -p cargo-dylint -p dylint-link --features=dylint/__driver_from_crates_io
+            readelf -V target/${{ matrix.target }}/release/cargo-dylint | grep -o "GLIBC_[0-9.]*" | sort -Vu | tail -1 | grep -Fx GLIBC_2.17
+          '
+          mkdir -p 'out/${{ matrix.shape }}'
+          cp 'dylint/target/${{ matrix.target }}/release/cargo-dylint' 'out/${{ matrix.shape }}/'
+          cp 'dylint/target/${{ matrix.target }}/release/dylint-link' 'out/${{ matrix.shape }}/'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dylint-6.0.3-${{ matrix.shape }}-glibc217
+          path: out/${{ matrix.shape }}
+          if-no-files-found: error
