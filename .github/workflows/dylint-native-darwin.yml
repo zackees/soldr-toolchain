@@ -42,6 +42,7 @@ jobs:
       - name: Build locked Dylint pair
         working-directory: dylint
         run: |
+          rustup target add '${{ matrix.target }}'
           cargo build --locked --release --target '${{ matrix.target }}' \
             -p cargo-dylint -p dylint-link \
             --features=dylint/__driver_from_crates_io
