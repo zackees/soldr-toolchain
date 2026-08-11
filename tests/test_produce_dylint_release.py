@@ -197,7 +197,9 @@ def test_driver_build_is_native_so_rustc_private_crates_come_from_host_sysroot(
     assert "CARGO_BUILD_TARGET" not in environment
     assert environment["CARGO_TARGET_DIR"] == str(target_dir)
     assert "RUSTFLAGS" not in environment
-    assert environment["CARGO_ENCODED_RUSTFLAGS"] == "-C\x1fprefer-dynamic"
+    assert environment["CARGO_ENCODED_RUSTFLAGS"] == (
+        "-C\x1ftarget-feature=-crt-static\x1f-C\x1fprefer-dynamic"
+    )
     assert target_dir == tmp_path / "work" / "dylint-driver-target"
     assert release.driver_binary_path(target_dir, ".exe") == (
         target_dir / "release" / "soldr-dylint-driver.exe"
@@ -214,7 +216,7 @@ def test_driver_build_is_native_so_rustc_private_crates_come_from_host_sysroot(
         assert "RUSTFLAGS" not in lane_environment
         if lane.environment == "alpine":
             assert lane_environment["CARGO_ENCODED_RUSTFLAGS"] == (
-                "-C\x1fprefer-dynamic"
+                "-C\x1ftarget-feature=-crt-static\x1f-C\x1fprefer-dynamic"
             )
         else:
             assert "CARGO_ENCODED_RUSTFLAGS" not in lane_environment

@@ -424,9 +424,12 @@ def driver_build_environment(
     env.pop("CARGO_ENCODED_RUSTFLAGS", None)
     if lane.environment == "alpine":
         # Musl rustc-dev distributes the compiler-private graph as dynamic
-        # libraries.  Without this, rustc requests unavailable rlibs for the
-        # compiler crates while linking the executable driver.
-        env["CARGO_ENCODED_RUSTFLAGS"] = "-C\x1fprefer-dynamic"
+        # libraries.  Musl targets default to a static CRT, which forces an
+        # executable back to rlibs even with prefer-dynamic, so both switches
+        # are required for the compiler crates to remain dynamically linked.
+        env["CARGO_ENCODED_RUSTFLAGS"] = (
+            "-C\x1ftarget-feature=-crt-static\x1f-C\x1fprefer-dynamic"
+        )
     target_dir = work_dir / "dylint-driver-target"
     env["CARGO_TARGET_DIR"] = str(target_dir)
     return env, target_dir
