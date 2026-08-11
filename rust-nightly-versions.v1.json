@@ -2,6 +2,17 @@
   "schema_version": 1,
   "source": "https://static.rust-lang.org/dist/channel-rust-nightly.toml",
   "nightlies": {
+    "nightly-2026-08-11": {
+      "manifest_date": "2026-08-11",
+      "rust_version": "1.99",
+      "rustc_release": "1.99.0-nightly",
+      "rustc_version": "rustc 1.99.0-nightly (12c36e253 2026-08-10)",
+      "rustc_commit_hash": "12c36e2539c54397c51d6ea4401defd8768a4f5b",
+      "rustc_commit_date": "2026-08-10",
+      "rustc_host": "x86_64-unknown-linux-gnu",
+      "manifest_url": "https://static.rust-lang.org/dist/2026-08-11/channel-rust-nightly.toml",
+      "manifest_sha256": "b242b1eb75547f0badb9c85e03389208ad79b0a322488d4a44e2d77773673dfe"
+    },
     "nightly-2026-08-10": {
       "manifest_date": "2026-08-10",
       "rust_version": "1.99",
@@ -210,6 +221,94 @@
       "rustc_host": "x86_64-unknown-linux-gnu",
       "manifest_url": "https://static.rust-lang.org/dist/2026-07-23/channel-rust-nightly.toml",
       "manifest_sha256": "a66a873f03170e9ddd3cc1fb8dc2395edda872b43ba239e4fa0a3f47971e728a"
+    },
+    "nightly-2026-06-18": {
+      "manifest_date": "2026-06-18",
+      "rust_version": "1.98",
+      "rustc_release": "1.98.0-nightly",
+      "rustc_version": "rustc 1.98.0-nightly (c1b22f44c 2026-06-17)",
+      "rustc_commit_hash": "c1b22f44c3f30e186b829de95f59740c3a690aba",
+      "rustc_commit_date": "2026-06-17",
+      "rustc_host": "x86_64-unknown-linux-gnu",
+      "manifest_url": "https://static.rust-lang.org/dist/2026-06-18/channel-rust-nightly.toml",
+      "manifest_sha256": "69a5dae786fa12c1b8d17ea9af86dc4d7ee30bf00c395c1fe5dc92e1f3afef96"
+    },
+    "nightly-2026-06-17": {
+      "manifest_date": "2026-06-17",
+      "rust_version": "1.98",
+      "rustc_release": "1.98.0-nightly",
+      "rustc_version": "rustc 1.98.0-nightly (9e2abe0c6 2026-06-16)",
+      "rustc_commit_hash": "9e2abe0c6ab27fcbb95c30695188a75776e2feb1",
+      "rustc_commit_date": "2026-06-16",
+      "rustc_host": "x86_64-unknown-linux-gnu",
+      "manifest_url": "https://static.rust-lang.org/dist/2026-06-17/channel-rust-nightly.toml",
+      "manifest_sha256": "6a66c44a39729ee24627c4dc5d1d18fd6f0d94433504f81263f1c7253603a600"
+    },
+    "nightly-2026-06-16": {
+      "manifest_date": "2026-06-16",
+      "rust_version": "1.98",
+      "rustc_release": "1.98.0-nightly",
+      "rustc_version": "rustc 1.98.0-nightly (01dfd7924 2026-06-15)",
+      "rustc_commit_hash": "01dfd79246f1b2d5f146616deff08223a840a9ae",
+      "rustc_commit_date": "2026-06-15",
+      "rustc_host": "x86_64-unknown-linux-gnu",
+      "manifest_url": "https://static.rust-lang.org/dist/2026-06-16/channel-rust-nightly.toml",
+      "manifest_sha256": "85aac3269ca8d744b7fc8d1bc5dbc05f4e49e29778b8e566a8c1d596348ef373"
+    },
+    "nightly-2026-06-15": {
+      "manifest_date": "2026-06-15",
+      "rust_version": "1.98",
+      "rustc_release": "1.98.0-nightly",
+      "rustc_version": "rustc 1.98.0-nightly (3daae5e42 2026-06-14)",
+      "rustc_commit_hash": "3daae5e42ec9ba435212987331af1b7b8634fa90",
+      "rustc_commit_date": "2026-06-14",
+      "rustc_host": "x86_64-unknown-linux-gnu",
+      "manifest_url": "https://static.rust-lang.org/dist/2026-06-15/channel-rust-nightly.toml",
+      "manifest_sha256": "a178a9aae39affd334baea3cc06b91698dbe66a2c6cb064e3a744ad39326d1ad"
+    },
+    "nightly-2026-06-14": {
+      "manifest_date": "2026-06-14",
+      "rust_version": "1.98",
+      "rustc_release": "1.98.0-nightly",
+      "rustc_version": "rustc 1.98.0-nightly (1f087276b 2026-06-13)",
+      "rustc_commit_hash": "1f087276ba7a16d74ec04739ecf582ae495b3b79",
+      "rustc_commit_date": "2026-06-13",
+      "rustc_host": "x86_64-unknown-linux-gnu",
+      "manifest_url": "https://static.rust-lang.org/dist/2026-06-14/channel-rust-nightly.toml",
+      "manifest_sha256": "7089e25f8d63642b607d12ce20f2891efa6358dceb20a7bf03f9328acf9495c0"
+    },
+    "nightly-2026-06-13": {
+      "manifest_date": "2026-06-13",
+      "rust_version": "1.98",
+      "rustc_release": "1.98.0-nightly",
+      "rustc_version": "rustc 1.98.0-nightly (654079540 2026-06-12)",
+      "rustc_commit_hash": "65407954098ca3c19f0d46092cb374b5d3e9dc3c",
+      "rustc_commit_date": "2026-06-12",
+      "rustc_host": "x86_64-unknown-linux-gnu",
+      "manifest_url": "https://static.rust-lang.org/dist/2026-06-13/channel-rust-nightly.toml",
+      "manifest_sha256": "16c362e7c3ea106effae0d50045a4729972e29227fb5dfaaabaf73f25a2a9308"
+    },
+    "nightly-2026-06-12": {
+      "manifest_date": "2026-06-12",
+      "rust_version": "1.98",
+      "rustc_release": "1.98.0-nightly",
+      "rustc_version": "rustc 1.98.0-nightly (b30f3df3b 2026-06-11)",
+      "rustc_commit_hash": "b30f3df3ba3c4c9de2f58f1a75dd9500b79b3f8d",
+      "rustc_commit_date": "2026-06-11",
+      "rustc_host": "x86_64-unknown-linux-gnu",
+      "manifest_url": "https://static.rust-lang.org/dist/2026-06-12/channel-rust-nightly.toml",
+      "manifest_sha256": "59f9df9cfb632963d6268e9189e0cf943aba920150ada57a851b499b9ec5b719"
+    },
+    "nightly-2026-06-11": {
+      "manifest_date": "2026-06-11",
+      "rust_version": "1.98",
+      "rustc_release": "1.98.0-nightly",
+      "rustc_version": "rustc 1.98.0-nightly (485ec3fbc 2026-06-10)",
+      "rustc_commit_hash": "485ec3fbcc12fa14ef6596dabb125ad710499c9e",
+      "rustc_commit_date": "2026-06-10",
+      "rustc_host": "x86_64-unknown-linux-gnu",
+      "manifest_url": "https://static.rust-lang.org/dist/2026-06-11/channel-rust-nightly.toml",
+      "manifest_sha256": "2f9f6e770671dfa9e2bb84ba8fd86e3292c158be26fc596deb59db5df5e4ff09"
     },
     "nightly-2026-06-10": {
       "manifest_date": "2026-06-10",
@@ -2461,6 +2560,14 @@
     },
     "1.98": {
       "nightlies": [
+        "nightly-2026-06-18",
+        "nightly-2026-06-17",
+        "nightly-2026-06-16",
+        "nightly-2026-06-15",
+        "nightly-2026-06-14",
+        "nightly-2026-06-13",
+        "nightly-2026-06-12",
+        "nightly-2026-06-11",
         "nightly-2026-06-10",
         "nightly-2026-06-09",
         "nightly-2026-06-08",
@@ -2481,10 +2588,11 @@
         "nightly-2026-05-24",
         "nightly-2026-05-23"
       ],
-      "selected": "nightly-2026-06-10"
+      "selected": "nightly-2026-06-18"
     },
     "1.99": {
       "nightlies": [
+        "nightly-2026-08-11",
         "nightly-2026-08-10",
         "nightly-2026-08-09",
         "nightly-2026-08-08",
@@ -2505,7 +2613,7 @@
         "nightly-2026-07-24",
         "nightly-2026-07-23"
       ],
-      "selected": "nightly-2026-08-10"
+      "selected": "nightly-2026-08-11"
     }
   }
 }
