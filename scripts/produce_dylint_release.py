@@ -414,10 +414,19 @@ def driver_build_command(manifest: Path) -> list[str]:
     ]
 
 
-def driver_build_environment(work_dir: Path) -> tuple[dict[str, str], Path]:
+def driver_build_environment(
+    work_dir: Path, lane: ReleaseLane
+) -> tuple[dict[str, str], Path]:
     """Isolate Cargo target selection so the driver is unconditionally native."""
     env = dict(os.environ)
     env.pop("CARGO_BUILD_TARGET", None)
+    env.pop("RUSTFLAGS", None)
+    env.pop("CARGO_ENCODED_RUSTFLAGS", None)
+    if lane.environment == "alpine":
+        # Musl rustc-dev distributes the compiler-private graph as dynamic
+        # libraries.  Without this, rustc requests unavailable rlibs for the
+        # compiler crates while linking the executable driver.
+        env["CARGO_ENCODED_RUSTFLAGS"] = "-C\x1fprefer-dynamic"
     target_dir = work_dir / "dylint-driver-target"
     env["CARGO_TARGET_DIR"] = str(target_dir)
     return env, target_dir
@@ -525,7 +534,7 @@ def build_lane(*, repo_root: Path, dylint_checkout: Path, output_dir: Path, work
 
     driver_manifest = repo_root / "dylint-driver" / "Cargo.toml"
     driver_command = driver_build_command(driver_manifest)
-    driver_env, driver_target_dir = driver_build_environment(work_dir)
+    driver_env, driver_target_dir = driver_build_environment(work_dir, lane)
     driver_result = _run(driver_command, cwd=repo_root, env=driver_env)
     print(driver_result.stdout, end="")
 
