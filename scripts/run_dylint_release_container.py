@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import shlex
 import subprocess
 from pathlib import Path
 from typing import Sequence
@@ -36,6 +37,7 @@ def docker_command(
     if lane.environment == "manylinux2014":
         image = MANYLINUX_IMAGES[shape]
         python = "/opt/python/cp311-cp311/bin/python"
+        shell = "bash"
         prepare = (
             "yum install -y openssl-devel perl-IPC-Cmd perl-Time-Piece"
             " && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs "
@@ -44,11 +46,10 @@ def docker_command(
     elif lane.environment == "alpine":
         image = MUSL_IMAGE
         python = "python3"
+        shell = "/bin/sh"
         prepare = (
             "apk add --no-cache bash build-base cmake curl git openssl-dev perl "
             "pkgconf python3"
-            " && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs "
-            "| sh -s -- -y --profile minimal"
         )
     else:
         raise RuntimeError(f"unsupported Linux release environment {lane.environment!r}")
@@ -60,7 +61,22 @@ def docker_command(
         "--output-dir /workspace/out --work-dir /workspace/work "
         f"--shape {shape}"
     )
-    inner = f"set -euo pipefail; {prepare}; . /root/.cargo/env; {producer}"
+    safe_checkout = (
+        f"git config --global --add safe.directory {checkout_arg}"
+    )
+    if lane.environment == "alpine":
+        bash_inner = (
+            "set -euo pipefail; "
+            "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs "
+            "| sh -s -- -y --profile minimal; "
+            f". /root/.cargo/env; {safe_checkout}; {producer}"
+        )
+        inner = f"set -eu; {prepare}; bash -lc {shlex.quote(bash_inner)}"
+    else:
+        inner = (
+            f"set -euo pipefail; {prepare}; . /root/.cargo/env; "
+            f"{safe_checkout}; {producer}"
+        )
     command = [
         "docker",
         "run",
@@ -74,7 +90,7 @@ def docker_command(
         "--workdir",
         "/workspace",
         image,
-        "bash",
+        shell,
         "-lc",
         inner,
     ])

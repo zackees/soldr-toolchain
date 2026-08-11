@@ -392,6 +392,7 @@ def _fixture_environment(repo_root: Path, relocated: Path) -> dict[str, str]:
     env["PATH"] = os.pathsep.join([str(pair_dir), env.get("PATH", "")])
     env["DYLINT_DRIVER_PATH"] = str(relocated / "drivers")
     env["RUSTUP_TOOLCHAIN"] = DRIVER_TOOLCHAIN
+    env["RUSTUP_HOME"] = str(toolchain_root.parent.parent)
     library_var = "DYLD_LIBRARY_PATH" if sys.platform == "darwin" else "LD_LIBRARY_PATH"
     if os.name != "nt":
         env[library_var] = os.pathsep.join(

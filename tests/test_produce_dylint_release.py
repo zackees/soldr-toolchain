@@ -159,6 +159,19 @@ def test_fixture_path_preserves_rustup_proxy_resolution(
         assert str(toolchain_root / "lib") in environment["LD_LIBRARY_PATH"]
 
 
+def test_fixture_environment_exports_rustup_home_for_prebuilt_driver(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    rustup_home = tmp_path / "rustup"
+    toolchain_root = rustup_home / "toolchains" / "nightly-qualified-host"
+    monkeypatch.setattr(release, "_toolchain_root", lambda _repo_root: toolchain_root)
+    monkeypatch.delenv("RUSTUP_HOME", raising=False)
+
+    environment = release._fixture_environment(tmp_path, tmp_path / "relocated")
+
+    assert environment["RUSTUP_HOME"] == str(rustup_home)
+
+
 def test_gnu_elf_evidence_enforces_architecture_and_glibc_ceiling() -> None:
     lane = release.lane_for_shape("linux-x64-gnu")
     evidence = release.validate_linux_elf_evidence(
