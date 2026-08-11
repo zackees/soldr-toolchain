@@ -42,3 +42,34 @@ def test_external_dylint_checkout_is_mounted_read_only(tmp_path: Path) -> None:
 
     assert f"{checkout.resolve()}:/dylint:ro" in command
     assert "--dylint-checkout /dylint" in command[-1]
+    assert "git config --global --add safe.directory /dylint" in command[-1]
+
+
+@pytest.mark.parametrize(
+    ("shape", "checkout"),
+    [
+        ("linux-x64-gnu", "/workspace/dylint"),
+        ("linux-arm64-gnu", "/workspace/dylint"),
+        ("linux-x64-musl", "/workspace/dylint"),
+        ("linux-arm64-musl", "/workspace/dylint"),
+    ],
+)
+def test_container_marks_actions_checkout_safe_for_root(
+    tmp_path: Path, shape: str, checkout: str
+) -> None:
+    command = container.docker_command(tmp_path, shape)
+
+    assert f"git config --global --add safe.directory {checkout}" in command[-1]
+
+
+@pytest.mark.parametrize("shape", ["linux-x64-musl", "linux-arm64-musl"])
+def test_alpine_bootstraps_with_builtin_shell_before_bash(
+    tmp_path: Path, shape: str
+) -> None:
+    command = container.docker_command(tmp_path, shape)
+    image_index = next(index for index, part in enumerate(command) if "alpine@" in part)
+
+    assert command[image_index + 1] == "/bin/sh"
+    assert command[image_index + 2] == "-lc"
+    assert command[-1].startswith("set -eu; apk add --no-cache bash ")
+    assert "bash -lc" in command[-1]
