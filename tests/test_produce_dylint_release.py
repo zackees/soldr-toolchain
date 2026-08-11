@@ -147,7 +147,9 @@ def test_fixture_path_preserves_rustup_proxy_resolution(
     monkeypatch.setattr(release, "_toolchain_root", lambda _repo_root: toolchain_root)
     monkeypatch.setenv("PATH", os.pathsep.join(["rustup-proxies", "system-bin"]))
 
-    environment = release._fixture_environment(tmp_path, tmp_path / "relocated")
+    environment = release._fixture_environment(
+        tmp_path, tmp_path / "relocated", release.lane_for_shape("windows-x64")
+    )
 
     assert environment["PATH"].split(os.pathsep) == [
         str(tmp_path / "relocated" / "pair"),
@@ -167,9 +169,26 @@ def test_fixture_environment_exports_rustup_home_for_prebuilt_driver(
     monkeypatch.setattr(release, "_toolchain_root", lambda _repo_root: toolchain_root)
     monkeypatch.delenv("RUSTUP_HOME", raising=False)
 
-    environment = release._fixture_environment(tmp_path, tmp_path / "relocated")
+    environment = release._fixture_environment(
+        tmp_path, tmp_path / "relocated", release.lane_for_shape("windows-x64")
+    )
 
     assert environment["RUSTUP_HOME"] == str(rustup_home)
+
+
+def test_fixture_environment_disables_static_crt_for_musl_lint_cdylib(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(release, "_toolchain_root", lambda _repo_root: tmp_path)
+    monkeypatch.setenv("CARGO_ENCODED_RUSTFLAGS", "wrong-inherited-flags")
+
+    environment = release._fixture_environment(
+        tmp_path, tmp_path / "relocated", release.lane_for_shape("linux-x64-musl")
+    )
+
+    assert environment["CARGO_ENCODED_RUSTFLAGS"] == (
+        "-C\x1ftarget-feature=-crt-static"
+    )
 
 
 def test_driver_build_is_native_so_rustc_private_crates_come_from_host_sysroot(
@@ -229,7 +248,7 @@ def test_gnu_elf_evidence_enforces_architecture_and_glibc_ceiling() -> None:
         "cargo-dylint",
         header="Machine: Advanced Micro Devices X86-64",
         program_headers="[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]",
-        version_info="Name: GLIBC_2.2.5\nName: GLIBC_2.16",
+        version_info="File: libc.so.6\nName: GLIBC_2.2.5\nName: GLIBC_2.16",
     )
 
     assert evidence == {
@@ -246,7 +265,18 @@ def test_gnu_elf_evidence_enforces_architecture_and_glibc_ceiling() -> None:
             "cargo-dylint",
             header="Machine: Advanced Micro Devices X86-64",
             program_headers="[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]",
-            version_info="Name: GLIBC_2.34",
+            version_info="File: libc.so.6\nName: GLIBC_2.34",
+        )
+    with pytest.raises(RuntimeError, match="GLIBC 2.29"):
+        release.validate_linux_elf_evidence(
+            lane,
+            "cargo-dylint",
+            header="Machine: Advanced Micro Devices X86-64",
+            program_headers="[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]",
+            version_info=(
+                "File: libc.so.6\nName: GLIBC_2.17\n"
+                "File: libm.so.6\nName: GLIBC_2.29"
+            ),
         )
     with pytest.raises(RuntimeError, match="ELF machine"):
         release.validate_linux_elf_evidence(
@@ -254,7 +284,7 @@ def test_gnu_elf_evidence_enforces_architecture_and_glibc_ceiling() -> None:
             "cargo-dylint",
             header="Machine: AArch64",
             program_headers="",
-            version_info="Name: GLIBC_2.16",
+            version_info="File: libc.so.6\nName: GLIBC_2.16",
         )
 
 
@@ -275,7 +305,7 @@ def test_musl_elf_evidence_rejects_glibc_and_dynamic_pair() -> None:
             "cargo-dylint",
             header="Machine: AArch64",
             program_headers="",
-            version_info="Name: GLIBC_2.17",
+            version_info="File: libc.so.6\nName: GLIBC_2.17",
         )
 
     driver = release.validate_linux_elf_evidence(
@@ -283,7 +313,7 @@ def test_musl_elf_evidence_rejects_glibc_and_dynamic_pair() -> None:
         "dylint-driver",
         header="Machine: AArch64",
         program_headers="[Requesting program interpreter: /lib/ld-musl-aarch64.so.1]",
-        version_info="No version information found",
+        version_info="File: libgcc_s.so.1\nName: GLIBC_2.0",
     )
     assert driver["interpreter"] == "/lib/ld-musl-aarch64.so.1"
     assert driver["glibc_max"] is None
