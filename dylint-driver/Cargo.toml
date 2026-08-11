@@ -1,0 +1,18 @@
+[package]
+name = "soldr-dylint-driver"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+anyhow = "=1.0.102"
+env_logger = "=0.11.9"
+dylint_driver = "=6.0.3"
+
+[build-dependencies]
+# Dylint's build-time curl/git2 stack otherwise binds to the producer image's
+# OpenSSL. Vendoring keeps the driver recipe identical on manylinux, musl,
+# Windows, and macOS and avoids raising the GNU runtime floor.
+openssl-sys = { version = "=0.9.117", features = ["vendored"] }
+
+[workspace]

@@ -153,6 +153,111 @@ def test_forge_rust_platform_names_cover_every_catalog_shape(tmp_path: Path) -> 
         )
 
 
+def test_find_forge_rust_artifact_supports_grouped_workflow_download(
+    tmp_path: Path,
+) -> None:
+    artifact = (
+        tmp_path
+        / "dylint-release-linux-x64-gnu"
+        / "forge-rust-cargo-dylint-6.0.3-linux-x64-gnu"
+    )
+    artifact.mkdir(parents=True)
+    (artifact / "manifest.json").write_text("{}", encoding="utf-8")
+
+    assert (
+        fc._find_forge_rust_artifact(
+            tmp_path, "cargo-dylint", "6.0.3", "linux-x64-gnu"
+        )
+        == artifact
+    )
+
+
+def test_find_forge_rust_artifact_rejects_duplicate_exact_matches(
+    tmp_path: Path,
+) -> None:
+    expected = "forge-rust-cargo-dylint-6.0.3-linux-x64-gnu"
+    for parent in ("first", "second"):
+        artifact = tmp_path / parent / expected
+        artifact.mkdir(parents=True)
+        (artifact / "manifest.json").write_text("{}", encoding="utf-8")
+
+    with pytest.raises(SystemExit, match="multiple Rust artifacts"):
+        fc._find_forge_rust_artifact(
+            tmp_path, "cargo-dylint", "6.0.3", "linux-x64-gnu"
+        )
+
+
+def _valid_dylint_evidence(shape: str = "linux-x64-gnu") -> dict:
+    target = fc.RUST_TARGET_BY_SHAPE[shape]
+    return {
+        "pair_identity": {
+            "dylint_version": "6.0.3",
+            "source_ref": "9adfa398661273ca7dc99df9bf2c26ae6f61b1c5",
+            "target": target,
+        },
+        "smoke": {
+            "result": "passed",
+            "fixture": "fixtures/dylint-release",
+            "known_violation": "release_fixture_forbidden_io",
+            "binaries": ["cargo-dylint", "dylint-link", "dylint-driver"],
+            "execution_mode": "native",
+            "warm_driver_builds": 0,
+            "warm_network": "offline",
+            "target": target,
+        },
+        "binary_evidence": {
+            "format": "ELF",
+            "machine": "Advanced Micro Devices X86-64",
+            "interpreter": "/lib64/ld-linux-x86-64.so.2",
+            "glibc_max": "2.16",
+            "glibc_ceiling": "2.17",
+        },
+    }
+
+
+def test_dylint_ingest_rejects_incomplete_smoke_and_abi_evidence() -> None:
+    managed = json.loads(
+        (Path(__file__).parents[1] / "managed-rust-tools.json").read_text(
+            encoding="utf-8"
+        )
+    )["tools"]["cargo-dylint"]
+    manifest = _valid_dylint_evidence()
+    manifest["smoke"]["warm_network"] = "online"
+
+    with pytest.raises(SystemExit, match="warm_network"):
+        fc._validate_dylint_manifest_evidence(
+            manifest, managed, tool="cargo-dylint", shape="linux-x64-gnu"
+        )
+
+    manifest = _valid_dylint_evidence()
+    manifest["binary_evidence"]["glibc_max"] = "2.34"
+    with pytest.raises(SystemExit, match="GLIBC"):
+        fc._validate_dylint_manifest_evidence(
+            manifest, managed, tool="cargo-dylint", shape="linux-x64-gnu"
+        )
+
+
+def test_dylint_ingest_rejects_dynamic_musl_pair() -> None:
+    managed = json.loads(
+        (Path(__file__).parents[1] / "managed-rust-tools.json").read_text(
+            encoding="utf-8"
+        )
+    )["tools"]["dylint-link"]
+    manifest = _valid_dylint_evidence("linux-x64-musl")
+    manifest["binary_evidence"].update(
+        {
+            "interpreter": "/lib/ld-musl-x86_64.so.1",
+            "glibc_max": None,
+            "glibc_ceiling": None,
+        }
+    )
+
+    with pytest.raises(SystemExit, match="static"):
+        fc._validate_dylint_manifest_evidence(
+            manifest, managed, tool="dylint-link", shape="linux-x64-musl"
+        )
+
+
 @pytest.mark.parametrize(
     ("field", "value", "message"),
     [
