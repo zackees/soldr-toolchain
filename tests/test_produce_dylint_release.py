@@ -172,6 +172,38 @@ def test_fixture_environment_exports_rustup_home_for_prebuilt_driver(
     assert environment["RUSTUP_HOME"] == str(rustup_home)
 
 
+def test_driver_build_is_native_so_rustc_private_crates_come_from_host_sysroot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manifest = tmp_path / "dylint-driver" / "Cargo.toml"
+    monkeypatch.setenv("CARGO_BUILD_TARGET", "wrong-inherited-target")
+    monkeypatch.setenv("CARGO_TARGET_DIR", str(tmp_path / "wrong-inherited-output"))
+
+    command = release.driver_build_command(manifest)
+    environment, target_dir = release.driver_build_environment(tmp_path / "work")
+
+    assert command == [
+        "cargo",
+        "+nightly-2026-05-28",
+        "build",
+        "--locked",
+        "--release",
+        "--manifest-path",
+        str(manifest),
+    ]
+    assert "CARGO_BUILD_TARGET" not in environment
+    assert environment["CARGO_TARGET_DIR"] == str(target_dir)
+    assert target_dir == tmp_path / "work" / "dylint-driver-target"
+    assert release.driver_binary_path(target_dir, ".exe") == (
+        target_dir / "release" / "soldr-dylint-driver.exe"
+    )
+
+    musl = release.lane_for_shape("linux-x64-musl")
+    pair_command = release.pair_build_command(musl)
+    target_index = pair_command.index("--target")
+    assert pair_command[target_index + 1] == "x86_64-unknown-linux-musl"
+
+
 def test_gnu_elf_evidence_enforces_architecture_and_glibc_ceiling() -> None:
     lane = release.lane_for_shape("linux-x64-gnu")
     evidence = release.validate_linux_elf_evidence(
