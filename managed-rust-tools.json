@@ -30,6 +30,19 @@
       "binary": "dylint-link",
       "release_tag_prefix": "v",
       "catalogue_from_release": false
+    },
+    "dylint-driver": {
+      "version": "6.0.3-nightly-2026-05-28",
+      "source": "trailofbits/dylint",
+      "source_ref": "9adfa398661273ca7dc99df9bf2c26ae6f61b1c5",
+      "binary": "dylint-driver",
+      "catalogue_from_release": false,
+      "driver_identity": {
+        "dylint_version": "6.0.3",
+        "toolchain": "nightly-2026-05-28",
+        "rustc_release": "1.98.0-nightly",
+        "rustc_commit": "57d06900fd7d9ee06d3a7f323bb77f17ab3cfaf8"
+      }
     }
   },
   "platforms": [

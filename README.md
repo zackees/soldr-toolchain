@@ -231,31 +231,49 @@ checkout in this order:
 If none of those resolves to a directory containing `manifest.json`,
 the parity tests skip — the pure-function tests still run.
 
-### Producing Dylint 6.0.3 on Windows x64
+### Producing the Dylint 6.0.3 triplet
 
-Dylint is the exception to the target-native Forge recipe model: its two
-compatibility-paired executables are built from the immutable upstream workspace
-on one Windows x64 producer. Clone `trailofbits/dylint` at exact tag `v6.0.3`
-(commit `9adfa398661273ca7dc99df9bf2c26ae6f61b1c5`), then use Soldr's blessed
-cross-build path:
+The `build and validate native Dylint release` workflow produces
+`cargo-dylint`, `dylint-link`, and the exact-nightly `dylint-driver` together on
+all eight canonical hosts. Windows ARM64 and both macOS architectures use native
+hosted runners; GNU binaries use digest-pinned manylinux2014 containers; musl
+binaries and drivers use digest-pinned Alpine containers on matching CPU
+architectures.
+
+The driver identity is immutable and includes Dylint `6.0.3`,
+`nightly-2026-05-28`, rustc release `1.98.0-nightly`, full rustc commit
+`57d06900fd7d9ee06d3a7f323bb77f17ab3cfaf8`, and the host triple. Every lane
+relocates all three binaries, runs a clean custom-lint case, observes the known
+`release_fixture_forbidden_io` violation, and repeats the violation with Cargo
+offline. The warm run must leave the driver hash and timestamp unchanged.
+
+The driver bundle intentionally contains only `dylint-driver`; rustc-private
+libraries remain owned by the exact installed nightly. Consumers must place the
+driver at
+`$DYLINT_DRIVER_PATH/nightly-2026-05-28-<host>/dylint-driver` and expose that
+nightly's private libraries while invoking Dylint: prepend the toolchain's
+`bin` directory to `PATH` on Windows, its `lib` directory to `LD_LIBRARY_PATH`
+on Linux, or its `lib` directory to `DYLD_LIBRARY_PATH` on macOS. Soldr owns
+that runtime environment contract; the release fixture uses the same layout
+and never treats the driver archive as a standalone rustc distribution.
+
+After a green workflow run, download all eight workflow artifacts into one
+directory and ingest the complete 24-bundle transaction into a clean sibling
+checkout of the `assets` branch:
 
 ```sh
-uv run --group dev python -m scripts.produce_dylint \
-    --dylint-checkout C:/src/dylint \
-    --output-dir C:/build/dylint-artifacts \
-    --assets-root C:/src/soldr-toolchain-assets \
-    --runtime-validation C:/build/dylint-runtime-validation.json
+gh run download <run-id> --dir ../dylint-release-artifacts
+uv run --frozen --group dev python -m scripts.produce_dylint_release ingest \
+    --artifacts-dir ../dylint-release-artifacts \
+    --assets-root ../soldr-toolchain-assets \
+    --forge-run-id <run-id>
 ```
 
-The producer invokes `soldr build --locked --release --target <target> -p
-cargo-dylint -p dylint-link --features=dylint/__driver_from_crates_io` for all
-eight canonical targets. It rejects dirty or mismatched source, missing output,
-partial matrices, bad checksums, and incomplete runtime-fixture evidence. The
-validation JSON must record a passing small Dylint lint fixture for every target
-and both binaries; it is intentionally required before local outputs can be
-catalogued. Add `--publish` only after reviewing the assets checkout: that is
-the explicit operation which creates one assets PR for all 16 bundles. Use
-`--dry-run` to print the hermetic, network-free build plan.
+Ingest fails closed if any tool/host artifact, payload hash, real-lint evidence,
+or driver identity is missing or inconsistent. Review the resulting assets diff,
+run `scripts.lint_assets`, and publish it as one PR against `assets`; never merge
+a partial target set. Unsupported nightlies are remediated by adding and proving
+a new exact driver identity in this producer before a Soldr consumer pin changes.
 
 ### Rebuilding the catalogue locally
 
