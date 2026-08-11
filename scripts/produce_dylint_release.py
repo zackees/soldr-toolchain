@@ -401,6 +401,51 @@ def _fixture_environment(repo_root: Path, relocated: Path) -> dict[str, str]:
     return env
 
 
+def driver_build_command(manifest: Path) -> list[str]:
+    """Build the driver for the native host that owns its rustc-private ABI."""
+    return [
+        "cargo",
+        f"+{DRIVER_TOOLCHAIN}",
+        "build",
+        "--locked",
+        "--release",
+        "--manifest-path",
+        str(manifest),
+    ]
+
+
+def driver_build_environment(work_dir: Path) -> tuple[dict[str, str], Path]:
+    """Isolate Cargo target selection so the driver is unconditionally native."""
+    env = dict(os.environ)
+    env.pop("CARGO_BUILD_TARGET", None)
+    target_dir = work_dir / "dylint-driver-target"
+    env["CARGO_TARGET_DIR"] = str(target_dir)
+    return env, target_dir
+
+
+def driver_binary_path(target_dir: Path, suffix: str) -> Path:
+    """Return Cargo's native-host output path for the release driver."""
+    return target_dir / "release" / f"soldr-dylint-driver{suffix}"
+
+
+def pair_build_command(lane: ReleaseLane) -> list[str]:
+    """Build the relocatable CLI pair for the lane's explicit target."""
+    return [
+        "cargo",
+        f"+{PAIR_TOOLCHAIN}",
+        "build",
+        "--locked",
+        "--release",
+        "--target",
+        lane.target,
+        "-p",
+        "cargo-dylint",
+        "-p",
+        "dylint-link",
+        "--features=dylint/__driver_from_crates_io",
+    ]
+
+
 def _run_fixture(
     *, repo_root: Path, work_dir: Path, lane: ReleaseLane, pair: Mapping[str, Path], driver: Path
 ) -> dict[str, object]:
@@ -471,20 +516,7 @@ def build_lane(*, repo_root: Path, dylint_checkout: Path, output_dir: Path, work
     _verify_dylint_checkout(dylint_checkout)
     _install_toolchains(repo_root)
 
-    pair_command = [
-        "cargo",
-        f"+{PAIR_TOOLCHAIN}",
-        "build",
-        "--locked",
-        "--release",
-        "--target",
-        lane.target,
-        "-p",
-        "cargo-dylint",
-        "-p",
-        "dylint-link",
-        "--features=dylint/__driver_from_crates_io",
-    ]
+    pair_command = pair_build_command(lane)
     pair_target_dir = work_dir / "dylint-target"
     pair_env = dict(os.environ)
     pair_env["CARGO_TARGET_DIR"] = str(pair_target_dir)
@@ -492,18 +524,9 @@ def build_lane(*, repo_root: Path, dylint_checkout: Path, output_dir: Path, work
     print(pair_result.stdout, end="")
 
     driver_manifest = repo_root / "dylint-driver" / "Cargo.toml"
-    driver_command = [
-        "cargo",
-        f"+{DRIVER_TOOLCHAIN}",
-        "build",
-        "--locked",
-        "--release",
-        "--target",
-        lane.target,
-        "--manifest-path",
-        str(driver_manifest),
-    ]
-    driver_result = _run(driver_command, cwd=repo_root)
+    driver_command = driver_build_command(driver_manifest)
+    driver_env, driver_target_dir = driver_build_environment(work_dir)
+    driver_result = _run(driver_command, cwd=repo_root, env=driver_env)
     print(driver_result.stdout, end="")
 
     suffix = ".exe" if lane.shape.startswith("windows-") else ""
@@ -511,14 +534,7 @@ def build_lane(*, repo_root: Path, dylint_checkout: Path, output_dir: Path, work
         tool: pair_target_dir / lane.target / "release" / f"{tool}{suffix}"
         for tool in DYLINT_TOOLS
     }
-    driver = (
-        repo_root
-        / "dylint-driver"
-        / "target"
-        / lane.target
-        / "release"
-        / f"soldr-dylint-driver{suffix}"
-    )
+    driver = driver_binary_path(driver_target_dir, suffix)
     rustc_verbose = _run(
         ["rustc", f"+{DRIVER_TOOLCHAIN}", "-vV"], cwd=repo_root
     ).stdout
