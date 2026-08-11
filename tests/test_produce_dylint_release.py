@@ -178,9 +178,12 @@ def test_driver_build_is_native_so_rustc_private_crates_come_from_host_sysroot(
     manifest = tmp_path / "dylint-driver" / "Cargo.toml"
     monkeypatch.setenv("CARGO_BUILD_TARGET", "wrong-inherited-target")
     monkeypatch.setenv("CARGO_TARGET_DIR", str(tmp_path / "wrong-inherited-output"))
+    monkeypatch.setenv("RUSTFLAGS", "wrong-inherited-flags")
+    monkeypatch.setenv("CARGO_ENCODED_RUSTFLAGS", "wrong-inherited-encoded-flags")
 
     command = release.driver_build_command(manifest)
-    environment, target_dir = release.driver_build_environment(tmp_path / "work")
+    musl = release.lane_for_shape("linux-x64-musl")
+    environment, target_dir = release.driver_build_environment(tmp_path / "work", musl)
 
     assert command == [
         "cargo",
@@ -193,15 +196,28 @@ def test_driver_build_is_native_so_rustc_private_crates_come_from_host_sysroot(
     ]
     assert "CARGO_BUILD_TARGET" not in environment
     assert environment["CARGO_TARGET_DIR"] == str(target_dir)
+    assert "RUSTFLAGS" not in environment
+    assert environment["CARGO_ENCODED_RUSTFLAGS"] == "-C\x1fprefer-dynamic"
     assert target_dir == tmp_path / "work" / "dylint-driver-target"
     assert release.driver_binary_path(target_dir, ".exe") == (
         target_dir / "release" / "soldr-dylint-driver.exe"
     )
 
-    musl = release.lane_for_shape("linux-x64-musl")
     pair_command = release.pair_build_command(musl)
     target_index = pair_command.index("--target")
     assert pair_command[target_index + 1] == "x86_64-unknown-linux-musl"
+
+    for lane in release.release_plan():
+        lane_environment, _ = release.driver_build_environment(
+            tmp_path / f"{lane.shape}-work", lane
+        )
+        assert "RUSTFLAGS" not in lane_environment
+        if lane.environment == "alpine":
+            assert lane_environment["CARGO_ENCODED_RUSTFLAGS"] == (
+                "-C\x1fprefer-dynamic"
+            )
+        else:
+            assert "CARGO_ENCODED_RUSTFLAGS" not in lane_environment
 
 
 def test_gnu_elf_evidence_enforces_architecture_and_glibc_ceiling() -> None:
