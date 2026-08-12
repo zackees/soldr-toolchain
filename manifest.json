@@ -26,9 +26,9 @@
     "cargo-chef": {
       "descriptor": {
         "url": "cargo-chef/manifest.json",
-        "size_bytes": 107897,
+        "size_bytes": 110472,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "f1bc0e2b1c980a1eaeba0132edbe92432384e8bbb992024fe5a2033d78ec4489"
+        "sha256": "66be801b91c56ae050e45135f0421dc78be6a32be5ee29c63d7ffcbfc4000412"
       },
       "summary": "LukeMathWalker/cargo-chef",
       "kind_hint": "tool"

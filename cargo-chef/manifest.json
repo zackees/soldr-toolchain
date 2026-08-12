@@ -5,11 +5,85 @@
   "tool": "cargo-chef",
   "online_url": "https://zackees.github.io/soldr-toolchain/cargo-chef/manifest.json",
   "channels": {
-    "latest-stable": "v0.1.77",
-    "stable": "v0.1.77",
+    "latest-stable": "v0.1.78",
+    "stable": "v0.1.78",
     "pinned": "v0.1.73"
   },
   "releases": [
+    {
+      "schema_version": 1,
+      "version": "v0.1.78",
+      "published_at": "2026-08-12T06:21:41Z",
+      "min_client_version": 1,
+      "platforms": [
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "cargo-chef-aarch64-unknown-linux-gnu.tar.xz",
+            "size_bytes": 1366484,
+            "urls": [
+              "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.78/cargo-chef-aarch64-unknown-linux-gnu.tar.xz"
+            ],
+            "sha256": "a47e13fba89c2895f5a5c3d0844acd2a5fd416eceb3a6f9dfb26e28155099f4e"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "cargo-chef-aarch64-unknown-linux-musl.tar.xz",
+            "size_bytes": 1392104,
+            "urls": [
+              "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.78/cargo-chef-aarch64-unknown-linux-musl.tar.xz"
+            ],
+            "sha256": "cd59b90fce5fa84c4189648fec33404ec5491791eebdb812df5e7fca8336408d"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "cargo-chef-x86_64-unknown-linux-gnu.tar.xz",
+            "size_bytes": 1510020,
+            "urls": [
+              "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.78/cargo-chef-x86_64-unknown-linux-gnu.tar.xz"
+            ],
+            "sha256": "70ef940ef90d04d122f0176fdb8d6c39069191b484a1eaa29b327370c2e1c3c0"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "cargo-chef-x86_64-unknown-linux-musl.tar.xz",
+            "size_bytes": 1579952,
+            "urls": [
+              "https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.78/cargo-chef-x86_64-unknown-linux-musl.tar.xz"
+            ],
+            "sha256": "aca691abfbfbbe00d482e0ed2249eec3091b65e96a0ce92947fb5b254d48b16d"
+          }
+        }
+      ],
+      "source": {
+        "vcs": "git",
+        "repo_url": "https://github.com/LukeMathWalker/cargo-chef",
+        "ref": "v0.1.78",
+        "archive_url": "https://github.com/LukeMathWalker/cargo-chef/archive/refs/tags/v0.1.78.tar.gz"
+      }
+    },
     {
       "schema_version": 1,
       "version": "v0.1.77",
