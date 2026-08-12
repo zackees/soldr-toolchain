@@ -7,83 +7,36 @@ permissions:
   contents: read
 
 jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - id: matrix
+        run: echo "matrix=$(python3 -m scripts.validate_dylint_published plan --github-matrix)" >> "$GITHUB_OUTPUT"
+
   validate:
+    needs: plan
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - runner: windows-2022
-            platform: windows-x86_64-msvc
-            target: x86_64-pc-windows-msvc
-            suffix: .exe
-          - runner: windows-2022
-            platform: windows-aarch64-msvc
-            target: aarch64-pc-windows-msvc
-            suffix: .exe
-          - runner: macos-14
-            platform: darwin-x86_64
-            target: x86_64-apple-darwin
-            suffix: ''
-          - runner: macos-14
-            platform: darwin-aarch64
-            target: aarch64-apple-darwin
-            suffix: ''
-          - runner: ubuntu-22.04
-            platform: linux-x86_64-glibc
-            target: x86_64-unknown-linux-gnu
-            suffix: ''
-          - runner: ubuntu-24.04-arm
-            platform: linux-aarch64-glibc
-            target: aarch64-unknown-linux-gnu
-            suffix: ''
-          - runner: ubuntu-22.04
-            platform: linux-x86_64-musl
-            target: x86_64-unknown-linux-musl
-            suffix: ''
-          - runner: ubuntu-24.04-arm
-            platform: linux-aarch64-musl
-            target: aarch64-unknown-linux-musl
-            suffix: ''
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
     steps:
-      - name: Fetch and verify both published bundles
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Validate native Windows or macOS publication
+        if: matrix.environment == 'native'
         shell: bash
-        run: |
-          set -euo pipefail
-          base="https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets"
-          for tool in cargo-dylint dylint-link; do
-            name="$tool-6.0.3-${{ matrix.target }}.tar.gz"
-            url="$base/$tool/v6.0.3/${{ matrix.platform }}/$name"
-            curl --fail --location --retry 3 --output "$name" "$url"
-            tar -xzf "$name"
-            test -x "package/$tool${{ matrix.suffix }}"
-            if [ "$tool" = dylint-link ]; then
-              if [ '${{ matrix.target }}' = aarch64-pc-windows-msvc ]; then
-                # No hosted Windows ARM64 runner is available: extraction and
-                # PE layout are still verified above, but it cannot execute here.
-                true
-              elif [ '${{ matrix.target }}' = x86_64-pc-windows-msvc ]; then
-                RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-msvc "package/$tool${{ matrix.suffix }}" --help
-              else
-                RUSTUP_TOOLCHAIN=stable "package/$tool${{ matrix.suffix }}" --help
-              fi
-            else
-              "package/$tool${{ matrix.suffix }}" --help
-            fi
-            rm -rf package manifest.json "$name"
-          done
-      - name: Verify Linux binary compatibility
-        if: startsWith(matrix.platform, 'linux-')
-        shell: bash
-        run: |
-          set -euo pipefail
-          base="https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/${{ matrix.platform }}"
-          name="cargo-dylint-6.0.3-${{ matrix.target }}.tar.gz"
-          curl --fail --location --output "$name" "$base/$name"
-          tar -xzf "$name"
-          if [[ '${{ matrix.platform }}' == *musl ]]; then
-            ! readelf -l package/cargo-dylint | grep -q 'INTERP'
-          else
-            max_glibc="$(readelf -V package/cargo-dylint | grep -o 'GLIBC_[0-9.]*' | sort -Vu | tail -1)"
-            test "$(printf '%s\n%s\n' "$max_glibc" GLIBC_2.17 | sort -V | head -1)" = "$max_glibc"
-          fi
+        run: >-
+          python -m scripts.validate_dylint_published validate
+          --repo-root . --work-dir '${{ runner.temp }}/dylint-published'
+          --shape '${{ matrix.shape }}'
+      - name: Validate native Linux ABI publication
+        if: matrix.environment != 'native'
+        run: >-
+          python -m scripts.run_dylint_published_container
+          --repo-root . --work-dir '${{ runner.temp }}/dylint-published'
+          --shape '${{ matrix.shape }}'
