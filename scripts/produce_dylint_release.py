@@ -151,6 +151,22 @@ def _version_key(version: str) -> tuple[int, ...]:
     return tuple(int(component) for component in version.split("."))
 
 
+def _glibc_versions(version_info: str) -> set[str]:
+    """Return GLIBC requirements, excluding libgcc's ARM version namespace."""
+    versions: set[str] = set()
+    provider: str | None = None
+    for line in version_info.splitlines():
+        file_match = re.search(r"\bFile:\s*([^\s]+)", line)
+        if file_match:
+            provider = file_match.group(1)
+        # Alpine's ARM libgcc_s exports an historical symbol version named
+        # GLIBC_2.0.  It is not a dependency on glibc; every other provider's
+        # GLIBC namespace remains part of the enforced GNU runtime floor.
+        if provider is not None and provider != "libgcc_s.so.1":
+            versions.update(re.findall(r"\bGLIBC_(\d+(?:\.\d+)+)\b", line))
+    return versions
+
+
 def validate_linux_elf_evidence(
     lane: ReleaseLane,
     tool: str,
@@ -177,7 +193,7 @@ def validate_linux_elf_evidence(
         r"Requesting program interpreter:\s*([^\]]+)", program_headers
     )
     interpreter = interpreter_match.group(1).strip() if interpreter_match else None
-    glibc_versions = set(re.findall(r"\bGLIBC_(\d+(?:\.\d+)+)\b", version_info))
+    glibc_versions = _glibc_versions(version_info)
     glibc_max = max(glibc_versions, key=_version_key) if glibc_versions else None
 
     if lane.environment == "manylinux2014":
@@ -382,7 +398,9 @@ def _toolchain_root(repo_root: Path) -> Path:
     return Path(rustc).resolve().parent.parent
 
 
-def _fixture_environment(repo_root: Path, relocated: Path) -> dict[str, str]:
+def _fixture_environment(
+    repo_root: Path, relocated: Path, lane: ReleaseLane
+) -> dict[str, str]:
     env = dict(os.environ)
     pair_dir = relocated / "pair"
     toolchain_root = _toolchain_root(repo_root)
@@ -393,6 +411,12 @@ def _fixture_environment(repo_root: Path, relocated: Path) -> dict[str, str]:
     env["DYLINT_DRIVER_PATH"] = str(relocated / "drivers")
     env["RUSTUP_TOOLCHAIN"] = DRIVER_TOOLCHAIN
     env["RUSTUP_HOME"] = str(toolchain_root.parent.parent)
+    env.pop("CARGO_ENCODED_RUSTFLAGS", None)
+    if lane.environment == "alpine":
+        # Dylint removes plain RUSTFLAGS while building its cdylib metadata
+        # entry.  The encoded form survives that sanitization and lets the
+        # musl target produce the dynamic lint library that Dylint requires.
+        env["CARGO_ENCODED_RUSTFLAGS"] = "-C\x1ftarget-feature=-crt-static"
     library_var = "DYLD_LIBRARY_PATH" if sys.platform == "darwin" else "LD_LIBRARY_PATH"
     if os.name != "nt":
         env[library_var] = os.pathsep.join(
@@ -480,7 +504,7 @@ def _run_fixture(
     installed_driver.chmod(0o755)
     before = (_sha256(installed_driver), installed_driver.stat().st_mtime_ns)
 
-    env = _fixture_environment(repo_root, relocated)
+    env = _fixture_environment(repo_root, relocated, lane)
     command = [str(pair_dir / f"cargo-dylint{suffix}"), "dylint", "--all"]
     clean = _run(command, cwd=fixture, env=env, check=False)
     print(clean.stdout, end="")
