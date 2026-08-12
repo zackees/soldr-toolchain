@@ -18,7 +18,13 @@ def validate(path: Path) -> dict:
     ):
         raise ValueError("managed Rust tools must list eight unique platforms")
     tools = doc.get("tools") or {}
-    required_tools = {"cargo-binstall", "cargo-nextest", "cargo-dylint", "dylint-link"}
+    required_tools = {
+        "cargo-binstall",
+        "cargo-nextest",
+        "cargo-dylint",
+        "dylint-link",
+        "dylint-driver",
+    }
     missing_tools = sorted(required_tools - set(tools))
     if missing_tools:
         raise ValueError(f"managed Rust tools missing required entries: {missing_tools}")

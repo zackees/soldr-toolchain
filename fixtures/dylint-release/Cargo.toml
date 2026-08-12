@@ -1,0 +1,6 @@
+[workspace]
+members = ["app", "lint"]
+resolver = "2"
+
+[workspace.metadata.dylint]
+libraries = [{ path = "lint" }]

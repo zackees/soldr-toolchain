@@ -237,7 +237,7 @@ def _forge_rust_asset_name(tool: str, version: str, shape: str) -> str:
 
 MANAGED_RUST_TOOLS = (
     "cargo-chef", "crgx", "cargo-binstall", "cargo-nextest",
-    "cargo-dylint", "dylint-link",
+    "cargo-dylint", "dylint-link", "dylint-driver",
 )
 for _tool in MANAGED_RUST_TOOLS:
     TOOL_RECIPE_NAME[_tool] = {shape: f"{_tool}-{shape}" for shape in RUST_CLI_SHAPES}
@@ -275,6 +275,7 @@ DEFAULT_ASSET_NAME = {
     "cargo-nextest": "bundle.tar.zst",
     "cargo-dylint": "bundle.tar.zst",
     "dylint-link": "bundle.tar.zst",
+    "dylint-driver": "bundle.tar.zst",
 }
 
 V1_SCHEMA_URL = "https://zackees.github.io/manifest.json/v1/manifest.schema.json"
@@ -375,7 +376,13 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     rust_artifact = None
-    if args.tool in {"cargo-binstall", "cargo-nextest", "cargo-dylint", "dylint-link"}:
+    if args.tool in {
+        "cargo-binstall",
+        "cargo-nextest",
+        "cargo-dylint",
+        "dylint-link",
+        "dylint-driver",
+    }:
         rust_artifact = _find_forge_rust_artifact(
             args.forge_dir, args.tool, args.version, args.shape
         )
@@ -526,10 +533,120 @@ def _find_forge_rust_artifact(
     """Locate one unpacked ``actions/upload-artifact`` Rust payload."""
     platform = FORGE_RUST_PLATFORM_BY_SHAPE.get(shape, shape)
     expected = f"forge-rust-{tool}-{version}-{platform}"
-    artifact_dir = forge_dir / expected
-    if artifact_dir.is_dir() and (artifact_dir / "manifest.json").is_file():
-        return artifact_dir
-    return None
+    matches = sorted(
+        manifest.parent
+        for manifest in forge_dir.rglob("manifest.json")
+        if manifest.parent.name == expected
+    )
+    if len(matches) > 1:
+        raise SystemExit(
+            f"forge_to_catalogue.py: multiple Rust artifacts match {expected!r}: "
+            + ", ".join(str(path) for path in matches)
+        )
+    return matches[0] if matches else None
+
+
+def _numeric_version(version: str) -> tuple[int, ...]:
+    try:
+        return tuple(int(component) for component in version.split("."))
+    except ValueError as exc:
+        raise SystemExit(
+            f"forge_to_catalogue.py: invalid numeric version {version!r}"
+        ) from exc
+
+
+def _validate_dylint_manifest_evidence(
+    manifest: dict[str, Any],
+    managed: dict[str, Any],
+    *,
+    tool: str,
+    shape: str,
+) -> None:
+    """Reject Dylint artifacts without the complete native release proof."""
+    target = RUST_TARGET_BY_SHAPE[shape]
+    smoke = manifest.get("smoke")
+    expected_smoke = {
+        "result": "passed",
+        "fixture": "fixtures/dylint-release",
+        "known_violation": "release_fixture_forbidden_io",
+        "binaries": ["cargo-dylint", "dylint-link", "dylint-driver"],
+        "execution_mode": "native",
+        "warm_driver_builds": 0,
+        "warm_network": "offline",
+        "target": target,
+    }
+    if not isinstance(smoke, dict):
+        raise SystemExit("forge_to_catalogue.py: Dylint smoke evidence is missing")
+    for field, expected in expected_smoke.items():
+        observed = smoke.get(field)
+        if field == "warm_driver_builds" and type(observed) is not int:
+            observed = None
+        if observed != expected:
+            raise SystemExit(
+                f"forge_to_catalogue.py: Dylint smoke {field}={observed!r}, "
+                f"expected {expected!r}"
+            )
+
+    if tool in {"cargo-dylint", "dylint-link"}:
+        expected_pair_identity = {
+            "dylint_version": managed["version"],
+            "source_ref": managed["source_ref"],
+            "target": target,
+        }
+        if manifest.get("pair_identity") != expected_pair_identity:
+            raise SystemExit(
+                "forge_to_catalogue.py: Dylint pair_identity does not match "
+                f"the managed identity for {target}"
+            )
+
+    if not shape.startswith("linux-"):
+        return
+
+    evidence = manifest.get("binary_evidence")
+    if not isinstance(evidence, dict):
+        raise SystemExit("forge_to_catalogue.py: Linux binary_evidence is missing")
+    expected_machine = (
+        "Advanced Micro Devices X86-64"
+        if target.startswith("x86_64-")
+        else "AArch64"
+    )
+    if evidence.get("format") != "ELF" or evidence.get("machine") != expected_machine:
+        raise SystemExit(
+            "forge_to_catalogue.py: Linux ELF format or machine evidence is invalid"
+        )
+
+    glibc_max = evidence.get("glibc_max")
+    glibc_ceiling = evidence.get("glibc_ceiling")
+    interpreter = evidence.get("interpreter")
+    if shape.endswith("-gnu"):
+        if not isinstance(glibc_max, str) or glibc_ceiling != "2.17":
+            raise SystemExit(
+                "forge_to_catalogue.py: GNU GLIBC evidence or ceiling is missing"
+            )
+        if _numeric_version(glibc_max) > _numeric_version("2.17"):
+            raise SystemExit(
+                f"forge_to_catalogue.py: {tool} requires GLIBC {glibc_max}; "
+                "ceiling is 2.17"
+            )
+        if not isinstance(interpreter, str) or "ld-linux" not in interpreter:
+            raise SystemExit(
+                "forge_to_catalogue.py: GNU interpreter evidence is invalid"
+            )
+    else:
+        if glibc_max is not None or glibc_ceiling is not None:
+            raise SystemExit(
+                "forge_to_catalogue.py: musl artifact unexpectedly has GLIBC evidence"
+            )
+        if tool in {"cargo-dylint", "dylint-link"} and interpreter is not None:
+            raise SystemExit(
+                f"forge_to_catalogue.py: musl pair member {tool} must be static"
+            )
+        if interpreter is not None and (
+            not isinstance(interpreter, str) or "ld-musl" not in interpreter
+        ):
+            raise SystemExit(
+                "forge_to_catalogue.py: musl interpreter evidence is invalid"
+            )
 
 
 def _package_forge_rust_artifact(
@@ -567,6 +684,20 @@ def _package_forge_rust_artifact(
         raise SystemExit(
             f"forge_to_catalogue.py: Rust source_ref {source_ref!r}, "
             f"expected managed commit {managed.get('source_ref')!r}"
+        )
+    if tool == "dylint-driver":
+        expected_driver_identity = {
+            **managed["driver_identity"],
+            "host": RUST_TARGET_BY_SHAPE[shape],
+        }
+        if manifest.get("driver_identity") != expected_driver_identity:
+            raise SystemExit(
+                "forge_to_catalogue.py: Rust driver_identity does not match the "
+                f"managed identity for {RUST_TARGET_BY_SHAPE[shape]}"
+            )
+    if tool in {"cargo-dylint", "dylint-link", "dylint-driver"}:
+        _validate_dylint_manifest_evidence(
+            manifest, managed, tool=tool, shape=shape
         )
     if (manifest.get("smoke") or {}).get("result") != "passed":
         raise SystemExit("forge_to_catalogue.py: Rust native smoke evidence is missing")
@@ -613,6 +744,8 @@ def _package_forge_rust_artifact(
         "resolution_mode": manifest.get("resolution_mode"),
         "payload_sha256": actual_sha256,
         "smoke": manifest["smoke"],
+        "binary_evidence": manifest.get("binary_evidence"),
+        "driver_identity": manifest.get("driver_identity"),
     }
 
 
@@ -826,7 +959,13 @@ def _update_catalogue(
 
 
 def _catalog_version(tool: str, package_version: str) -> str:
-    if tool in {"cargo-chef", "crgx", "cargo-dylint", "dylint-link"} and not package_version.startswith("v"):
+    if tool in {
+        "cargo-chef",
+        "crgx",
+        "cargo-dylint",
+        "dylint-link",
+        "dylint-driver",
+    } and not package_version.startswith("v"):
         return f"v{package_version}"
     return package_version
 
