@@ -5,10 +5,83 @@
   "tool": "cargo-xwin",
   "online_url": "https://zackees.github.io/soldr-toolchain/cargo-xwin/manifest.json",
   "channels": {
-    "latest-stable": "v0.23.0",
-    "stable": "v0.23.0"
+    "latest-stable": "v0.23.1",
+    "stable": "v0.23.1"
   },
   "releases": [
+    {
+      "schema_version": 1,
+      "version": "v0.23.1",
+      "published_at": "2026-08-13T11:21:37Z",
+      "min_client_version": 1,
+      "platforms": [
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "universal2"
+          },
+          "asset": {
+            "filename": "cargo-xwin-v0.23.1.universal2-apple-darwin.tar.gz",
+            "size_bytes": 6839410,
+            "urls": [
+              "https://github.com/rust-cross/cargo-xwin/releases/download/v0.23.1/cargo-xwin-v0.23.1.universal2-apple-darwin.tar.gz"
+            ],
+            "sha256": "1d74345d23ec744728124a0244696e9f21340fbb4b8a59cc1e39ba4ab18d8113"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "cargo-xwin-v0.23.1.aarch64-unknown-linux-musl.tar.gz",
+            "size_bytes": 3619655,
+            "urls": [
+              "https://github.com/rust-cross/cargo-xwin/releases/download/v0.23.1/cargo-xwin-v0.23.1.aarch64-unknown-linux-musl.tar.gz"
+            ],
+            "sha256": "dc0a0fb28fdd90405f69e7365bce91d2504ea7491eb4d79d5655ffa106358925"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "cargo-xwin-v0.23.1.x86_64-unknown-linux-musl.tar.gz",
+            "size_bytes": 3850667,
+            "urls": [
+              "https://github.com/rust-cross/cargo-xwin/releases/download/v0.23.1/cargo-xwin-v0.23.1.x86_64-unknown-linux-musl.tar.gz"
+            ],
+            "sha256": "c492c6dfb7e5ac0eee586b796e0fc950ba13077e7f0bbb046f445d71790d5360"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "x86_64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "cargo-xwin-v0.23.1.windows-x64.zip",
+            "size_bytes": 3389840,
+            "urls": [
+              "https://github.com/rust-cross/cargo-xwin/releases/download/v0.23.1/cargo-xwin-v0.23.1.windows-x64.zip"
+            ],
+            "sha256": "114534c57cdcca604f59c9d70024583d20ff7c5505677f06247e971184a23872"
+          }
+        }
+      ],
+      "source": {
+        "vcs": "git",
+        "repo_url": "https://github.com/rust-cross/cargo-xwin",
+        "ref": "v0.23.1",
+        "archive_url": "https://github.com/rust-cross/cargo-xwin/archive/refs/tags/v0.23.1.tar.gz"
+      }
+    },
     {
       "schema_version": 1,
       "version": "v0.23.0",
