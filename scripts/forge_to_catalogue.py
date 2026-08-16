@@ -237,7 +237,7 @@ def _forge_rust_asset_name(tool: str, version: str, shape: str) -> str:
 
 MANAGED_RUST_TOOLS = (
     "cargo-chef", "crgx", "cargo-binstall", "cargo-nextest",
-    "cargo-dylint", "dylint-link", "dylint-driver",
+    "cargo-dylint", "dylint-link", "dylint-driver", "soldr-maturin",
 )
 for _tool in MANAGED_RUST_TOOLS:
     TOOL_RECIPE_NAME[_tool] = {shape: f"{_tool}-{shape}" for shape in RUST_CLI_SHAPES}
@@ -382,6 +382,7 @@ def main(argv: list[str] | None = None) -> int:
         "cargo-dylint",
         "dylint-link",
         "dylint-driver",
+        "soldr-maturin",
     }:
         rust_artifact = _find_forge_rust_artifact(
             args.forge_dir, args.tool, args.version, args.shape
