@@ -2,6 +2,17 @@
   "schema_version": 1,
   "source": "https://static.rust-lang.org/dist/channel-rust-nightly.toml",
   "nightlies": {
+    "nightly-2026-08-16": {
+      "manifest_date": "2026-08-16",
+      "rust_version": "1.100",
+      "rustc_release": "1.100.0-nightly",
+      "rustc_version": "rustc 1.100.0-nightly (67854e511 2026-08-15)",
+      "rustc_commit_hash": "67854e511de21d881bb16426996cd4259d44aa2e",
+      "rustc_commit_date": "2026-08-15",
+      "rustc_host": "x86_64-unknown-linux-gnu",
+      "manifest_url": "https://static.rust-lang.org/dist/2026-08-16/channel-rust-nightly.toml",
+      "manifest_sha256": "f7aba49911c160e9d25ebd8b14f6b4d7c4301380bde18b0136c373730ed738c7"
+    },
     "nightly-2026-08-15": {
       "manifest_date": "2026-08-15",
       "rust_version": "1.99",
@@ -265,6 +276,28 @@
       "rustc_host": "x86_64-unknown-linux-gnu",
       "manifest_url": "https://static.rust-lang.org/dist/2026-07-23/channel-rust-nightly.toml",
       "manifest_sha256": "a66a873f03170e9ddd3cc1fb8dc2395edda872b43ba239e4fa0a3f47971e728a"
+    },
+    "nightly-2026-07-22": {
+      "manifest_date": "2026-07-22",
+      "rust_version": "1.99",
+      "rustc_release": "1.99.0-nightly",
+      "rustc_version": "rustc 1.99.0-nightly (0e29c21d9 2026-07-21)",
+      "rustc_commit_hash": "0e29c21d93abc9bdc330182be1fbd33cfd5fee68",
+      "rustc_commit_date": "2026-07-21",
+      "rustc_host": "x86_64-unknown-linux-gnu",
+      "manifest_url": "https://static.rust-lang.org/dist/2026-07-22/channel-rust-nightly.toml",
+      "manifest_sha256": "34d70747aaccd7549625a7f540091932824752a63863adf969956f41c953286f"
+    },
+    "nightly-2026-07-21": {
+      "manifest_date": "2026-07-21",
+      "rust_version": "1.99",
+      "rustc_release": "1.99.0-nightly",
+      "rustc_version": "rustc 1.99.0-nightly (87e5904f5 2026-07-20)",
+      "rustc_commit_hash": "87e5904f5eb6398af6b22eac2802c78934260c48",
+      "rustc_commit_date": "2026-07-20",
+      "rustc_host": "x86_64-unknown-linux-gnu",
+      "manifest_url": "https://static.rust-lang.org/dist/2026-07-21/channel-rust-nightly.toml",
+      "manifest_sha256": "c0b09f4e128768b2d6eab27050625a1ce974f8b39c07871370368cd82fbf8617"
     },
     "nightly-2026-07-20": {
       "manifest_date": "2026-07-20",
@@ -2766,6 +2799,12 @@
   },
   "unavailable_dates": [],
   "versions": {
+    "1.100": {
+      "nightlies": [
+        "nightly-2026-08-16"
+      ],
+      "selected": "nightly-2026-08-16"
+    },
     "1.94": {
       "nightlies": [
         "nightly-2026-01-18",
@@ -3029,6 +3068,8 @@
         "nightly-2026-07-25",
         "nightly-2026-07-24",
         "nightly-2026-07-23",
+        "nightly-2026-07-22",
+        "nightly-2026-07-21",
         "nightly-2026-07-20",
         "nightly-2026-07-19",
         "nightly-2026-07-18",

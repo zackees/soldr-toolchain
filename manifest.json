@@ -73,6 +73,16 @@
       "summary": "yfedoseev/crgx",
       "kind_hint": "tool"
     },
+    "soldr-maturin": {
+      "descriptor": {
+        "url": "soldr-maturin/manifest.json",
+        "size_bytes": 3892,
+        "media_type": "application/vnd.manifest.v1+json",
+        "sha256": "3347fb0a84e5a69a4de1ef503dc2438c04c07645c257f79509ecd967738c813d"
+      },
+      "summary": "zackees/soldr-maturin",
+      "kind_hint": "tool"
+    },
     "xwin-cache": {
       "descriptor": {
         "url": "xwin-cache/manifest.json",

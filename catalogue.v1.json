@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-16T04:47:39Z",
+  "generated_at": "2026-08-16T04:51:50Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -1097,7 +1097,7 @@
       "tag": "assets",
       "asset": "rust-nightly-versions.v1.json",
       "url": "https://zackees.github.io/soldr-toolchain/rust-nightly-versions.v1.json",
-      "sha256": "79b9a1d3508d7722eba66c51377bd6b2a3f878039b624aa57422506884e43e96"
+      "sha256": "ec6cb570c42aee49126531ed8ac3091fea93923c895fc7de16b9696c798a4c65"
     },
     {
       "owner": "zackees",
@@ -1135,6 +1135,70 @@
       "owner": "zackees",
       "repo": "soldr-toolchain",
       "tag": "assets",
+      "asset": "soldr-maturin-1.14.1.post1-aarch64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/darwin-aarch64/soldr-maturin-1.14.1.post1-aarch64-apple-darwin.tar.gz",
+      "sha256": "318907aa396e660795e07c7c1aae11af73600ab6188c7fec64ed7f1482a73132"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "soldr-maturin-1.14.1.post1-aarch64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/windows-aarch64-msvc/soldr-maturin-1.14.1.post1-aarch64-pc-windows-msvc.tar.gz",
+      "sha256": "251f10b5256f31118d2dcb3252bae7a6e9dcdeeed3c943d81aa4a425beebfc7c"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "soldr-maturin-1.14.1.post1-aarch64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/linux-aarch64-glibc/soldr-maturin-1.14.1.post1-aarch64-unknown-linux-gnu.tar.gz",
+      "sha256": "d493f98ac3e7e1d2538251bd02f2c6e792dbcba8ef1ea8c2ff8251f8c8d37840"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "soldr-maturin-1.14.1.post1-aarch64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/linux-aarch64-musl/soldr-maturin-1.14.1.post1-aarch64-unknown-linux-musl.tar.gz",
+      "sha256": "bf904279980d141bd5b6d2649ca54a6fa1e377a6116fcb45336b79b1132b4c12"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "soldr-maturin-1.14.1.post1-x86_64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/darwin-x86_64/soldr-maturin-1.14.1.post1-x86_64-apple-darwin.tar.gz",
+      "sha256": "122e2118be21f87ac1d7862ad269c75ca4190f16d02bf9655e15ad1989692a63"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "soldr-maturin-1.14.1.post1-x86_64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/windows-x86_64-msvc/soldr-maturin-1.14.1.post1-x86_64-pc-windows-msvc.tar.gz",
+      "sha256": "125331d14124c9c1d236aa0f2cb8cd5181284b0f4ac2675e799b57d7c8669663"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "soldr-maturin-1.14.1.post1-x86_64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/linux-x86_64-glibc/soldr-maturin-1.14.1.post1-x86_64-unknown-linux-gnu.tar.gz",
+      "sha256": "20a85e41a901c3cbde2a8de08a0a4f0b349acd3062e2cbe3e7b82438e232c7b7"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "soldr-maturin-1.14.1.post1-x86_64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/linux-x86_64-musl/soldr-maturin-1.14.1.post1-x86_64-unknown-linux-musl.tar.gz",
+      "sha256": "86f0ca9a49d443d78771e7a2574eb4a67c5885a3b71b66d85ed0ccf9a7c5bcaa"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
       "asset": "xwin-cache.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/xwin-cache/2026-06-22/windows-aarch64-msvc/xwin-cache.tar.zst",
       "sha256": "cb7fa0e68ce173a54f0dbc116d3e8f04c7013953529ada8284b0ac149139b9da"
@@ -1154,70 +1218,6 @@
       "asset": "bundle.tar.zst",
       "url": "https://api.github.com/repos/zackees/soldr-toolchain-private/releases/assets/505002676",
       "sha256": "932d9e36cbad6243b6ca9e50332b258f7efeb086d2f21c80447738064418c714"
-    },
-    {
-      "owner": "zackees",
-      "repo": "soldr-toolchain",
-      "tag": "assets",
-      "asset": "soldr-maturin-1.14.1.post1-x86_64-pc-windows-msvc.tar.gz",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/windows-x86_64-msvc/soldr-maturin-1.14.1.post1-x86_64-pc-windows-msvc.tar.gz",
-      "sha256": "125331d14124c9c1d236aa0f2cb8cd5181284b0f4ac2675e799b57d7c8669663"
-    },
-    {
-      "owner": "zackees",
-      "repo": "soldr-toolchain",
-      "tag": "assets",
-      "asset": "soldr-maturin-1.14.1.post1-aarch64-pc-windows-msvc.tar.gz",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/windows-aarch64-msvc/soldr-maturin-1.14.1.post1-aarch64-pc-windows-msvc.tar.gz",
-      "sha256": "251f10b5256f31118d2dcb3252bae7a6e9dcdeeed3c943d81aa4a425beebfc7c"
-    },
-    {
-      "owner": "zackees",
-      "repo": "soldr-toolchain",
-      "tag": "assets",
-      "asset": "soldr-maturin-1.14.1.post1-aarch64-apple-darwin.tar.gz",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/darwin-aarch64/soldr-maturin-1.14.1.post1-aarch64-apple-darwin.tar.gz",
-      "sha256": "318907aa396e660795e07c7c1aae11af73600ab6188c7fec64ed7f1482a73132"
-    },
-    {
-      "owner": "zackees",
-      "repo": "soldr-toolchain",
-      "tag": "assets",
-      "asset": "soldr-maturin-1.14.1.post1-x86_64-apple-darwin.tar.gz",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/darwin-x86_64/soldr-maturin-1.14.1.post1-x86_64-apple-darwin.tar.gz",
-      "sha256": "122e2118be21f87ac1d7862ad269c75ca4190f16d02bf9655e15ad1989692a63"
-    },
-    {
-      "owner": "zackees",
-      "repo": "soldr-toolchain",
-      "tag": "assets",
-      "asset": "soldr-maturin-1.14.1.post1-x86_64-unknown-linux-gnu.tar.gz",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/linux-x86_64-glibc/soldr-maturin-1.14.1.post1-x86_64-unknown-linux-gnu.tar.gz",
-      "sha256": "20a85e41a901c3cbde2a8de08a0a4f0b349acd3062e2cbe3e7b82438e232c7b7"
-    },
-    {
-      "owner": "zackees",
-      "repo": "soldr-toolchain",
-      "tag": "assets",
-      "asset": "soldr-maturin-1.14.1.post1-aarch64-unknown-linux-gnu.tar.gz",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/linux-aarch64-glibc/soldr-maturin-1.14.1.post1-aarch64-unknown-linux-gnu.tar.gz",
-      "sha256": "d493f98ac3e7e1d2538251bd02f2c6e792dbcba8ef1ea8c2ff8251f8c8d37840"
-    },
-    {
-      "owner": "zackees",
-      "repo": "soldr-toolchain",
-      "tag": "assets",
-      "asset": "soldr-maturin-1.14.1.post1-x86_64-unknown-linux-musl.tar.gz",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/linux-x86_64-musl/soldr-maturin-1.14.1.post1-x86_64-unknown-linux-musl.tar.gz",
-      "sha256": "86f0ca9a49d443d78771e7a2574eb4a67c5885a3b71b66d85ed0ccf9a7c5bcaa"
-    },
-    {
-      "owner": "zackees",
-      "repo": "soldr-toolchain",
-      "tag": "assets",
-      "asset": "soldr-maturin-1.14.1.post1-aarch64-unknown-linux-musl.tar.gz",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/linux-aarch64-musl/soldr-maturin-1.14.1.post1-aarch64-unknown-linux-musl.tar.gz",
-      "sha256": "bf904279980d141bd5b6d2649ca54a6fa1e377a6116fcb45336b79b1132b4c12"
     }
   ]
 }

@@ -1,0 +1,115 @@
+{
+  "$schema": "https://zackees.github.io/manifest.json/v1/manifest.schema.json",
+  "kind": "Catalog",
+  "schema_version": 1,
+  "tool": "soldr-maturin",
+  "online_url": "https://zackees.github.io/soldr-toolchain/soldr-maturin/manifest.json",
+  "channels": {
+    "latest-stable": "1.14.1.post1",
+    "stable": "1.14.1.post1"
+  },
+  "releases": [
+    {
+      "schema_version": 1,
+      "version": "1.14.1.post1",
+      "published_at": "2026-08-16T04:39:30Z",
+      "min_client_version": 1,
+      "platforms": [
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "maturin-aarch64-apple-darwin.tar.gz",
+            "size_bytes": 9036190,
+            "urls": [
+              "https://github.com/zackees/soldr-maturin/releases/download/v1.14.1.post1/maturin-aarch64-apple-darwin.tar.gz"
+            ],
+            "sha256": "7e1130917e6bf16b3b715e0fdf40ff25192a2c29cbc49dfe110107a224f266fe"
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "maturin-x86_64-apple-darwin.tar.gz",
+            "size_bytes": 9719217,
+            "urls": [
+              "https://github.com/zackees/soldr-maturin/releases/download/v1.14.1.post1/maturin-x86_64-apple-darwin.tar.gz"
+            ],
+            "sha256": "cb423f9aec014a4a5f2b32d3a23ca2392aaec126c47aa282ede934d1d3fec475"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "maturin-aarch64-unknown-linux-musl.tar.gz",
+            "size_bytes": 9646727,
+            "urls": [
+              "https://github.com/zackees/soldr-maturin/releases/download/v1.14.1.post1/maturin-aarch64-unknown-linux-musl.tar.gz"
+            ],
+            "sha256": "2a58ffa2b7d2e26fadec17db3aa1ae3091d6799860111760608bffc7aef7be8c"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "maturin-x86_64-unknown-linux-musl.tar.gz",
+            "size_bytes": 10191938,
+            "urls": [
+              "https://github.com/zackees/soldr-maturin/releases/download/v1.14.1.post1/maturin-x86_64-unknown-linux-musl.tar.gz"
+            ],
+            "sha256": "2ccace7fb5591972348e1c80809f33aa08c86b12bf60ef93773325aa3da7b052"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "aarch64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "maturin-aarch64-pc-windows-msvc.zip",
+            "size_bytes": 8957476,
+            "urls": [
+              "https://github.com/zackees/soldr-maturin/releases/download/v1.14.1.post1/maturin-aarch64-pc-windows-msvc.zip"
+            ],
+            "sha256": "eb4f96e1f6ca29f97fd380f15c77cf64f7ee76875fe28b38f047ee0ca4b61dd5"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "x86_64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "maturin-x86_64-pc-windows-msvc.zip",
+            "size_bytes": 9558814,
+            "urls": [
+              "https://github.com/zackees/soldr-maturin/releases/download/v1.14.1.post1/maturin-x86_64-pc-windows-msvc.zip"
+            ],
+            "sha256": "39d4e7e971c0b270ae3ba3c07448d357c00618acd2cac961650c6d270e0fb7f1"
+          }
+        }
+      ],
+      "source": {
+        "vcs": "git",
+        "repo_url": "https://github.com/zackees/soldr-maturin",
+        "ref": "v1.14.1.post1",
+        "archive_url": "https://github.com/zackees/soldr-maturin/archive/refs/tags/v1.14.1.post1.tar.gz"
+      }
+    }
+  ]
+}
