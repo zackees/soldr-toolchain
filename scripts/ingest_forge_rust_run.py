@@ -14,7 +14,7 @@ def main() -> int:
     parser.add_argument("--forge-dir", type=Path, required=True)
     parser.add_argument(
         "--tool",
-        choices=("cargo-binstall", "cargo-nextest", "cargo-dylint", "dylint-link"),
+        choices=("cargo-binstall", "cargo-nextest", "cargo-dylint", "dylint-link", "soldr-maturin"),
         required=True,
     )
     parser.add_argument("--version", required=True)
