@@ -43,6 +43,13 @@
         "rustc_release": "1.98.0-nightly",
         "rustc_commit": "57d06900fd7d9ee06d3a7f323bb77f17ab3cfaf8"
       }
+    },
+    "soldr-maturin": {
+      "version": "1.14.1.post1",
+      "source": "zackees/soldr-maturin",
+      "source_ref": "cdf12d349700ebf0d1f6c345484989e500a66dcf",
+      "binary": "maturin",
+      "release_tag_prefix": "v"
     }
   },
   "platforms": [

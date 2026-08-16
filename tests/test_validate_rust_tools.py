@@ -14,6 +14,7 @@ def test_pinned_vertical_slice_has_dylint_triplet_and_eight_platforms():
         "cargo-dylint",
         "dylint-link",
         "dylint-driver",
+        "soldr-maturin",
     }
     assert len(doc["platforms"]) == 8
     assert doc["tools"]["dylint-driver"]["driver_identity"] == {
