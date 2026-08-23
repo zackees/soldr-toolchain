@@ -5,11 +5,157 @@
   "tool": "cargo-binstall",
   "online_url": "https://zackees.github.io/soldr-toolchain/cargo-binstall/manifest.json",
   "channels": {
-    "latest-stable": "1.21.1",
-    "stable": "1.21.1",
+    "latest-stable": "1.22.0",
+    "stable": "1.22.0",
     "pinned": "1.20.1"
   },
   "releases": [
+    {
+      "schema_version": 1,
+      "version": "1.22.0",
+      "published_at": "2026-08-22T15:24:58Z",
+      "min_client_version": 1,
+      "platforms": [
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "cargo-binstall-aarch64-apple-darwin.full.zip",
+            "size_bytes": 7589211,
+            "urls": [
+              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.22.0/cargo-binstall-aarch64-apple-darwin.full.zip"
+            ],
+            "sha256": "cff63b5f07806348ea098f3e6e531d549133656bb2f5b5ddcca0bd82c0201d68"
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "universal2"
+          },
+          "asset": {
+            "filename": "cargo-binstall-universal-apple-darwin.full.zip",
+            "size_bytes": 15880942,
+            "urls": [
+              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.22.0/cargo-binstall-universal-apple-darwin.full.zip"
+            ],
+            "sha256": "a50dafbae212d1a74c9d0ece31b31691dfdb10ee9c6f1cbaa7ed727849ccba56"
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "cargo-binstall-x86_64-apple-darwin.full.zip",
+            "size_bytes": 8309552,
+            "urls": [
+              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.22.0/cargo-binstall-x86_64-apple-darwin.full.zip"
+            ],
+            "sha256": "53e6e1b16bd002ab81b6bdabcf41da360678972d1c67dfb3ed323f933e82a320"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "cargo-binstall-aarch64-unknown-linux-gnu.full.tgz",
+            "size_bytes": 8186067,
+            "urls": [
+              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.22.0/cargo-binstall-aarch64-unknown-linux-gnu.full.tgz"
+            ],
+            "sha256": "2ff877ff844321c8b2e41aca2bd50a436ee659708321715b16f758525cf4cacc"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "cargo-binstall-aarch64-unknown-linux-musl.full.tgz",
+            "size_bytes": 8225050,
+            "urls": [
+              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.22.0/cargo-binstall-aarch64-unknown-linux-musl.full.tgz"
+            ],
+            "sha256": "1f977af555fd842c0f2bc42bcad2e1950e7629cf96bd624392cbc8fb5d926b84"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "cargo-binstall-x86_64-unknown-linux-gnu.full.tgz",
+            "size_bytes": 8705139,
+            "urls": [
+              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.22.0/cargo-binstall-x86_64-unknown-linux-gnu.full.tgz"
+            ],
+            "sha256": "8bccc061f2798e6f944c24978353b94c76ade7fb722331730a9b090697b21684"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "cargo-binstall-x86_64-unknown-linux-musl.full.tgz",
+            "size_bytes": 8726446,
+            "urls": [
+              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.22.0/cargo-binstall-x86_64-unknown-linux-musl.full.tgz"
+            ],
+            "sha256": "e036312fa1ecdaac92441c4ef9ebaaaff415e5e73edb83223510645d7dfc66f3"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "aarch64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "cargo-binstall-aarch64-pc-windows-msvc.full.zip",
+            "size_bytes": 8567804,
+            "urls": [
+              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.22.0/cargo-binstall-aarch64-pc-windows-msvc.full.zip"
+            ],
+            "sha256": "e1f48ffce41197e14f7fb3bae0c32c81da1f5af748f956d4cf829211c140c284"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "x86_64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "cargo-binstall-x86_64-pc-windows-msvc.full.zip",
+            "size_bytes": 8859088,
+            "urls": [
+              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.22.0/cargo-binstall-x86_64-pc-windows-msvc.full.zip"
+            ],
+            "sha256": "052f4060528509444970a57f08122caefaa5002888d6c3261891b52f64dcb4d0"
+          }
+        }
+      ],
+      "source": {
+        "vcs": "git",
+        "repo_url": "https://github.com/cargo-bins/cargo-binstall",
+        "ref": "v1.22.0",
+        "archive_url": "https://github.com/cargo-bins/cargo-binstall/archive/refs/tags/v1.22.0.tar.gz"
+      }
+    },
     {
       "schema_version": 1,
       "version": "1.21.1",
@@ -1760,152 +1906,6 @@
         "repo_url": "https://github.com/cargo-bins/cargo-binstall",
         "ref": "v1.17.6",
         "archive_url": "https://github.com/cargo-bins/cargo-binstall/archive/refs/tags/v1.17.6.tar.gz"
-      }
-    },
-    {
-      "schema_version": 1,
-      "version": "1.17.5",
-      "published_at": "2026-02-13T13:40:56Z",
-      "min_client_version": 1,
-      "platforms": [
-        {
-          "platform": {
-            "os": "darwin",
-            "arch": "aarch64"
-          },
-          "asset": {
-            "filename": "cargo-binstall-aarch64-apple-darwin.full.zip",
-            "size_bytes": 7491688,
-            "urls": [
-              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.17.5/cargo-binstall-aarch64-apple-darwin.full.zip"
-            ],
-            "sha256": "e0b6a50b413c0d59f851b658581fb2cf2c0ec14d1de66335f6c4f48cea7b54d8"
-          }
-        },
-        {
-          "platform": {
-            "os": "darwin",
-            "arch": "universal2"
-          },
-          "asset": {
-            "filename": "cargo-binstall-universal-apple-darwin.full.zip",
-            "size_bytes": 15646238,
-            "urls": [
-              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.17.5/cargo-binstall-universal-apple-darwin.full.zip"
-            ],
-            "sha256": "3fdbe44bb02102cebacb2a34efbcb5394f1561aab51e602e00e4847eb301c721"
-          }
-        },
-        {
-          "platform": {
-            "os": "darwin",
-            "arch": "x86_64"
-          },
-          "asset": {
-            "filename": "cargo-binstall-x86_64-apple-darwin.full.zip",
-            "size_bytes": 8169391,
-            "urls": [
-              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.17.5/cargo-binstall-x86_64-apple-darwin.full.zip"
-            ],
-            "sha256": "882e19c4acad8142ee7f1195d0583b5c73ca65d5f5f942f40a6dd8b7a0e6f316"
-          }
-        },
-        {
-          "platform": {
-            "os": "linux",
-            "arch": "aarch64",
-            "libc": "glibc"
-          },
-          "asset": {
-            "filename": "cargo-binstall-aarch64-unknown-linux-gnu.full.tgz",
-            "size_bytes": 8058013,
-            "urls": [
-              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.17.5/cargo-binstall-aarch64-unknown-linux-gnu.full.tgz"
-            ],
-            "sha256": "70136f67ac22475efbefa0727fe04740b0618686462408234c0625648a4c8e7f"
-          }
-        },
-        {
-          "platform": {
-            "os": "linux",
-            "arch": "aarch64",
-            "libc": "musl"
-          },
-          "asset": {
-            "filename": "cargo-binstall-aarch64-unknown-linux-musl.full.tgz",
-            "size_bytes": 8108468,
-            "urls": [
-              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.17.5/cargo-binstall-aarch64-unknown-linux-musl.full.tgz"
-            ],
-            "sha256": "7c93ea2eacf3457e60c2dcfc797223ca08cf44e58dc687a460e8b73521f23bdc"
-          }
-        },
-        {
-          "platform": {
-            "os": "linux",
-            "arch": "x86_64",
-            "libc": "glibc"
-          },
-          "asset": {
-            "filename": "cargo-binstall-x86_64-unknown-linux-gnu.full.tgz",
-            "size_bytes": 8595552,
-            "urls": [
-              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.17.5/cargo-binstall-x86_64-unknown-linux-gnu.full.tgz"
-            ],
-            "sha256": "22bd8c620cb4a5f196b9739e04c5f137a0a02810c939ba2f10102a4772c60144"
-          }
-        },
-        {
-          "platform": {
-            "os": "linux",
-            "arch": "x86_64",
-            "libc": "musl"
-          },
-          "asset": {
-            "filename": "cargo-binstall-x86_64-unknown-linux-musl.full.tgz",
-            "size_bytes": 8619581,
-            "urls": [
-              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.17.5/cargo-binstall-x86_64-unknown-linux-musl.full.tgz"
-            ],
-            "sha256": "76563118b45aad8fd93b741193fa19fdeca887d6f44968758abfd1761b5aca16"
-          }
-        },
-        {
-          "platform": {
-            "os": "windows",
-            "arch": "aarch64",
-            "abi": "msvc"
-          },
-          "asset": {
-            "filename": "cargo-binstall-aarch64-pc-windows-msvc.full.zip",
-            "size_bytes": 8458014,
-            "urls": [
-              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.17.5/cargo-binstall-aarch64-pc-windows-msvc.full.zip"
-            ],
-            "sha256": "ad71b18b5f8b794c1dcac7779a839c8010a296abb35a25a229bede23abec1066"
-          }
-        },
-        {
-          "platform": {
-            "os": "windows",
-            "arch": "x86_64",
-            "abi": "msvc"
-          },
-          "asset": {
-            "filename": "cargo-binstall-x86_64-pc-windows-msvc.full.zip",
-            "size_bytes": 8718756,
-            "urls": [
-              "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.17.5/cargo-binstall-x86_64-pc-windows-msvc.full.zip"
-            ],
-            "sha256": "7430596488bba9259edd59735aa2df0768cb44dc936e8ece57f8ba676939ec6a"
-          }
-        }
-      ],
-      "source": {
-        "vcs": "git",
-        "repo_url": "https://github.com/cargo-bins/cargo-binstall",
-        "ref": "v1.17.5",
-        "archive_url": "https://github.com/cargo-bins/cargo-binstall/archive/refs/tags/v1.17.5.tar.gz"
       }
     }
   ]
