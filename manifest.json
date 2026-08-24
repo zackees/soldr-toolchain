@@ -56,9 +56,9 @@
     "cargo-zigbuild": {
       "descriptor": {
         "url": "cargo-zigbuild/manifest.json",
-        "size_bytes": 243802,
+        "size_bytes": 245720,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "0c8cc26770d9bf6df9b4ae43a69d19b8351ff244eafe4e4603733ee9f15305db"
+        "sha256": "52938fc582d92936ebe184d8ab8289fc7a359b283c23aefb04ef1f6e65f6146a"
       },
       "summary": "rust-cross/cargo-zigbuild",
       "kind_hint": "tool"
@@ -96,9 +96,9 @@
     "zccache": {
       "descriptor": {
         "url": "zccache/manifest.json",
-        "size_bytes": 246204,
+        "size_bytes": 253266,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "ef9bb99511a3332cac11b501f2bc3e78f3ed6e59015b5d70528048e62fa77d38"
+        "sha256": "1a1c44b9bd04a5af758ac0c172a9c719f23866616245c0db49d39d7e2b7588c1"
       },
       "summary": "zackees/zccache",
       "kind_hint": "tool"
