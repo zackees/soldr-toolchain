@@ -8,7 +8,7 @@
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "rust-nightly-versions.v1.json",
-      "url": "https://zackees.github.io/soldr-toolchain/rust-nightly-versions.v1.json",
+      "url": "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/rust-nightly-versions.v1.json",
       "sha256": "d5826673cab0bb4170adedabb5002005fbd5666102ce9162296b9ba926b8942d"
     },
     {
