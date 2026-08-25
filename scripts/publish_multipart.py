@@ -156,14 +156,21 @@ def scan_unsmudged_catalogue(assets_dir: Path) -> list[SourceInventoryRow]:
     rows = document.get("entries") if isinstance(document, dict) else None
     if not isinstance(rows, list):
         raise ValueError("catalogue.v1.json entries must be a list")
+    identity_counts = Counter(
+        tuple(entry.get(key) for key in ("owner", "repo", "tag", "asset"))
+        for entry in rows
+        if isinstance(entry, dict)
+    )
     result: list[SourceInventoryRow] = []
     for entry in rows:
         if not isinstance(entry, dict) or not isinstance(entry.get("url"), str):
             raise ValueError("catalogue v1 entry lacks url")
-        logical = "\0".join(str(entry.get(key, "")) for key in ("owner", "repo", "tag", "asset"))
         provenance = {key: entry.get(key) for key in ("owner", "repo", "tag", "asset")}
         fingerprint = hashlib.sha256(canonical_json_bytes(entry)).hexdigest()
         relative = _entry_path(entry["url"])
+        identity = tuple(entry.get(key) for key in ("owner", "repo", "tag", "asset"))
+        logical_asset = relative if relative is not None and identity_counts[identity] > 1 else entry.get("asset", "")
+        logical = "\0".join(str(entry.get(key, "")) for key in ("owner", "repo", "tag")) + "\0" + str(logical_asset)
         if relative is None:
             result.append(SourceInventoryRow(logical, "-", str(entry.get("asset", "-")), provenance=provenance, transport="direct", metadata_fingerprint=fingerprint))
             continue

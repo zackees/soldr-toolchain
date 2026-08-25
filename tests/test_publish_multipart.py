@@ -101,8 +101,10 @@ def test_build_publication_rewrites_lfs_rows_and_hierarchical_assets(tmp_path: P
 def test_duplicate_v1_filenames_use_unique_source_path_identities(tmp_path: Path) -> None:
     assets = tmp_path / "assets"
     rows = []
+    payloads = {}
     for platform, payload in (("linux-x64", b"one"), ("linux-arm64", b"two")):
         relative = f"tool/1/{platform}/bundle.tar.zst"
+        payloads[relative] = payload
         source = assets / relative
         source.parent.mkdir(parents=True, exist_ok=True)
         source.write_bytes(payload)
@@ -134,6 +136,16 @@ def test_duplicate_v1_filenames_use_unique_source_path_identities(tmp_path: Path
     }
     state = json.loads((tmp_path / "www" / "publish-state.v1.json").read_text())
     assert len(state["logical_assets"]) == 2
+
+    for relative, payload in payloads.items():
+        (assets / relative).write_bytes((
+            "version https://git-lfs.github.com/spec/v1\n"
+            f"oid sha256:{_sha(payload)}\n"
+            f"size {len(payload)}\n"
+        ).encode())
+    inventory = scan_unsmudged_catalogue(assets)
+    assert len({row.logical_key for row in inventory}) == 2
+    assert {row.logical_key for row in inventory} == set(state["logical_assets"])
 
 
 def test_direct_non_lfs_rows_remain_direct(tmp_path: Path) -> None:
