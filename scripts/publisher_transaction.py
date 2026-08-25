@@ -547,7 +547,9 @@ def fetch_verified_public_ledger(
                 raise ValueError("Pages bytes are not bound to immutable generation www tree")
         if api.commit_tree(binding.active_commit) != binding.active_tree or api.commit_tree(binding.previous_commit) != binding.previous_tree:
             raise ValueError("data commit tree does not agree with state")
-        return verified_public_ledger(state, binding, catalogue), www_commit, www_tree
+        ledger = verified_public_ledger(state, binding, catalogue)
+        verified_reused_entries(api, ledger)
+        return ledger, www_commit, www_tree
     except (KeyError, TypeError, ValueError) as exc:
         raise PublishError("public state/catalogue binding is corrupt") from exc
 
@@ -659,7 +661,9 @@ def fetch_immutable_generation_ledger(
             raise ValueError("immutable generation identity mismatch")
         if api.commit_tree(binding.active_commit) != binding.active_tree or api.commit_tree(binding.previous_commit) != binding.previous_tree:
             raise ValueError("immutable generation data binding mismatch")
-        return verified_public_ledger(state, binding, catalogue), commit, tree
+        ledger = verified_public_ledger(state, binding, catalogue)
+        verified_reused_entries(api, ledger)
+        return ledger, commit, tree
     except (KeyError, TypeError, ValueError) as exc:
         raise PublishError("immutable generation ledger is corrupt") from exc
 
