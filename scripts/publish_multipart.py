@@ -16,7 +16,9 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 import time
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping
@@ -59,6 +61,31 @@ from scripts.publication_model import PublishedPart, SourceInventoryRow, canonic
 _LOCAL_URL = re.compile(
     r"^https://(?:media\.githubusercontent\.com/media|raw\.githubusercontent\.com)/"
     r"zackees/soldr-toolchain/assets/(?P<path>.+)$"
+)
+_EXTERNAL_LLVM_POLICY: dict[str, dict[str, str | int]] = {
+    "https://media.githubusercontent.com/media/zackees/clang-tool-chain-bins/main/assets/clang/linux/x86_64/llvm-21.1.5-linux-x86_64.tar.zst": {
+        "path": "clang/linux/x86_64/llvm-21.1.5-linux-x86_64.tar.zst",
+        "asset": "llvm-21.1.5-linux-x86_64.tar.zst",
+        "sha256": "4021cc49d70472122761709e7376835dfc857b5ec77183fa969b5f61d0f13a2f",
+        "size_bytes": 98921700,
+    },
+    "https://media.githubusercontent.com/media/zackees/clang-tool-chain-bins/main/assets/clang/linux/arm64/llvm-21.1.5-linux-arm64.tar.zst": {
+        "path": "clang/linux/arm64/llvm-21.1.5-linux-arm64.tar.zst",
+        "asset": "llvm-21.1.5-linux-arm64.tar.zst",
+        "sha256": "df774b7fc1e392458325552addb67bf8c11bd452ad7bc660cf77103c617f89c5",
+        "size_bytes": 95393222,
+    },
+    "https://media.githubusercontent.com/media/zackees/clang-tool-chain-bins/main/assets/clang/win/x86_64/llvm-21.1.5-win-x86_64.tar.zst": {
+        "path": "clang/win/x86_64/llvm-21.1.5-win-x86_64.tar.zst",
+        "asset": "llvm-21.1.5-win-x86_64.tar.zst",
+        "sha256": "8d6dd1cbc2261f8e6fa657b48f10a6e44223441d4b5487f056838cb8c2403a77",
+        "size_bytes": 61647904,
+    },
+}
+_SOURCE_INVENTORY = "source-inventory.v1.json"
+_EXTERNAL_INVENTORY = "multipart-external-entries.v1.json"
+_LOCAL_PAGES_JSON = re.compile(
+    r"^https://zackees\.github\.io/soldr-toolchain/(?P<path>[^?#]+\.json)$"
 )
 _LFS_SIGNATURE = b"version https://git-lfs.github.com/spec/v1\n"
 _PUBLIC_DATA_REF = re.compile(r"^public-[ab]$")
@@ -103,7 +130,106 @@ def _git_blob_id(path: Path) -> str:
 
 def _entry_path(url: str) -> str | None:
     match = _LOCAL_URL.fullmatch(url)
-    return match.group("path") if match else None
+    if match is not None:
+        return match.group("path")
+    policy = _EXTERNAL_LLVM_POLICY.get(url)
+    return str(policy["path"]) if policy is not None else None
+
+
+def _source_entries(assets_dir: Path) -> list[dict[str, Any]]:
+    """Merge multipart-local, direct compatibility, and external rows."""
+
+    inventory = assets_dir / _SOURCE_INVENTORY
+    external = assets_dir / _EXTERNAL_INVENTORY
+    if not inventory.is_file() or not external.is_file():
+        raise ValueError("multipart publication requires source and external inventories")
+    source_document = _load(inventory)
+    external_document = _load(external)
+    if source_document.get("schema_version") != 5:
+        raise ValueError("source inventory must use schema_version 5")
+    if external_document.get("schema_version") != 1:
+        raise ValueError("external inventory must use schema_version 1")
+    source_rows = source_document.get("entries")
+    external_rows = external_document.get("entries")
+    expected_source = external_document.get("expected_source_entries")
+    expected_external = external_document.get("expected_external_entries")
+    if not isinstance(source_rows, list) or len(source_rows) != expected_source:
+        raise ValueError("source inventory entry count does not match publication policy")
+    if not isinstance(external_rows, list) or len(external_rows) != expected_external:
+        raise ValueError("external inventory entry count does not match publication policy")
+    if any(
+        not isinstance(row, dict)
+        or not isinstance(row.get("url"), str)
+        or _LOCAL_URL.fullmatch(row["url"]) is None
+        for row in source_rows
+    ):
+        raise ValueError("source inventory contains a non-local multipart row")
+    documents = [source_document, _load(assets_dir / "catalogue.v1.json"), external_document]
+
+    entries: list[dict[str, Any]] = []
+    seen_urls: set[str] = set()
+    for document in documents:
+        rows = document.get("entries") if isinstance(document, dict) else None
+        if not isinstance(rows, list):
+            raise ValueError("source inventory entries must be a list")
+        for row in rows:
+            if not isinstance(row, dict) or not isinstance(row.get("url"), str):
+                raise ValueError("source inventory entry lacks url")
+            if row["url"] not in seen_urls:
+                entries.append(row)
+                seen_urls.add(row["url"])
+    return entries
+
+
+def _external_entries(assets_dir: Path) -> dict[str, dict[str, Any]]:
+    path = assets_dir / _EXTERNAL_INVENTORY
+    if not path.is_file():
+        raise ValueError("multipart publication requires an external inventory")
+    document = _load(path)
+    if document.get("schema_version") != 1:
+        raise ValueError("external inventory must use schema_version 1")
+    entries = document.get("entries")
+    if not isinstance(entries, list) or len(entries) != document.get("expected_external_entries"):
+        raise ValueError("external inventory entry count does not match publication policy")
+    result: dict[str, dict[str, Any]] = {}
+    for entry in entries:
+        if not isinstance(entry, dict) or not isinstance(entry.get("url"), str):
+            raise ValueError("external multipart entry lacks url")
+        relative = _entry_path(entry["url"])
+        sha, size = entry.get("sha256"), entry.get("size_bytes")
+        policy = _EXTERNAL_LLVM_POLICY.get(entry["url"])
+        if relative is None or policy is None:
+            raise ValueError("external multipart URL is not allowlisted")
+        if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{64}", sha):
+            raise ValueError("external multipart entry has invalid sha256")
+        if not isinstance(size, int) or isinstance(size, bool) or size <= 0:
+            raise ValueError("external multipart entry has invalid size_bytes")
+        for key in ("asset", "sha256", "size_bytes"):
+            if entry.get(key) != policy[key]:
+                raise ValueError(f"external multipart entry violates pinned {key} policy")
+        if relative in result:
+            raise ValueError("duplicate external multipart source path")
+        result[relative] = entry
+    if set(entry["url"] for entry in entries) != set(_EXTERNAL_LLVM_POLICY):
+        raise ValueError("external multipart inventory does not match the pinned URL policy")
+    return result
+
+
+def _prepare_external_pointers(assets_dir: Path) -> dict[str, dict[str, Any]]:
+    entries = _external_entries(assets_dir)
+    for relative, entry in entries.items():
+        source = _source_path(assets_dir, relative)
+        if source.is_file():
+            continue
+        source.parent.mkdir(parents=True, exist_ok=True)
+        source.write_bytes(
+            (
+                "version https://git-lfs.github.com/spec/v1\n"
+                f"oid sha256:{entry['sha256']}\n"
+                f"size {entry['size_bytes']}\n"
+            ).encode("ascii")
+        )
+    return entries
 
 
 def _source_path(root: Path, relative: str) -> Path:
@@ -144,6 +270,49 @@ class GitLfsPathMaterializer(ExactOidMaterializer):
         return self.materialize_path(oid_sha256, size_bytes).read_bytes()
 
 
+class HttpPathMaterializer(ExactOidMaterializer):
+    """Fetch one allowlisted external LFS object exactly once for slicing."""
+
+    def __init__(self, checkout: Path, source_path: str, url: str) -> None:
+        self.checkout, self.source_path, self.url = Path(checkout), source_path, url
+
+    def materialize_path(self, oid_sha256: str, size_bytes: int) -> Path:
+        path = _source_path(self.checkout, self.source_path)
+        request = urllib.request.Request(self.url, headers={"User-Agent": "soldr-toolchain-multipart-publisher/1"})
+        temp_path: Path | None = None
+        try:
+            with urllib.request.urlopen(request, timeout=120) as response:
+                content_length = response.headers.get("Content-Length")
+                if content_length is not None:
+                    try:
+                        declared_length = int(content_length)
+                    except ValueError as exc:
+                        raise ValueError("external response has an invalid Content-Length") from exc
+                    if declared_length != size_bytes:
+                        raise ValueError("external response Content-Length does not match inventory")
+                with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as temporary:
+                    temp_path = Path(temporary.name)
+                    observed = 0
+                    while chunk := response.read(1024 * 1024):
+                        observed += len(chunk)
+                        if observed > size_bytes:
+                            raise ValueError("external response exceeds declared size")
+                        temporary.write(chunk)
+                if observed != size_bytes:
+                    raise ValueError("external response is shorter than declared size")
+            assert temp_path is not None
+            verify_declared_source(temp_path, oid_sha256, size_bytes)
+            temp_path.replace(path)
+        except Exception:
+            if temp_path is not None:
+                temp_path.unlink(missing_ok=True)
+            raise
+        return path
+
+    def materialize(self, oid_sha256: str, size_bytes: int) -> bytes:
+        return self.materialize_path(oid_sha256, size_bytes).read_bytes()
+
+
 def scan_unsmudged_catalogue(assets_dir: Path) -> list[SourceInventoryRow]:
     """Inventory every catalogue row before any LFS transfer.
 
@@ -152,10 +321,8 @@ def scan_unsmudged_catalogue(assets_dir: Path) -> list[SourceInventoryRow]:
     expected to be unsmudged, so accidental broad LFS pulls cannot silently
     enlarge the publisher's transfer set.
     """
-    document = _load(assets_dir / "catalogue.v1.json")
-    rows = document.get("entries") if isinstance(document, dict) else None
-    if not isinstance(rows, list):
-        raise ValueError("catalogue.v1.json entries must be a list")
+    _prepare_external_pointers(assets_dir)
+    rows = _source_entries(assets_dir)
     identity_counts = Counter(
         tuple(entry.get(key) for key in ("owner", "repo", "tag", "asset"))
         for entry in rows
@@ -186,12 +353,16 @@ def scan_unsmudged_catalogue(assets_dir: Path) -> list[SourceInventoryRow]:
 def materialize_selected(rows: Iterable[SourceInventoryRow], classifications: dict[str, str], assets_dir: Path, *, materializer_factory=GitLfsPathMaterializer) -> dict[str, bytes | Path]:
     """Materialize only new/invalid/repartition OIDs, once per immutable OID."""
     result: dict[str, bytes | Path] = {}
+    external = _external_entries(assets_dir)
     for row in rows:
         if row.transport != "lfs" or classifications.get(row.logical_key) not in {"new_or_invalid", "explicit_repartition"}:
             continue
         assert row.source_oid_sha256 is not None and row.source_size_bytes is not None
         if row.source_oid_sha256 not in result:
-            materializer = materializer_factory(assets_dir, row.source_path)
+            if row.source_path in external and materializer_factory is GitLfsPathMaterializer:
+                materializer = HttpPathMaterializer(assets_dir, row.source_path, external[row.source_path]["url"])
+            else:
+                materializer = materializer_factory(assets_dir, row.source_path)
             materialize_path = getattr(materializer, "materialize_path", None)
             if callable(materialize_path):
                 path = materialize_path(row.source_oid_sha256, row.source_size_bytes)
@@ -246,7 +417,7 @@ def _rewrite_assets(value: Any, published: dict[str, PartitionedAsset], data_ref
 def _raise_on_lfs_reference(root: Path) -> None:
     for path in root.rglob("*.json"):
         text = path.read_text(encoding="utf-8")
-        if "media.githubusercontent.com/media/zackees/soldr-toolchain/assets" in text or "raw.githubusercontent.com/zackees/soldr-toolchain/assets" in text:
+        if "media.githubusercontent.com/media/" in text or "raw.githubusercontent.com/zackees/soldr-toolchain/assets" in text:
             raise ValueError(f"www metadata retains an LFS delivery URL: {path}")
         raw_base = "https://raw.githubusercontent.com/zackees/soldr-toolchain/"
         allowed = re.compile(re.escape(raw_base) + r"public-[ab]/")
@@ -299,10 +470,8 @@ def build_publication(
     publish_timestamp = int(time.time()) if published_at is None else published_at
     if public_dir.exists() or www_dir.exists():
         raise ValueError("publication outputs must not already exist")
-    catalogue_v1 = _load(assets_dir / "catalogue.v1.json")
-    entries_v1 = catalogue_v1.get("entries")
-    if not isinstance(entries_v1, list):
-        raise ValueError("catalogue.v1.json entries must be a list")
+    _prepare_external_pointers(assets_dir)
+    entries_v1 = _source_entries(assets_dir)
     identity_counts = Counter(
         tuple(row.get(key) for key in ("owner", "repo", "tag", "asset"))
         for row in entries_v1
@@ -351,6 +520,24 @@ def build_publication(
             base["asset"] = rel
         logical_key = "\0".join(str(base[key]) for key in ("owner", "repo", "tag", "asset"))
         if rel is None:
+            pages_match = _LOCAL_PAGES_JSON.fullmatch(url)
+            if pages_match is not None:
+                pages_source = _source_path(assets_dir, pages_match.group("path"))
+                if not pages_source.is_file():
+                    raise ValueError(f"local Pages catalogue source is missing: {url}")
+                deployed = canonical_json_bytes(_load(pages_source))
+                entries_v2.append(
+                    {
+                        **base,
+                        "sha256": hashlib.sha256(deployed).hexdigest(),
+                        "size_bytes": len(deployed),
+                        "urls": [
+                            "https://zackees.github.io/soldr-toolchain/"
+                            f"generations/{generation}/{pages_match.group('path')}"
+                        ],
+                    }
+                )
+                continue
             size = row.get("size_bytes")
             local_pages = assets_dir / Path(url).name
             if not isinstance(size, int) and local_pages.is_file():
@@ -417,7 +604,12 @@ def build_publication(
         shutil.copyfile(assets_dir / "index.html", generation_root / "index.html")
     for source in sorted(assets_dir.rglob("*.json"), key=lambda item: item.as_posix()):
         rel = source.relative_to(assets_dir)
-        if rel.as_posix() in {"catalogue.v1.json", "asset-index.json"}:
+        if rel.as_posix() in {
+            "catalogue.v1.json",
+            "asset-index.json",
+            _SOURCE_INVENTORY,
+            _EXTERNAL_INVENTORY,
+        }:
             continue
         document = _load(source)
         _rewrite_assets(document, published, data_ref)

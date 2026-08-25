@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import subprocess
 import sys
@@ -8,12 +9,52 @@ from pathlib import Path
 
 import pytest
 
+from scripts import publish_multipart as pm
 from scripts.publish_multipart import GitLfsPathMaterializer, _rewrite_assets, build_publication, materialize_selected, scan_unsmudged_catalogue
 from scripts.publication_model import GenerationBinding, PartitionedAsset, PublishedPart, VerifiedPublicLedger
 
 
+@pytest.fixture(autouse=True)
+def _empty_external_policy(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(pm, "_EXTERNAL_LLVM_POLICY", {})
+
+
 def _sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def _write_source_controls(assets: Path) -> None:
+    assets.mkdir(parents=True, exist_ok=True)
+    (assets / "source-inventory.v1.json").write_text(
+        '{"schema_version":5,"entries":[]}'
+    )
+    (assets / "multipart-external-entries.v1.json").write_text(
+        '{"schema_version":1,"expected_source_entries":0,'
+        '"expected_external_entries":0,"entries":[]}'
+    )
+
+
+def _allow_external(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    url: str,
+    path: str,
+    asset: str,
+    sha256: str,
+    size_bytes: int,
+) -> None:
+    monkeypatch.setattr(
+        pm,
+        "_EXTERNAL_LLVM_POLICY",
+        {
+            url: {
+                "path": path,
+                "asset": asset,
+                "sha256": sha256,
+                "size_bytes": size_bytes,
+            }
+        },
+    )
 
 
 def test_production_module_entrypoint_imports_from_repository_root() -> None:
@@ -29,6 +70,7 @@ def test_production_module_entrypoint_imports_from_repository_root() -> None:
 
 def test_build_publication_rewrites_lfs_rows_and_hierarchical_assets(tmp_path: Path) -> None:
     assets = tmp_path / "assets"
+    _write_source_controls(assets)
     payload = b"abcdefghij"
     blob = assets / "tool" / "1" / "linux-x64" / "bundle.tar.zst"
     blob.parent.mkdir(parents=True)
@@ -100,6 +142,7 @@ def test_build_publication_rewrites_lfs_rows_and_hierarchical_assets(tmp_path: P
 
 def test_duplicate_v1_filenames_use_unique_source_path_identities(tmp_path: Path) -> None:
     assets = tmp_path / "assets"
+    _write_source_controls(assets)
     rows = []
     payloads = {}
     for platform, payload in (("linux-x64", b"one"), ("linux-arm64", b"two")):
@@ -150,7 +193,7 @@ def test_duplicate_v1_filenames_use_unique_source_path_identities(tmp_path: Path
 
 def test_direct_non_lfs_rows_remain_direct(tmp_path: Path) -> None:
     assets = tmp_path / "assets"
-    assets.mkdir()
+    _write_source_controls(assets)
     (assets / "catalogue.v1.json").write_text(
         json.dumps(
             {
@@ -173,8 +216,275 @@ def test_direct_non_lfs_rows_remain_direct(tmp_path: Path) -> None:
     assert result.part_count == 0
 
 
+def test_external_llvm_is_inventory_bound_and_partitioned(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assets = tmp_path / "assets"
+    _write_source_controls(assets)
+    payload = b"external llvm bytes"
+    digest = _sha(payload)
+    url = (
+        "https://media.githubusercontent.com/media/zackees/clang-tool-chain-bins/"
+        "main/assets/clang/linux/x86_64/llvm-21.1.5-linux-x86_64.tar.zst"
+    )
+    _allow_external(
+        monkeypatch,
+        url=url,
+        path="clang/linux/x86_64/llvm-21.1.5-linux-x86_64.tar.zst",
+        asset="llvm-21.1.5-linux-x86_64.tar.zst",
+        sha256=digest,
+        size_bytes=len(payload),
+    )
+    (assets / "catalogue.v1.json").write_text('{"entries": []}')
+    (assets / "multipart-external-entries.v1.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "expected_source_entries": 0,
+                "expected_external_entries": 1,
+                "entries": [
+                    {
+                        "owner": "zackees",
+                        "repo": "clang-tool-chain-bins",
+                        "tag": "main",
+                        "asset": "llvm-21.1.5-linux-x86_64.tar.zst",
+                        "url": url,
+                        "sha256": digest,
+                        "size_bytes": len(payload),
+                    }
+                ]
+            }
+        )
+    )
+    (assets / "manifest.json").write_text(
+        '{"kind":"Index","schema_version":1,"tools":{}}'
+    )
+
+    inventory = scan_unsmudged_catalogue(assets)
+    assert len(inventory) == 1
+    assert inventory[0].source_path == (
+        "clang/linux/x86_64/llvm-21.1.5-linux-x86_64.tar.zst"
+    )
+
+    class NeverMaterialize:
+        def __init__(self, *_: object) -> None:
+            raise AssertionError("an exact public mapping must not refetch external LFS")
+
+    assert materialize_selected(
+        inventory,
+        {inventory[0].logical_key: "exact"},
+        assets,
+        materializer_factory=NeverMaterialize,
+    ) == {}
+
+    class FakeMaterializer:
+        def __init__(self, checkout: Path, source_path: str) -> None:
+            self.path = checkout / source_path
+
+        def materialize(self, oid_sha256: str, size_bytes: int) -> bytes:
+            assert (oid_sha256, size_bytes) == (digest, len(payload))
+            self.path.write_bytes(payload)
+            return payload
+
+    materialize_selected(
+        inventory,
+        {inventory[0].logical_key: "new_or_invalid"},
+        assets,
+        materializer_factory=FakeMaterializer,
+    )
+    result = build_publication(
+        assets,
+        tmp_path / "public",
+        tmp_path / "www",
+        source_commit="a" * 40,
+        source_tree="b" * 40,
+        active_slot="public-a",
+        generation="llvm",
+        target_bytes=8,
+    )
+    entry = json.loads((tmp_path / "www" / "catalogue.v2.json").read_text())["entries"][0]
+    assert entry["repo"] == "clang-tool-chain-bins"
+    assert entry["source_path"].startswith("clang/")
+    assert "urls" not in entry
+    assert result.part_count == 3
+    assert not (tmp_path / "www" / "source-inventory.v1.json").exists()
+    assert not (tmp_path / "www" / "multipart-external-entries.v1.json").exists()
+
+
+def test_external_http_materializer_is_bounded_and_used_by_production_dispatch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assets = tmp_path / "assets"
+    _write_source_controls(assets)
+    payload = b"bounded external llvm"
+    digest = _sha(payload)
+    url = (
+        "https://media.githubusercontent.com/media/zackees/clang-tool-chain-bins/"
+        "main/assets/clang/linux/arm64/llvm-21.1.5-linux-arm64.tar.zst"
+    )
+    _allow_external(
+        monkeypatch,
+        url=url,
+        path="clang/linux/arm64/llvm-21.1.5-linux-arm64.tar.zst",
+        asset="llvm-21.1.5-linux-arm64.tar.zst",
+        sha256=digest,
+        size_bytes=len(payload),
+    )
+    (assets / "catalogue.v1.json").write_text('{"entries":[]}')
+    (assets / "multipart-external-entries.v1.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "expected_source_entries": 0,
+                "expected_external_entries": 1,
+                "entries": [
+                    {
+                        "owner": "zackees",
+                        "repo": "clang-tool-chain-bins",
+                        "tag": "main",
+                        "asset": "llvm-21.1.5-linux-arm64.tar.zst",
+                        "url": url,
+                        "sha256": digest,
+                        "size_bytes": len(payload),
+                    }
+                ],
+            }
+        )
+    )
+    inventory = scan_unsmudged_catalogue(assets)
+
+    class Response(io.BytesIO):
+        def __init__(self, body: bytes, content_length: int | None) -> None:
+            super().__init__(body)
+            self.headers = (
+                {} if content_length is None else {"Content-Length": str(content_length)}
+            )
+
+    calls: list[str] = []
+
+    def open_valid(request: object, *, timeout: int) -> Response:
+        calls.append(request.full_url)  # type: ignore[attr-defined]
+        assert timeout == 120
+        return Response(payload, len(payload))
+
+    monkeypatch.setattr(pm.urllib.request, "urlopen", open_valid)
+    result = materialize_selected(
+        inventory, {inventory[0].logical_key: "new_or_invalid"}, assets
+    )
+    assert Path(result[digest]).read_bytes() == payload
+    assert calls == [url]
+
+    overflow_path = "clang/linux/arm64/llvm-21.1.5-overflow.tar.zst"
+    overflow = pm.HttpPathMaterializer(assets, overflow_path, url)
+    monkeypatch.setattr(
+        pm.urllib.request,
+        "urlopen",
+        lambda *_args, **_kwargs: Response(payload + b"x", None),
+    )
+    before = set((assets / "clang" / "linux" / "arm64").iterdir())
+    with pytest.raises(ValueError, match="exceeds declared size"):
+        overflow.materialize_path(digest, len(payload))
+    assert set((assets / "clang" / "linux" / "arm64").iterdir()) == before
+
+
+def test_publication_fails_closed_without_complete_control_inventories(
+    tmp_path: Path,
+) -> None:
+    assets = tmp_path / "assets"
+    assets.mkdir()
+    (assets / "catalogue.v1.json").write_text('{"entries":[]}')
+    with pytest.raises(ValueError, match="requires .*inventory"):
+        scan_unsmudged_catalogue(assets)
+
+    _write_source_controls(assets)
+    policy = json.loads((assets / "multipart-external-entries.v1.json").read_text())
+    policy["expected_source_entries"] = 1
+    (assets / "multipart-external-entries.v1.json").write_text(json.dumps(policy))
+    with pytest.raises(ValueError, match="source inventory entry count"):
+        scan_unsmudged_catalogue(assets)
+
+
+def test_pages_reject_any_unrewritten_external_lfs_url(tmp_path: Path) -> None:
+    assets = tmp_path / "assets"
+    _write_source_controls(assets)
+    (assets / "catalogue.v1.json").write_text('{"entries":[]}')
+    (assets / "manifest.json").write_text(
+        json.dumps(
+            {
+                "kind": "Index",
+                "schema_version": 1,
+                "leak": "https://media.githubusercontent.com/media/zackees/clang-tool-chain-bins/main/assets/clang/leak.tar.zst",
+            }
+        )
+    )
+    with pytest.raises(ValueError, match="retains an LFS delivery URL"):
+        build_publication(
+            assets,
+            tmp_path / "public",
+            tmp_path / "www",
+            source_commit="a" * 40,
+            source_tree="b" * 40,
+            active_slot="public-a",
+            generation="leak",
+        )
+
+
+def test_local_pages_json_is_pinned_to_immutable_generation(tmp_path: Path) -> None:
+    assets = tmp_path / "assets"
+    _write_source_controls(assets)
+    nightly = {"schema_version": 1, "nightlies": {"nightly-2026-08-25": {}}}
+    source_bytes = json.dumps(nightly, indent=2).encode()
+    (assets / "rust-nightly-versions.v1.json").write_bytes(source_bytes)
+    (assets / "catalogue.v1.json").write_text(
+        json.dumps(
+            {
+                "entries": [
+                    {
+                        "owner": "zackees",
+                        "repo": "soldr-toolchain",
+                        "tag": "assets",
+                        "asset": "rust-nightly-versions.v1.json",
+                        "url": "https://zackees.github.io/soldr-toolchain/rust-nightly-versions.v1.json",
+                        "sha256": _sha(source_bytes),
+                    }
+                ]
+            }
+        )
+    )
+    (assets / "manifest.json").write_text(
+        '{"kind":"Index","schema_version":1,"tools":{}}'
+    )
+
+    build_publication(
+        assets,
+        tmp_path / "public",
+        tmp_path / "www",
+        source_commit="a" * 40,
+        source_tree="b" * 40,
+        active_slot="public-a",
+        generation="nightly-pin",
+    )
+
+    deployed = (tmp_path / "www" / "generations" / "nightly-pin" / "rust-nightly-versions.v1.json").read_bytes()
+    entry = json.loads((tmp_path / "www" / "catalogue.v2.json").read_text())["entries"][0]
+    assert entry["urls"] == [
+        "https://zackees.github.io/soldr-toolchain/generations/nightly-pin/rust-nightly-versions.v1.json"
+    ]
+    assert entry["size_bytes"] == len(deployed)
+    assert entry["sha256"] == _sha(deployed)
+
+
+def test_refresh_never_materializes_the_assets_lfs_checkout() -> None:
+    workflow = (Path(__file__).parents[1] / ".github/workflows/refresh-manifest.yml").read_text()
+    assert "lfs: true" not in workflow
+    assert "lfs: false" in workflow
+    assert "--include-legacy-local" in workflow
+    assert "source-inventory.v1.json" in workflow
+
+
 def test_new_logical_aliases_share_one_materialized_oid_regardless_of_sort_order(tmp_path: Path) -> None:
     assets = tmp_path / "assets"
+    _write_source_controls(assets)
     payload = b"shared immutable bytes"
     digest = _sha(payload)
     materialized = assets / "tool" / "z-materialized.bin"
@@ -212,7 +522,7 @@ def test_new_logical_aliases_share_one_materialized_oid_regardless_of_sort_order
 
 def test_pages_snapshot_preserves_retained_generation_metadata(tmp_path: Path) -> None:
     assets = tmp_path / "assets"
-    assets.mkdir()
+    _write_source_controls(assets)
     (assets / "catalogue.v1.json").write_text('{"entries":[]}')
     (assets / "manifest.json").write_text('{"kind":"Index","schema_version":1,"tools":{}}')
     old_state = {"generation": "old", "sentinel": "retained"}
@@ -250,7 +560,7 @@ def test_pages_snapshot_preserves_retained_generation_metadata(tmp_path: Path) -
 
 def test_lfs_source_must_match_declared_oid_and_stay_inside_assets(tmp_path: Path) -> None:
     assets = tmp_path / "assets"
-    assets.mkdir()
+    _write_source_controls(assets)
     (assets / "manifest.json").write_text('{"kind":"Index","schema_version":1,"tools":{}}')
     (assets / "catalogue.v1.json").write_text(
         json.dumps(
@@ -274,7 +584,7 @@ def test_lfs_source_must_match_declared_oid_and_stay_inside_assets(tmp_path: Pat
 
 def test_unsmudged_scan_and_selective_deduplicated_materialization(tmp_path: Path) -> None:
     assets = tmp_path / "assets"
-    assets.mkdir()
+    _write_source_controls(assets)
     payload = b"same"
     oid = _sha(payload)
     for name in ("one", "two"):

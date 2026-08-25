@@ -44,7 +44,9 @@ jobs:
         with:
           ref: assets
           path: assets
-          lfs: true
+          # The refresh only needs pointer metadata. Materializing the whole
+          # corpus here was a recurring multi-gigabyte billable LFS download.
+          lfs: false
 
       - name: Checkout zackees/soldr (pinned-version source)
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -111,6 +113,17 @@ jobs:
               --manifest-checkout assets \
               --output assets/asset-index.json \
               --branch assets
+
+      - name: Build multipart source inventory without materializing LFS
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=main python3 -m scripts.build_asset_index \
+              --manifest-checkout assets \
+              --output assets/source-inventory.v1.json \
+              --branch assets \
+              --include-legacy-local
+          cp main/multipart-external-entries.v1.json assets/multipart-external-entries.v1.json
 
       - name: Mirror v5 asset-index.json into v1 catalogue.v1.json
         # Compatibility-only projection: repository raw/media rows are
