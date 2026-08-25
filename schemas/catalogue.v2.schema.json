@@ -3,17 +3,28 @@
   "$id": "https://zackees.github.io/soldr-toolchain/schemas/catalogue.v2.schema.json",
   "title": "soldr-toolchain catalogue v2",
   "type": "object",
-  "required": ["schema_version", "entries"],
+  "required": ["schema_version", "generation", "publication_state", "entries"],
   "additionalProperties": false,
   "properties": {
     "schema_version": {"type": "integer", "const": 2},
+    "generation": {"$ref": "#/$defs/generation"},
+    "publication_state": {"$ref": "#/$defs/publication_state"},
     "generated_at": {"type": "string"},
     "origin": {"$ref": "#/$defs/url"},
     "entries": {"type": "array", "items": {"$ref": "#/$defs/entry"}}
   },
   "$defs": {
     "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "generation": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[A-Za-z0-9._:-]+$"},
     "url": {"type": "string", "maxLength": 8192, "pattern": "^https://[^\\s]+$"},
+    "publication_state": {
+      "type": "object", "additionalProperties": false,
+      "required": ["generation", "url"],
+      "properties": {
+        "generation": {"$ref": "#/$defs/generation"},
+        "url": {"$ref": "#/$defs/url"}
+      }
+    },
     "urls": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/url"}},
     "part": {
       "type": "object", "additionalProperties": false,
@@ -35,10 +46,12 @@
         "asset": {"type": "string", "minLength": 1},
         "sha256": {"$ref": "#/$defs/hash"},
         "size_bytes": {"type": "integer", "minimum": 1, "maximum": 8796093022208},
+        "min_client_version": {"type": "integer", "const": 2},
         "urls": {"$ref": "#/$defs/urls"},
         "parts": {"type": "array", "minItems": 1, "maxItems": 4096, "items": {"$ref": "#/$defs/part"}}
       },
-      "oneOf": [{"required": ["urls"]}, {"required": ["parts"]}]
+      "oneOf": [{"required": ["urls"]}, {"required": ["parts"]}],
+      "allOf": [{"if": {"required": ["parts"]}, "then": {"required": ["min_client_version"]}}]
     }
   }
 }

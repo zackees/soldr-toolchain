@@ -1,5 +1,10 @@
 {
   "schema_version": 2,
+  "generation": "2026-08-24T00:00:00Z-source0001",
+  "publication_state": {
+    "generation": "2026-08-24T00:00:00Z-source0001",
+    "url": "https://zackees.github.io/soldr-toolchain/generations/2026-08-24T00:00:00Z-source0001/publish-state.v1.json"
+  },
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v2.json",
-  "entries": [{"owner":"zackees","repo":"soldr-toolchain","tag":"assets","asset":"sdk.tar.zstd","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","size_bytes":3,"parts":[{"number":1,"sha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","size_bytes":3,"urls":["https://raw.githubusercontent.com/zackees/soldr-toolchain/public-a/sha256/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/0001-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.part"]}]}]
+  "entries": [{"owner":"zackees","repo":"soldr-toolchain","tag":"assets","asset":"sdk.tar.zstd","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","size_bytes":3,"min_client_version":2,"parts":[{"number":1,"sha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","size_bytes":3,"urls":["https://raw.githubusercontent.com/zackees/soldr-toolchain/public-a/sha256/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/0001-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.part"]}]}]
 }
