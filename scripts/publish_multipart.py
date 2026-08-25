@@ -9,6 +9,7 @@ the workflow so this module remains deterministic and fully testable.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import hashlib
 import json
 import os
@@ -295,6 +296,11 @@ def build_publication(
     entries_v1 = catalogue_v1.get("entries")
     if not isinstance(entries_v1, list):
         raise ValueError("catalogue.v1.json entries must be a list")
+    identity_counts = Counter(
+        tuple(row.get(key) for key in ("owner", "repo", "tag", "asset"))
+        for row in entries_v1
+        if isinstance(row, dict)
+    )
 
     # Materialization is OID-deduplicated, so the checkout path holding bytes
     # need not be the first logical alias after deterministic catalogue sort.
@@ -328,7 +334,15 @@ def build_publication(
             raise ValueError("catalogue v1 entry lacks url/sha256")
         rel = _entry_path(url)
         base = {key: row[key] for key in ("owner", "repo", "tag", "asset", "sha256")}
-        logical_key = "\0".join(str(row[key]) for key in ("owner", "repo", "tag", "asset"))
+        identity = tuple(row[key] for key in ("owner", "repo", "tag", "asset"))
+        if rel is not None and identity_counts[identity] > 1:
+            # v1 historically reused generic filenames such as
+            # `bundle.tar.zst` across many publisher-owned paths. v2 identities
+            # are unique, so only those collisions use the already-canonical
+            # source path as their asset key. Direct upstream identities stay
+            # byte-for-byte compatible.
+            base["asset"] = rel
+        logical_key = "\0".join(str(base[key]) for key in ("owner", "repo", "tag", "asset"))
         if rel is None:
             size = row.get("size_bytes")
             local_pages = assets_dir / Path(url).name

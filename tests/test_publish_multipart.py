@@ -98,6 +98,44 @@ def test_build_publication_rewrites_lfs_rows_and_hierarchical_assets(tmp_path: P
     assert result.part_count == 3
 
 
+def test_duplicate_v1_filenames_use_unique_source_path_identities(tmp_path: Path) -> None:
+    assets = tmp_path / "assets"
+    rows = []
+    for platform, payload in (("linux-x64", b"one"), ("linux-arm64", b"two")):
+        relative = f"tool/1/{platform}/bundle.tar.zst"
+        source = assets / relative
+        source.parent.mkdir(parents=True, exist_ok=True)
+        source.write_bytes(payload)
+        rows.append({
+            "owner": "zackees",
+            "repo": "soldr-toolchain",
+            "tag": "assets",
+            "asset": "bundle.tar.zst",
+            "url": f"https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/{relative}",
+            "sha256": _sha(payload),
+        })
+    (assets / "catalogue.v1.json").write_text(json.dumps({"entries": rows}))
+    (assets / "manifest.json").write_text('{"kind":"Index","schema_version":1,"tools":{}}')
+
+    build_publication(
+        assets,
+        tmp_path / "public",
+        tmp_path / "www",
+        source_commit="a" * 40,
+        source_tree="b" * 40,
+        active_slot="public-a",
+        generation="g",
+    )
+
+    catalogue = json.loads((tmp_path / "www" / "catalogue.v2.json").read_text())
+    assert {entry["asset"] for entry in catalogue["entries"]} == {
+        "tool/1/linux-arm64/bundle.tar.zst",
+        "tool/1/linux-x64/bundle.tar.zst",
+    }
+    state = json.loads((tmp_path / "www" / "publish-state.v1.json").read_text())
+    assert len(state["logical_assets"]) == 2
+
+
 def test_direct_non_lfs_rows_remain_direct(tmp_path: Path) -> None:
     assets = tmp_path / "assets"
     assets.mkdir()
