@@ -111,17 +111,29 @@ def git_force_with_lease(repo_dir: Path, owner: str, repo: str, token: str) -> L
     environment = os.environ.copy()
     environment.update(
         {
-            "GIT_CONFIG_COUNT": "1",
+            # actions/checkout persists its own extraheader. Reset that list
+            # before adding our scoped credential so Git never sends two
+            # Authorization headers to GitHub.
+            "GIT_CONFIG_COUNT": "2",
             "GIT_CONFIG_KEY_0": "http.https://github.com/.extraheader",
-            "GIT_CONFIG_VALUE_0": "AUTHORIZATION: basic " + credential,
+            "GIT_CONFIG_VALUE_0": "",
+            "GIT_CONFIG_KEY_1": "http.https://github.com/.extraheader",
+            "GIT_CONFIG_VALUE_1": "AUTHORIZATION: basic " + credential,
         }
     )
 
     def move(ref: str, sha: str, expected: str, source_ref: str | None) -> None:
         fetched = subprocess.run(
-            ["git", "fetch", "--no-tags", remote, source_ref or sha],
+            [
+                "git",
+                "-c",
+                "http.https://github.com/.extraheader=",
+                "fetch",
+                "--no-tags",
+                remote,
+                source_ref or sha,
+            ],
             cwd=checkout,
-            env=environment,
             capture_output=True,
             text=True,
             check=False,
