@@ -86,7 +86,7 @@ def test_build_publication_rewrites_lfs_rows_and_hierarchical_assets(tmp_path: P
     entry = catalogue["entries"][0]
     assert "urls" not in entry
     assert [part["size_bytes"] for part in entry["parts"]] == [4, 4, 2]
-    assert all("raw.githubusercontent.com/zackees/soldr-toolchain/generations/g-data/" in part["urls"][0] for part in entry["parts"])
+    assert all("raw.githubusercontent.com/zackees/soldr-toolchain/public-a/" in part["urls"][0] for part in entry["parts"])
     assert b"".join((public / part.path).read_bytes() for part in result.assets[_sha(payload)].parts) == payload
     rendered = json.loads((www / "tool" / "manifest.json").read_text())
     asset = rendered["releases"][0]["platforms"][0]["asset"]
