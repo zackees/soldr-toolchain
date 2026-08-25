@@ -23,6 +23,7 @@ from scripts.publisher_transaction import (
     publish_www_snapshot,
     publish_snapshot_pair,
     fetch_verified_public_ledger,
+    fetch_retained_direct_payloads,
     recover_verified_public_state,
     retention_plan,
     structural_tree,
@@ -149,6 +150,25 @@ def test_github_transport_retries_idempotent_object_writes(monkeypatch: pytest.M
     assert result["sha"] == "1" * 40
     assert calls == 3
     assert delays == [1, 2]
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://pages.test/generations/g/direct.json",
+        "https://user@pages.test/generations/g/direct.json",
+        "https://pages.test:444/generations/g/direct.json",
+    ],
+)
+def test_pages_payload_path_rejects_same_host_authority_bypasses(url: str) -> None:
+    with pytest.raises(ValueError, match="trusted Pages authority"):
+        pt._pages_payload_path(url, "https://pages.test")
+    assert (
+        pt._pages_payload_path(
+            "https://external.test/generations/g/direct.json", "https://pages.test"
+        )
+        is None
+    )
 
 
 def test_blob_bytes_accepts_github_wrapped_base64_but_rejects_invalid_data() -> None:
@@ -559,7 +579,22 @@ def test_missing_slot_requires_explicit_bootstrap(tmp_path: Path) -> None:
 
 
 def test_pages_recovery_ignores_newer_www_ref_and_binds_generation_tree(monkeypatch: pytest.MonkeyPatch) -> None:
-    catalogue = {"entries": [], "schema_version": 2}
+    direct = b'{\n  "schema_version": 1\n}\n'
+    direct_path = "generations/old/direct.json"
+    catalogue = {
+        "entries": [
+            {
+                "owner": "o",
+                "repo": "r",
+                "tag": "t",
+                "asset": "direct.json",
+                "sha256": hashlib.sha256(direct).hexdigest(),
+                "size_bytes": len(direct),
+                "urls": ["https://pages.test/" + direct_path],
+            }
+        ],
+        "schema_version": 2,
+    }
     state = {
         "generation": "old",
         "source": {"commit": "1" * 40, "tree": "2" * 40},
@@ -574,7 +609,9 @@ def test_pages_recovery_ignores_newer_www_ref_and_binds_generation_tree(monkeypa
         "catalogue.v2.json": canonical_json_bytes(catalogue),
         "generations/old/publish-state.v1.json": canonical_json_bytes(state),
         "generations/old/catalogue.v2.json": canonical_json_bytes(catalogue),
+        direct_path: direct,
     }
+    served = dict(files)
 
     class Api:
         def ref(self, name):
@@ -596,9 +633,14 @@ def test_pages_recovery_ignores_newer_www_ref_and_binds_generation_tree(monkeypa
     class Response:
         def __init__(self, data):
             self.data = data
+            self.offset = 0
 
-        def read(self):
-            return self.data
+        def read(self, size=-1):
+            if size < 0:
+                size = len(self.data) - self.offset
+            chunk = self.data[self.offset : self.offset + size]
+            self.offset += len(chunk)
+            return chunk
 
         def __enter__(self):
             return self
@@ -607,11 +649,25 @@ def test_pages_recovery_ignores_newer_www_ref_and_binds_generation_tree(monkeypa
             return False
 
     def opener(request, timeout):
-        return Response(files[request.full_url.removeprefix("https://pages.test/")])
+        return Response(served[request.full_url.removeprefix("https://pages.test/")])
 
     monkeypatch.setattr("scripts.publisher_transaction.urlopen", opener)
-    ledger, commit, tree = fetch_verified_public_ledger(Api(), pages_base="https://pages.test")
+    ledger, commit, tree = fetch_verified_public_ledger(
+        Api(), pages_base="https://pages.test", verify_direct_payloads=True
+    )
     assert ledger.binding.generation == "old" and commit == "c" * 40 and tree == "d" * 40
+
+    assert fetch_retained_direct_payloads([ledger], pages_base="https://pages.test") == {
+        direct_path: direct
+    }
+
+    served[direct_path] = b"corrupt"
+    with pytest.raises(PublishError, match="binding is corrupt"):
+        fetch_verified_public_ledger(
+            Api(), pages_base="https://pages.test", verify_direct_payloads=True
+        )
+    with pytest.raises(PublishError, match="failed public verification"):
+        fetch_retained_direct_payloads([ledger], pages_base="https://pages.test")
 
     full, part = "a" * 64, "b" * 64
     path = f"sha256/{full}/0001-{part}.part"
@@ -632,5 +688,9 @@ def test_pages_recovery_ignores_newer_www_ref_and_binds_generation_tree(monkeypa
     }
     files["publish-state.v1.json"] = canonical_json_bytes(state)
     files["generations/old/publish-state.v1.json"] = canonical_json_bytes(state)
+    served["publish-state.v1.json"] = files["publish-state.v1.json"]
+    served["generations/old/publish-state.v1.json"] = files[
+        "generations/old/publish-state.v1.json"
+    ]
     with pytest.raises(PublishError, match="reused part is absent from active tree"):
         fetch_verified_public_ledger(Api(), pages_base="https://pages.test")

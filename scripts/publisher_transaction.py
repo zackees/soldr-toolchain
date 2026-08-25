@@ -11,12 +11,14 @@ import base64
 import hashlib
 import json
 import os
+import re
 import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, Protocol
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
 from scripts.publication_model import (
@@ -479,12 +481,157 @@ def _create_immutable_ref(api: GitDataApi, ref: str, commit: str) -> None:
         raise PublishError("immutable generation ref already exists with different content: " + ref)
 
 
+def _pages_payload_path(url: str, pages_base: str) -> str | None:
+    """Map an exact Pages URL to its safe path in the www snapshot."""
+    try:
+        parsed = urlsplit(url)
+        base = urlsplit(pages_base)
+    except ValueError as exc:
+        raise ValueError("public direct payload URL is invalid") from exc
+    if parsed.hostname != base.hostname:
+        return None
+    if (
+        parsed.scheme != base.scheme
+        or parsed.netloc != base.netloc
+        or parsed.username is not None
+        or parsed.password is not None
+    ):
+        raise ValueError("public direct payload URL changes the trusted Pages authority")
+    base_path = base.path.rstrip("/") + "/"
+    if not parsed.path.startswith(base_path):
+        return None
+    relative = parsed.path.removeprefix(base_path)
+    if (
+        parsed.query
+        or parsed.fragment
+        or not relative
+        or "%" in relative
+        or "\\" in relative
+        or any(segment in {"", ".", ".."} for segment in relative.split("/"))
+    ):
+        raise ValueError("public direct payload URL is not a safe immutable path")
+    return relative
+
+
+def _fetch_verified_direct_payload(url: str, expected_sha: str, expected_size: int) -> bytes:
+    try:
+        with urlopen(Request(url), timeout=60) as response:
+            payload = bytearray()
+            digest = hashlib.sha256()
+            while chunk := response.read(min(1024 * 1024, expected_size + 1 - len(payload))):
+                payload.extend(chunk)
+                digest.update(chunk)
+                if len(payload) > expected_size:
+                    raise ValueError("deployed Pages direct payload exceeds its declared size")
+    except (HTTPError, URLError, TimeoutError) as exc:
+        raise ValueError("cannot fetch deployed direct payload") from exc
+    if len(payload) != expected_size or digest.hexdigest() != expected_sha:
+        raise ValueError("deployed Pages direct payload failed integrity verification")
+    return bytes(payload)
+
+
+def _verify_direct_pages_payloads(
+    api: GitDataApi,
+    *,
+    catalogue: Mapping[str, Any],
+    binding: GenerationBinding,
+    www_entries: Mapping[str, str],
+    pages_base: str,
+) -> None:
+    """Bind producer-owned direct bytes to both immutable Git and live Pages."""
+    rows = catalogue.get("entries")
+    if not isinstance(rows, list):
+        raise ValueError("public catalogue entries are malformed")
+    expected_prefix = f"generations/{binding.generation}/"
+    for row in rows:
+        if not isinstance(row, Mapping) or "urls" not in row:
+            continue
+        urls = row.get("urls")
+        if not isinstance(urls, list):
+            raise ValueError("public direct payload URLs are malformed")
+        for url in urls:
+            if not isinstance(url, str):
+                raise ValueError("public direct payload URL is malformed")
+            relative = _pages_payload_path(url, pages_base)
+            if relative is None:
+                continue
+            if not relative.startswith(expected_prefix):
+                raise ValueError("producer-owned direct payload URL is not generation-qualified")
+            expected_sha = row.get("sha256")
+            expected_size = row.get("size_bytes")
+            if (
+                not isinstance(expected_sha, str)
+                or re.fullmatch(r"[0-9a-f]{64}", expected_sha) is None
+                or not isinstance(expected_size, int)
+                or isinstance(expected_size, bool)
+                or expected_size <= 0
+            ):
+                raise ValueError("public direct payload integrity metadata is malformed")
+            blob = www_entries.get(relative)
+            if blob is None:
+                raise ValueError("immutable generation www tree is missing a direct payload")
+            immutable = api.blob_bytes(blob)
+            if len(immutable) != expected_size or hashlib.sha256(immutable).hexdigest() != expected_sha:
+                raise ValueError("immutable generation www tree has a corrupt direct payload")
+            _fetch_verified_direct_payload(url, expected_sha, expected_size)
+
+
+def fetch_retained_direct_payloads(
+    ledgers: Iterable[VerifiedPublicLedger], *, pages_base: str
+) -> dict[str, bytes]:
+    """Materialize verified direct bytes needed by retained Pages generations."""
+    payloads: dict[str, bytes] = {}
+    for ledger in ledgers:
+        validate_verified_public_ledger(ledger)
+        expected_prefix = f"generations/{ledger.binding.generation}/"
+        rows = ledger.catalogue.get("entries")
+        if not isinstance(rows, list):
+            raise PublishError("retained catalogue entries are malformed")
+        for row in rows:
+            if not isinstance(row, Mapping) or "urls" not in row:
+                continue
+            urls = row.get("urls")
+            if not isinstance(urls, list):
+                raise PublishError("retained direct payload URLs are malformed")
+            for url in urls:
+                if not isinstance(url, str):
+                    raise PublishError("retained direct payload URL is malformed")
+                try:
+                    relative = _pages_payload_path(url, pages_base)
+                except ValueError as exc:
+                    raise PublishError("retained direct payload URL is unsafe") from exc
+                # Pre-p2 ledgers used a stable root URL. They cannot be made
+                # immutable retroactively, so migration deliberately excludes
+                # them while preserving every generation-qualified payload.
+                if relative is None or not relative.startswith(expected_prefix):
+                    continue
+                expected_sha = row.get("sha256")
+                expected_size = row.get("size_bytes")
+                if (
+                    not isinstance(expected_sha, str)
+                    or re.fullmatch(r"[0-9a-f]{64}", expected_sha) is None
+                    or not isinstance(expected_size, int)
+                    or isinstance(expected_size, bool)
+                    or expected_size <= 0
+                ):
+                    raise PublishError("retained direct payload integrity metadata is malformed")
+                try:
+                    payload = _fetch_verified_direct_payload(url, expected_sha, expected_size)
+                except ValueError as exc:
+                    raise PublishError("retained direct payload failed public verification") from exc
+                old = payloads.setdefault(relative, payload)
+                if old != payload:
+                    raise PublishError("retained direct payload path has conflicting bytes")
+    return payloads
+
+
 def fetch_verified_public_ledger(
     api: GitDataApi,
     *,
     pages_base: str,
     generation: str | None = None,
     require_public_proof: bool = False,
+    verify_direct_payloads: bool = False,
 ) -> tuple[VerifiedPublicLedger, str, str]:
     """Bind canonical Pages bytes to their immutable generation-www tree.
 
@@ -545,6 +692,14 @@ def fetch_verified_public_ledger(
         }.items():
             if path not in entries or api.blob_bytes(entries[path]) != expected:
                 raise ValueError("Pages bytes are not bound to immutable generation www tree")
+        if verify_direct_payloads:
+            _verify_direct_pages_payloads(
+                api,
+                catalogue=catalogue,
+                binding=binding,
+                www_entries=entries,
+                pages_base=pages_base,
+            )
         if api.commit_tree(binding.active_commit) != binding.active_tree or api.commit_tree(binding.previous_commit) != binding.previous_tree:
             raise ValueError("data commit tree does not agree with state")
         ledger = verified_public_ledger(state, binding, catalogue)

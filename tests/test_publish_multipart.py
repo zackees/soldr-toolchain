@@ -11,7 +11,14 @@ import pytest
 
 from scripts import publish_multipart as pm
 from scripts.publish_multipart import GitLfsPathMaterializer, _rewrite_assets, build_publication, materialize_selected, scan_unsmudged_catalogue
-from scripts.publication_model import GenerationBinding, PartitionedAsset, PublishedPart, VerifiedPublicLedger
+from scripts.publication_model import (
+    GenerationBinding,
+    PartitionedAsset,
+    PublishedPart,
+    VerifiedPublicLedger,
+    canonical_json_sha256,
+    verified_public_ledger,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -446,6 +453,7 @@ def test_local_pages_json_is_pinned_to_immutable_generation(tmp_path: Path) -> N
                         "asset": "rust-nightly-versions.v1.json",
                         "url": "https://zackees.github.io/soldr-toolchain/rust-nightly-versions.v1.json",
                         "sha256": _sha(source_bytes),
+                        "size_bytes": len(source_bytes),
                     }
                 ]
             }
@@ -467,11 +475,145 @@ def test_local_pages_json_is_pinned_to_immutable_generation(tmp_path: Path) -> N
 
     deployed = (tmp_path / "www" / "generations" / "nightly-pin" / "rust-nightly-versions.v1.json").read_bytes()
     entry = json.loads((tmp_path / "www" / "catalogue.v2.json").read_text())["entries"][0]
+    assert deployed == source_bytes
+    assert (tmp_path / "www" / "rust-nightly-versions.v1.json").read_bytes() == source_bytes
     assert entry["urls"] == [
         "https://zackees.github.io/soldr-toolchain/generations/nightly-pin/rust-nightly-versions.v1.json"
     ]
-    assert entry["size_bytes"] == len(deployed)
-    assert entry["sha256"] == _sha(deployed)
+    assert entry["size_bytes"] == len(source_bytes)
+    assert entry["sha256"] == _sha(source_bytes)
+
+
+@pytest.mark.parametrize("corrupt_field", ["sha256", "size_bytes"])
+def test_local_pages_json_must_match_v1_integrity_metadata(tmp_path: Path, corrupt_field: str) -> None:
+    assets = tmp_path / "assets"
+    _write_source_controls(assets)
+    source_bytes = b'{\n  "schema_version": 1\n}\n'
+    row = {
+        "owner": "zackees",
+        "repo": "soldr-toolchain",
+        "tag": "assets",
+        "asset": "rust-nightly-versions.v1.json",
+        "url": "https://zackees.github.io/soldr-toolchain/rust-nightly-versions.v1.json",
+        "sha256": _sha(source_bytes),
+        "size_bytes": len(source_bytes),
+    }
+    row[corrupt_field] = "0" * 64 if corrupt_field == "sha256" else len(source_bytes) + 1
+    (assets / "rust-nightly-versions.v1.json").write_bytes(source_bytes)
+    (assets / "catalogue.v1.json").write_text(json.dumps({"entries": [row]}))
+    (assets / "manifest.json").write_text('{"kind":"Index","schema_version":1,"tools":{}}')
+
+    with pytest.raises(ValueError, match="verification"):
+        build_publication(
+            assets,
+            tmp_path / "public",
+            tmp_path / "www",
+            source_commit="a" * 40,
+            source_tree="b" * 40,
+            active_slot="public-a",
+            generation="bad-direct",
+        )
+
+
+def test_legacy_root_direct_url_migrates_to_raw_p2_generation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    legacy_payload = b'{"legacy":true}'
+    legacy_catalogue = {
+        "schema_version": 2,
+        "entries": [
+            {
+                "owner": "zackees",
+                "repo": "soldr-toolchain",
+                "tag": "assets",
+                "asset": "rust-nightly-versions.v1.json",
+                "sha256": _sha(legacy_payload),
+                "size_bytes": len(legacy_payload),
+                "urls": ["https://zackees.github.io/soldr-toolchain/rust-nightly-versions.v1.json"],
+            }
+        ],
+    }
+    legacy_digest = canonical_json_sha256(legacy_catalogue)
+    binding = GenerationBinding(
+        "source-legacy",
+        "1" * 40,
+        "2" * 40,
+        "public-a",
+        "3" * 40,
+        "4" * 40,
+        "public-b",
+        "5" * 40,
+        "6" * 40,
+        legacy_digest,
+    )
+    legacy_state = {
+        "generation": binding.generation,
+        "source": {"branch": "assets", "commit": binding.source_commit, "tree": binding.source_tree},
+        "active": {"slot": binding.active_slot, "commit": binding.active_commit, "tree": binding.active_tree},
+        "previous": {
+            "slot": binding.previous_slot,
+            "commit": binding.previous_commit,
+            "tree": binding.previous_tree,
+        },
+        "catalogue_sha256": legacy_digest,
+        "assets_by_sha256": {},
+        "logical_assets": {},
+    }
+    legacy = verified_public_ledger(legacy_state, binding, legacy_catalogue)
+
+    def unexpected_network(*_args, **_kwargs):
+        pytest.fail("legacy mutable direct URL must not be fetched for retention")
+
+    monkeypatch.setattr("scripts.publisher_transaction.urlopen", unexpected_network)
+    retained = pm.fetch_retained_direct_payloads(
+        [legacy], pages_base="https://zackees.github.io/soldr-toolchain"
+    )
+    assert retained == {}
+
+    assets = tmp_path / "assets"
+    _write_source_controls(assets)
+    current_payload = b'{\n  "current": true\n}\n'
+    (assets / "rust-nightly-versions.v1.json").write_bytes(current_payload)
+    (assets / "catalogue.v1.json").write_text(
+        json.dumps(
+            {
+                "entries": [
+                    {
+                        "owner": "zackees",
+                        "repo": "soldr-toolchain",
+                        "tag": "assets",
+                        "asset": "rust-nightly-versions.v1.json",
+                        "url": "https://zackees.github.io/soldr-toolchain/rust-nightly-versions.v1.json",
+                        "sha256": _sha(current_payload),
+                        "size_bytes": len(current_payload),
+                    }
+                ]
+            }
+        )
+    )
+    (assets / "manifest.json").write_text('{"kind":"Index","schema_version":1,"tools":{}}')
+    www = tmp_path / "www"
+    build_publication(
+        assets,
+        tmp_path / "public",
+        www,
+        source_commit="a" * 40,
+        source_tree="b" * 40,
+        active_slot="public-b",
+        generation="source-current-p2",
+        retained_ledgers=[legacy],
+        retained_direct_payloads=retained,
+    )
+
+    current_path = www / "generations" / "source-current-p2" / "rust-nightly-versions.v1.json"
+    assert current_path.read_bytes() == current_payload
+    assert not (www / "generations" / "source-legacy" / "rust-nightly-versions.v1.json").exists()
+    entry = json.loads((www / "catalogue.v2.json").read_text())["entries"][0]
+    assert entry["sha256"] == _sha(current_payload)
+    assert entry["urls"] == [
+        "https://zackees.github.io/soldr-toolchain/"
+        "generations/source-current-p2/rust-nightly-versions.v1.json"
+    ]
 
 
 def test_refresh_never_materializes_the_assets_lfs_checkout() -> None:
@@ -480,6 +622,41 @@ def test_refresh_never_materializes_the_assets_lfs_checkout() -> None:
     assert "lfs: false" in workflow
     assert "--include-legacy-local" in workflow
     assert "source-inventory.v1.json" in workflow
+
+
+def test_publisher_generation_includes_wire_format_version() -> None:
+    workflow = (Path(__file__).parents[1] / ".github/workflows/publish-multipart.yml").read_text()
+    assert 'generation="source-${source_commit:0:12}-p2"' in workflow
+
+
+def test_wire_generation_change_is_not_a_source_identical_noop() -> None:
+    binding = GenerationBinding(
+        "source-abc-p1",
+        "1" * 40,
+        "2" * 40,
+        "public-a",
+        "3" * 40,
+        "4" * 40,
+        "public-b",
+        "5" * 40,
+        "6" * 40,
+        "7" * 64,
+    )
+    ledger = VerifiedPublicLedger({}, binding, {})
+    classifications = {"direct": "direct", "asset": "exact_hit"}
+
+    assert pm.source_identical_noop(
+        source_commit=binding.source_commit,
+        generation=binding.generation,
+        ledger=ledger,
+        classifications=classifications,
+    )
+    assert not pm.source_identical_noop(
+        source_commit=binding.source_commit,
+        generation="source-abc-p2",
+        ledger=ledger,
+        classifications=classifications,
+    )
 
 
 def test_new_logical_aliases_share_one_materialized_oid_regardless_of_sort_order(tmp_path: Path) -> None:
@@ -526,7 +703,18 @@ def test_pages_snapshot_preserves_retained_generation_metadata(tmp_path: Path) -
     (assets / "catalogue.v1.json").write_text('{"entries":[]}')
     (assets / "manifest.json").write_text('{"kind":"Index","schema_version":1,"tools":{}}')
     old_state = {"generation": "old", "sentinel": "retained"}
-    old_catalogue = {"schema_version": 2, "entries": []}
+    retained_payload = b'{\n  "retained": true\n}\n'
+    retained_path = "generations/old/direct.json"
+    old_catalogue = {
+        "schema_version": 2,
+        "entries": [
+            {
+                "sha256": _sha(retained_payload),
+                "size_bytes": len(retained_payload),
+                "urls": ["https://zackees.github.io/soldr-toolchain/" + retained_path],
+            }
+        ],
+    }
     old = VerifiedPublicLedger(
         old_state,
         GenerationBinding(
@@ -553,9 +741,11 @@ def test_pages_snapshot_preserves_retained_generation_metadata(tmp_path: Path) -
         active_slot="public-b",
         generation="new",
         retained_ledgers=[old],
+        retained_direct_payloads={retained_path: retained_payload},
     )
     assert json.loads((www / "generations" / "old" / "publish-state.v1.json").read_text()) == old_state
     assert json.loads((www / "generations" / "old" / "catalogue.v2.json").read_text()) == old_catalogue
+    assert (www / retained_path).read_bytes() == retained_payload
 
 
 def test_lfs_source_must_match_declared_oid_and_stay_inside_assets(tmp_path: Path) -> None:
