@@ -880,8 +880,12 @@ def main() -> int:
                     seen_generations.add(item["generation"])
     if args.active_slot is None:
         raise ValueError("--active-slot is required for a local-only publication build")
-    metadata_only = ledger is not None and all(kind in {"metadata_only", "direct", "exact_hit", "alias", "removed"} for kind in classifications.values())
-    published_slot = ledger.binding.active_slot if metadata_only and ledger is not None else args.active_slot
+    # Build against the inactive slot first. Only the complete active-tree
+    # coverage proof below may retarget this to the currently live slot. In
+    # particular, exact/alias staging metadata does not prove those blobs are
+    # present in the live alias after an interrupted transaction.
+    metadata_only = False
+    published_slot = args.active_slot
     data_ref = published_slot
     result = (
         None

@@ -585,8 +585,10 @@ def test_pages_recovery_ignores_newer_www_ref_and_binds_generation_tree(monkeypa
             return "d" * 40 if commit == "c" * 40 else "f" * 40
 
         def tree_entries(self, tree):
-            assert tree == "d" * 40
-            return [{"type": "blob", "path": path, "sha": path} for path in files]
+            if tree == "d" * 40:
+                return [{"type": "blob", "path": path, "sha": path} for path in files]
+            assert tree == "f" * 40
+            return []
 
         def blob_bytes(self, blob):
             return files[blob]
@@ -610,3 +612,25 @@ def test_pages_recovery_ignores_newer_www_ref_and_binds_generation_tree(monkeypa
     monkeypatch.setattr("scripts.publisher_transaction.urlopen", opener)
     ledger, commit, tree = fetch_verified_public_ledger(Api(), pages_base="https://pages.test")
     assert ledger.binding.generation == "old" and commit == "c" * 40 and tree == "d" * 40
+
+    full, part = "a" * 64, "b" * 64
+    path = f"sha256/{full}/0001-{part}.part"
+    state["assets_by_sha256"] = {
+        full: {
+            "size_bytes": 3,
+            "partitioner": {"version": 1, "target_bytes": 3},
+            "parts": [
+                {
+                    "number": 1,
+                    "sha256": part,
+                    "size_bytes": 3,
+                    "path": path,
+                    "git_blob": "9" * 40,
+                }
+            ],
+        }
+    }
+    files["publish-state.v1.json"] = canonical_json_bytes(state)
+    files["generations/old/publish-state.v1.json"] = canonical_json_bytes(state)
+    with pytest.raises(PublishError, match="reused part is absent from active tree"):
+        fetch_verified_public_ledger(Api(), pages_base="https://pages.test")
