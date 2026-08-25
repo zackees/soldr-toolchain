@@ -5,6 +5,7 @@ publisher may only classify/reuse a :class:`VerifiedPublicLedger`, and only
 publishes parts after the LFS declaration has been checked against the exact
 stream which was sliced.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -60,12 +61,17 @@ class SourceInventoryRow:
 
 @dataclass(frozen=True)
 class GenerationBinding:
-    """The identities that bind an immutable public generation together."""
+    """The non-self-referential identities bound by public generation state.
+
+    The ``www`` commit/tree cannot be embedded in a file that is itself part of
+    that tree.  Publishers and recovery code verify the observed ``www`` ref
+    and tree externally and report them as transaction evidence; this binding
+    covers only identities that can truthfully be serialized in the state.
+    """
+
     generation: str
     source_commit: str
     source_tree: str
-    www_commit: str
-    www_tree: str
     active_slot: str
     active_commit: str
     active_tree: str
@@ -78,8 +84,10 @@ class GenerationBinding:
 @dataclass(frozen=True)
 class VerifiedPublicLedger:
     """A ledger checked against a publicly verified generation binding."""
+
     ledger: Mapping[str, Any]
     binding: GenerationBinding
+    catalogue: Mapping[str, Any]
 
 
 def _is_int(value: Any) -> bool:
@@ -273,8 +281,7 @@ def asset_mapping_from_partition(asset: PartitionedAsset, git_blob_ids: Iterable
     mapping = {
         "size_bytes": asset.size_bytes,
         "partitioner": {"version": asset.partitioner_version, "target_bytes": asset.target_bytes},
-        "parts": [{"number": part.number, "sha256": part.sha256, "size_bytes": part.size_bytes,
-                   "path": part.path, "git_blob": blob} for part, blob in zip(asset.parts, blobs)],
+        "parts": [{"number": part.number, "sha256": part.sha256, "size_bytes": part.size_bytes, "path": part.path, "git_blob": blob} for part, blob in zip(asset.parts, blobs)],
     }
     if not validate_asset_mapping(asset.full_sha256, mapping):
         raise ValueError("partitioned asset cannot form a valid ledger mapping")
@@ -291,7 +298,7 @@ def validate_generation_binding(binding: GenerationBinding) -> None:
         raise ValueError("generation must be nonempty")
     if binding.active_slot not in {"public-a", "public-b"} or binding.previous_slot not in {"public-a", "public-b"} or binding.active_slot == binding.previous_slot:
         raise ValueError("active and previous slots must be distinct public slots")
-    for name in ("source_commit", "source_tree", "www_commit", "www_tree", "active_commit", "active_tree", "previous_commit", "previous_tree"):
+    for name in ("source_commit", "source_tree", "active_commit", "active_tree", "previous_commit", "previous_tree"):
         _git_object(getattr(binding, name), name)
     _digest(binding.catalogue_sha256, "catalogue digest")
 
@@ -299,8 +306,6 @@ def validate_generation_binding(binding: GenerationBinding) -> None:
 def _validate_ledger_binding(ledger: Mapping[str, Any], binding: GenerationBinding) -> None:
     required = {
         "generation": binding.generation,
-        "source": {"commit": binding.source_commit, "tree": binding.source_tree},
-        "www": {"commit": binding.www_commit, "tree": binding.www_tree},
         "active": {"slot": binding.active_slot, "commit": binding.active_commit, "tree": binding.active_tree},
         "previous": {"slot": binding.previous_slot, "commit": binding.previous_commit, "tree": binding.previous_tree},
         "catalogue_sha256": binding.catalogue_sha256,
@@ -308,6 +313,13 @@ def _validate_ledger_binding(ledger: Mapping[str, Any], binding: GenerationBindi
     for key, expected in required.items():
         if ledger.get(key) != expected:
             raise ValueError(f"ledger {key} does not match public generation binding")
+    source = ledger.get("source")
+    if not isinstance(source, Mapping) or source.get("commit") != binding.source_commit or source.get("tree") != binding.source_tree:
+        raise ValueError("ledger source does not match public generation binding")
+    if "branch" in source and source.get("branch") != "assets":
+        raise ValueError("ledger source branch must be assets")
+    if "www" in ledger:
+        raise ValueError("ledger must not self-reference its containing www commit/tree")
     assets = ledger.get("assets_by_sha256")
     logical_assets = ledger.get("logical_assets")
     if not isinstance(assets, Mapping) or not isinstance(logical_assets, Mapping):
@@ -322,6 +334,19 @@ def _validate_ledger_binding(ledger: Mapping[str, Any], binding: GenerationBindi
         mapped = assets.get(row["source_oid_sha256"])
         if not isinstance(mapped, Mapping) or mapped.get("size_bytes") != row["source_size_bytes"]:
             raise ValueError("logical provenance does not bind to an asset mapping")
+    part_index = ledger.get("parts_by_sha256")
+    if part_index is not None:
+        if not isinstance(part_index, Mapping):
+            raise ValueError("parts_by_sha256 must be an object")
+        expected_parts: dict[str, dict[str, Any]] = {}
+        for mapping in assets.values():
+            for part in mapping["parts"]:
+                row = {"size_bytes": part["size_bytes"], "git_blob": part["git_blob"]}
+                prior = expected_parts.setdefault(part["sha256"], row)
+                if prior != row:
+                    raise ValueError("assets disagree on part digest identity")
+        if dict(part_index) != expected_parts:
+            raise ValueError("parts_by_sha256 does not canonically cover assets")
 
 
 def validate_verified_public_ledger(value: VerifiedPublicLedger) -> None:
@@ -330,6 +355,8 @@ def validate_verified_public_ledger(value: VerifiedPublicLedger) -> None:
         raise TypeError("expected a VerifiedPublicLedger")
     validate_generation_binding(value.binding)
     _validate_ledger_binding(value.ledger, value.binding)
+    if canonical_json_sha256(value.catalogue) != value.binding.catalogue_sha256:
+        raise ValueError("catalogue digest does not match public generation binding")
 
 
 def verified_public_ledger(ledger: Mapping[str, Any], binding: GenerationBinding, catalogue: Mapping[str, Any]) -> VerifiedPublicLedger:
@@ -338,7 +365,7 @@ def verified_public_ledger(ledger: Mapping[str, Any], binding: GenerationBinding
     if canonical_json_sha256(catalogue) != binding.catalogue_sha256:
         raise ValueError("catalogue digest does not match public generation binding")
     _validate_ledger_binding(ledger, binding)
-    return VerifiedPublicLedger(ledger, binding)
+    return VerifiedPublicLedger(ledger, binding, catalogue)
 
 
 def _validate_provenance(value: Any) -> None:
@@ -361,10 +388,16 @@ def _validate_logical_provenance(row: Mapping[str, Any]) -> None:
 
 
 def _validate_inventory_row(row: SourceInventoryRow) -> None:
-    if (not isinstance(row.logical_key, str) or not row.logical_key or
-            not isinstance(row.source_path, str) or not row.source_path or
-            not isinstance(row.asset, str) or not row.asset or
-            not isinstance(row.metadata_fingerprint, str) or not row.metadata_fingerprint):
+    if (
+        not isinstance(row.logical_key, str)
+        or not row.logical_key
+        or not isinstance(row.source_path, str)
+        or not row.source_path
+        or not isinstance(row.asset, str)
+        or not row.asset
+        or not isinstance(row.metadata_fingerprint, str)
+        or not row.metadata_fingerprint
+    ):
         raise ValueError("inventory logical provenance fields must be nonempty strings")
     _validate_provenance(row.provenance)
     if row.transport not in _TRANSPORTS:
@@ -400,11 +433,13 @@ def classify_inventory(rows: Iterable[SourceInventoryRow], ledger: VerifiedPubli
             result[row.logical_key] = "new_or_invalid"
         elif not isinstance(old, Mapping) or old.get("source_oid_sha256") != row.source_oid_sha256:
             result[row.logical_key] = "alias"
-        elif (old.get("source_size_bytes") != row.source_size_bytes or
-              old.get("source_path") != row.source_path or
-              old.get("asset") != row.asset or
-              old.get("metadata_fingerprint") != row.metadata_fingerprint or
-              old.get("provenance") != row.provenance):
+        elif (
+            old.get("source_size_bytes") != row.source_size_bytes
+            or old.get("source_path") != row.source_path
+            or old.get("asset") != row.asset
+            or old.get("metadata_fingerprint") != row.metadata_fingerprint
+            or old.get("provenance") != row.provenance
+        ):
             result[row.logical_key] = "metadata_only"
         else:
             result[row.logical_key] = "exact_hit"
@@ -451,7 +486,7 @@ def retained_part_paths(generations: Iterable[VerifiedPublicLedger], *, now_time
     for item in ledgers:
         validate_verified_public_ledger(item)
     sorted_ledgers = sorted(ledgers, key=lambda item: item.ledger.get("published_at", 0), reverse=True)
-    keep = sorted_ledgers[:prior_successes + 1] + [item for item in sorted_ledgers if now_timestamp - item.ledger.get("published_at", 0) < support_seconds]
+    keep = sorted_ledgers[: prior_successes + 1] + [item for item in sorted_ledgers if now_timestamp - item.ledger.get("published_at", 0) < support_seconds]
     paths: set[str] = set()
     for item in keep:
         for full, mapping in item.ledger.get("assets_by_sha256", {}).items():

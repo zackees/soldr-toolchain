@@ -13,7 +13,7 @@ from scripts.publication_model import (
 CATALOGUE_V2 = 2
 CURRENT_CLIENT_CAPABILITY = 2
 _TOP_KEYS = frozenset(("schema_version", "generation", "publication_state", "generated_at", "origin", "entries"))
-_ENTRY_KEYS = frozenset(("owner", "repo", "tag", "asset", "sha256", "size_bytes", "min_client_version", "urls", "parts"))
+_ENTRY_KEYS = frozenset(("owner", "repo", "tag", "asset", "sha256", "size_bytes", "source_path", "min_client_version", "urls", "parts"))
 _PART_KEYS = frozenset(("number", "sha256", "size_bytes", "urls"))
 _GENERATION = re.compile(r"^[A-Za-z0-9._:-]+$", re.ASCII)
 
@@ -47,7 +47,22 @@ def _publication_state_url(value: Any, generation: str) -> bool:
             not parsed.query and not parsed.fragment)
 
 
-def _urls(value: Any, prefix: str, errors: list[str], all_urls: set[str]) -> None:
+def _urls(value: Any, prefix: str, errors: list[str], all_urls: set[str], part_urls: Mapping[str, tuple[str, int]] | None = None) -> None:
+    if not isinstance(value, list) or not value:
+        errors.append(f"{prefix} must be a nonempty URL array")
+        return
+    local: set[str] = set()
+    for url in value:
+        if not _https_url(url):
+            errors.append(f"{prefix} contains an invalid HTTPS URL")
+        elif url in local or url in all_urls or (part_urls is not None and url in part_urls):
+            errors.append(f"{prefix} contains a duplicate URL")
+        local.add(url)
+        all_urls.add(url)
+
+
+def _part_urls(value: Any, prefix: str, errors: list[str], all_urls: set[str],
+               part_urls: dict[str, tuple[str, int]], identity: tuple[Any, Any]) -> None:
     if not isinstance(value, list) or not value:
         errors.append(f"{prefix} must be a nonempty URL array")
         return
@@ -57,8 +72,11 @@ def _urls(value: Any, prefix: str, errors: list[str], all_urls: set[str]) -> Non
             errors.append(f"{prefix} contains an invalid HTTPS URL")
         elif url in local or url in all_urls:
             errors.append(f"{prefix} contains a duplicate URL")
+        elif url in part_urls and part_urls[url] != identity:
+            errors.append(f"{prefix} reuses a URL for a different part identity")
+        elif isinstance(identity[0], str) and _is_int(identity[1]):
+            part_urls[url] = (identity[0], identity[1])
         local.add(url)
-        all_urls.add(url)
 
 
 def validate_document(document: Any) -> list[str]:
@@ -93,6 +111,7 @@ def validate_document(document: Any) -> list[str]:
         return errors + ["entries must be a list"]
     records: set[tuple[str, str, str, str]] = set()
     all_urls: set[str] = set()
+    part_urls: dict[str, tuple[str, int]] = {}
     if isinstance(publication_state, dict) and isinstance(publication_state.get("url"), str):
         all_urls.add(publication_state["url"])
     for i, entry in enumerate(entries):
@@ -109,6 +128,12 @@ def validate_document(document: Any) -> list[str]:
                 errors.append(f"{prefix}.{field} must be a nonempty string")
             else:
                 strings[field] = value
+        if "source_path" in entry and (
+            not isinstance(entry["source_path"], str)
+            or entry["source_path"].startswith("/")
+            or any(segment in {"", ".", ".."} for segment in entry["source_path"].split("/"))
+        ):
+            errors.append(f"{prefix}.source_path must be a safe relative path")
         try:
             _digest(entry.get("sha256"))
         except ValueError:
@@ -129,8 +154,12 @@ def validate_document(document: Any) -> list[str]:
             errors.append(f"{prefix} must contain exactly one of urls or parts")
             continue
         if has_urls:
-            _urls(entry["urls"], f"{prefix}.urls", errors, all_urls)
+            if "source_path" in entry:
+                errors.append(f"{prefix}.source_path is reserved for publisher-owned multipart assets")
+            _urls(entry["urls"], f"{prefix}.urls", errors, all_urls, part_urls)
             continue
+        if "source_path" not in entry:
+            errors.append(f"{prefix}.parts requires source_path")
         if entry.get("min_client_version") != CURRENT_CLIENT_CAPABILITY:
             errors.append(f"{prefix}.parts requires min_client_version {CURRENT_CLIENT_CAPABILITY}")
         parts = entry["parts"]
@@ -156,7 +185,14 @@ def validate_document(document: Any) -> list[str]:
                 errors.append(f"{part_prefix}.size_bytes is invalid")
             else:
                 checked_sum += part_size
-            _urls(part.get("urls"), f"{part_prefix}.urls", errors, all_urls)
+            _part_urls(
+                part.get("urls"),
+                f"{part_prefix}.urls",
+                errors,
+                all_urls,
+                part_urls,
+                (part.get("sha256"), part_size),
+            )
         if _is_int(total_size) and checked_sum != total_size:
             errors.append(f"{prefix}.parts sizes do not sum to size_bytes")
     return errors
@@ -194,11 +230,11 @@ def generation_binding_from_publication_state(state: Mapping[str, Any]) -> Gener
     if state.get("schema_version") != 1 or not _is_int(state.get("schema_version")):
         raise ValueError("publication state schema_version must be 1")
     try:
-        source, www = state["source"], state["www"]
+        source = state["source"]
         active, previous = state["active"], state["previous"]
         return GenerationBinding(
             state["generation"], source["commit"], source["tree"],
-            www["commit"], www["tree"], active["slot"], active["commit"], active["tree"],
+            active["slot"], active["commit"], active["tree"],
             previous["slot"], previous["commit"], previous["tree"], state["catalogue_sha256"],
         )
     except (KeyError, TypeError) as exc:

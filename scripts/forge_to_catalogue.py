@@ -345,6 +345,14 @@ def main(argv: list[str] | None = None) -> int:
         "(default: <assets-root>/catalogue.v1.json).",
     )
     parser.add_argument(
+        "--catalogue-v2", type=Path,
+        help="Optional verified post-cutover catalogue.v2.json to validate before staging an ingest.",
+    )
+    parser.add_argument(
+        "--publication-state", type=Path,
+        help="Immutable publish-state.v1.json required with --catalogue-v2.",
+    )
+    parser.add_argument(
         "--asset-name", help="Filename for the placed asset (default: per-tool)."
     )
     parser.add_argument(
@@ -356,6 +364,15 @@ def main(argv: list[str] | None = None) -> int:
         help="Executable receiving a JSON create-only upload request on stdin.",
     )
     args = parser.parse_args(argv)
+
+    if bool(args.catalogue_v2) != bool(args.publication_state):
+        parser.error("--catalogue-v2 and --publication-state must be supplied together")
+    if args.catalogue_v2:
+        # Forge still stages source bytes in the assets topology; it never
+        # writes public delivery URLs after cutover.  Validate the currently
+        # promoted generation before accepting a new source candidate so the
+        # next atomic publisher run has a known-good control-plane baseline.
+        _load_verified_generation(args.catalogue_v2, args.publication_state)
 
     try:
         import zstandard  # noqa: F401
@@ -873,6 +890,18 @@ def _sha256_of(path: Path) -> str:
     return h.hexdigest()
 
 
+def _load_verified_generation(catalogue_path: Path, state_path: Path):
+    """Read, bind, and transport-check a post-cutover generation lazily.
+
+    The lazy import keeps the historical direct-file CLI usable in the
+    pre-cutover assets workflow while the explicit v2 mode uses the shared
+    verified reader.
+    """
+    from scripts.generation_reader import load_verified_generation
+
+    return load_verified_generation(catalogue_path, state_path)
+
+
 # ----- catalogue mutation ------------------------------------------
 
 
@@ -1049,7 +1078,10 @@ def _update_manifest_catalog(
             "schema_version": 1,
             "version": catalog_version,
             "published_at": "",
-            "min_client_version": 1,
+            # This is a hierarchical source record.  The atomic publisher
+            # promotes it as a v2 multipart record, so never advertise it as
+            # capability-1-compatible in the generated release metadata.
+            "min_client_version": 2,
             "platforms": [],
         }
         releases.append(release)

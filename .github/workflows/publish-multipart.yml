@@ -1,0 +1,127 @@
+name: Publish non-LFS multipart snapshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      bootstrap:
+        description: "Explicitly authorize the one-time full-corpus bootstrap"
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: "15 8 * * *"
+
+concurrency:
+  group: soldr-toolchain-multipart-publisher
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout publisher
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          path: producer
+
+      - name: Checkout source pointers without LFS transfer
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: assets
+          path: assets
+          lfs: false
+
+      - name: Resolve deterministic source identity
+        id: plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_commit=$(git -C assets rev-parse HEAD)
+          source_tree=$(git -C assets rev-parse 'HEAD^{tree}')
+          # The source determines the idempotent staging ref; retention age is
+          # this transaction attempt and staging persists it across retries.
+          attempt_published_at=$(date -u +%s)
+          generation="source-${source_commit:0:12}"
+          {
+            echo "source_commit=$source_commit"
+            echo "source_tree=$source_tree"
+            echo "generation=$generation"
+            echo "published_at=$attempt_published_at"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Verify, selectively materialize, compile, and atomically publish
+        id: publish
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          bootstrap=()
+          if [[ '${{ inputs.bootstrap || false }}' == 'true' ]]; then bootstrap=(--bootstrap); fi
+          result=$(PYTHONPATH=producer python -m scripts.publish_multipart \
+            --assets-dir assets \
+            --public-dir public-snapshot \
+            --www-dir www-snapshot \
+            --source-commit '${{ steps.plan.outputs.source_commit }}' \
+            --source-tree '${{ steps.plan.outputs.source_tree }}' \
+            --generation '${{ steps.plan.outputs.generation }}' \
+            --published-at '${{ steps.plan.outputs.published_at }}' \
+            --direct-sizes producer/direct-asset-sizes.v1.json \
+            "${bootstrap[@]}" \
+            --publish)
+          echo "$result"
+          echo "published=$(jq -r '.published' <<<"$result")" >> "$GITHUB_OUTPUT"
+
+      - name: Reject LFS pointers, attributes, and oversized ordinary blobs
+        if: steps.publish.outputs.published == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e public-snapshot/.gitattributes
+          while IFS= read -r -d '' part; do
+            size=$(stat -c %s "$part")
+            (( size <= 99614720 ))
+            ! head -c 42 "$part" | grep -q 'version https://git-lfs.github.com/spec/v1'
+          done < <(find public-snapshot/sha256 -type f -name '*.part' -print0)
+          ! grep -R -E -n '(media.githubusercontent.com/media|raw.githubusercontent.com)/zackees/soldr-toolchain/assets' www-snapshot
+
+      - name: Configure Pages
+        if: steps.publish.outputs.published == 'true'
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+
+      - name: Upload metadata-only Pages artifact
+        if: steps.publish.outputs.published == 'true'
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+        with:
+          path: www-snapshot
+
+      - name: Deploy Pages
+        if: steps.publish.outputs.published == 'true'
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+
+      - name: Verify deployed Pages evidence
+        if: >-
+          always() && steps.publish.outcome == 'success' &&
+          (steps.publish.outputs.published == 'false' || steps.deployment.outcome == 'success')
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            if PYTHONPATH=producer python -m scripts.publish_multipart \
+              --assets-dir assets --public-dir public-snapshot --www-dir www-snapshot \
+              --source-commit '${{ steps.plan.outputs.source_commit }}' \
+              --source-tree '${{ steps.plan.outputs.source_tree }}' \
+              --generation '${{ steps.plan.outputs.generation }}' \
+              --verify-public; then
+              exit 0
+            fi
+            if [[ "$attempt" != 6 ]]; then sleep 10; fi
+          done
+          exit 1

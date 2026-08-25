@@ -222,3 +222,51 @@ must be authenticated:
   stripped for you.
 - Verify the downloaded bytes against the catalogue entry's `sha256`
   before use, exactly as for any other catalogue entry.
+
+## v2 cutover, rollback, and monitoring
+
+`catalogue.v1.json` is a compatibility projection only. It contains only
+single-URL direct entries (including authenticated private/external releases).
+Rows served from this repository's legacy `assets` ref, any
+`media.githubusercontent.com` LFS endpoint, a staging endpoint, or a multipart
+publication are deliberately omitted. External ordinary-Git raw URLs remain
+valid direct entries.
+The v1 producer is removed once the oldest supported Soldr client has v2
+capability support for one full support window; until then, do not add a v1
+row as a workaround for a v2 publication failure.
+
+The control plane is `catalogue.v2.json` plus its immutable
+`generations/<generation>/publish-state.v1.json` binding. Consumers validate
+that binding before resolving a direct URL or assembling parts. Every migrated
+hierarchical release has `min_client_version: 2`; direct/private/external
+entries remain direct records and do not acquire artificial parts.
+
+Canary each generation with the generation, source commit/tree, active and
+previous slot commit/tree, catalogue SHA-256, logical asset count, unique-byte
+SHA-256 count, part count, total bytes, and publication timestamp. Hold
+promotion for a digest mismatch, missing part, public raw/media/LFS/staging
+URL, sustained raw/repository 4xx/5xx, LFS billing/quota warning, or
+repository/pages health failure; record the rate and observation window.
+
+Rollback is the atomic publisher's previous verified generation (fallback
+#59), never a hand edit or return to an `assets` URL. Keep the prior ledger for
+the support window and switch the public pointer only after revalidation. The
+current `main` code-only / `assets` data-only topology remains until a dedicated
+cutover workflow is enabled.
+
+Post-cutover verification takes the immutable pair explicitly; it does not
+walk the `assets` checkout or fetch LFS:
+
+```sh
+uv run --group dev python -m scripts.lint_assets \
+  --catalogue-v2 public/catalogue.v2.json \
+  --publication-state public/generations/<generation>/publish-state.v1.json
+uv run --group dev python -m scripts.build_asset_index \
+  --catalogue-v2 public/catalogue.v2.json \
+  --publication-state public/generations/<generation>/publish-state.v1.json \
+  --output compatibility/asset-index.json
+```
+
+The compatibility index projection contains direct rows only. It cannot encode
+multipart records, so consumers needing any migrated hierarchical release must
+use v2 instead.

@@ -68,6 +68,9 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any, Iterable
+from urllib.parse import urlsplit
+
+from scripts.generation_reader import VerifiedGeneration, load_verified_generation
 
 ASSET_INDEX_SCHEMA_VERSION = 5
 
@@ -411,18 +414,71 @@ def build_asset_index(
     }
 
 
+def build_asset_index_from_generation(generation: VerifiedGeneration) -> dict[str, Any]:
+    """Project only v2 *direct* records into the legacy flat index.
+
+    The legacy shape has no state binding or parts array.  A multipart record
+    must therefore never be flattened into an apparently ordinary URL.  This
+    preserves direct, private, and external records while keeping all migrated
+    repository bytes on the verified v2 control plane.
+    """
+    entries: list[dict[str, Any]] = []
+    for entry in generation.entries:
+        if entry.is_multipart:
+            continue
+        for url in entry.urls:
+            entries.append({
+                "owner": entry.owner, "repo": entry.repo, "tag": entry.tag,
+                "asset": entry.asset, "url": url, "sha256": entry.sha256,
+            })
+    entries.sort(key=_entry_sort_key)
+    return {"schema_version": ASSET_INDEX_SCHEMA_VERSION, "entries": entries}
+
+
+def direct_compatible_entries(index: dict[str, Any]) -> dict[str, Any]:
+    """Remove old assets-branch media/raw rows from a legacy source index.
+
+    This retains public upstream and private/external direct releases during
+    transition, but prevents the flat compatibility artifact from advertising
+    a repository/LFS transport after v2 becomes the public control plane.
+    """
+    entries = []
+    for entry in index.get("entries", []):
+        url = entry.get("url") if isinstance(entry, dict) else None
+        parsed = urlsplit(url) if isinstance(url, str) else None
+        if parsed and parsed.hostname == "media.githubusercontent.com":
+            continue
+        segments = [segment for segment in parsed.path.split("/") if segment] if parsed else []
+        if (
+            parsed
+            and parsed.hostname == "raw.githubusercontent.com"
+            and segments[:3] == ["zackees", "soldr-toolchain", "assets"]
+        ):
+            continue
+        entries.append(entry)
+    return {"schema_version": ASSET_INDEX_SCHEMA_VERSION, "entries": entries}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument(
         "--manifest-checkout",
         type=Path,
-        required=True,
         help=(
             "Path to a local checkout of the soldr-toolchain ``assets`` "
             "branch (the orphan branch that hosts per-tool "
             "manifest.json files and the locally-hosted blobs under "
             "<tool>/<version>/<platform>/)."
         ),
+    )
+    source.add_argument(
+        "--catalogue-v2", type=Path,
+        help="Verified public catalogue.v2.json for the post-cutover direct-only projection.",
+    )
+    parser.add_argument(
+        "--publication-state", type=Path,
+        help="Immutable publish-state.v1.json required with --catalogue-v2.",
     )
     parser.add_argument(
         "--output",
@@ -453,23 +509,40 @@ def main(argv: list[str] | None = None) -> int:
             "locally-hosted blob entries are emitted."
         ),
     )
+    parser.add_argument(
+        "--include-legacy-local",
+        action="store_true",
+        help="Keep assets-branch media/raw rows (pre-cutover diagnostics only).",
+    )
     args = parser.parse_args(argv)
 
-    manifest_root = args.manifest_checkout.resolve()
-    if not manifest_root.is_dir():
-        print(
-            f"error: --manifest-checkout {manifest_root} is not a directory",
-            file=sys.stderr,
+    if args.catalogue_v2 is not None:
+        if args.publication_state is None:
+            parser.error("--catalogue-v2 requires --publication-state")
+        try:
+            index = build_asset_index_from_generation(load_verified_generation(
+                args.catalogue_v2, args.publication_state
+            ))
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            print(f"error: invalid verified v2 generation: {exc}", file=sys.stderr)
+            return 1
+    else:
+        manifest_root = args.manifest_checkout.resolve()
+        if not manifest_root.is_dir():
+            print(
+                f"error: --manifest-checkout {manifest_root} is not a directory",
+                file=sys.stderr,
+            )
+            return 2
+        index = build_asset_index(
+            manifest_root,
+            repo_owner=args.repo_owner,
+            repo_name=args.repo_name,
+            branch=args.branch,
+            offline=args.offline,
         )
-        return 2
-
-    index = build_asset_index(
-        manifest_root,
-        repo_owner=args.repo_owner,
-        repo_name=args.repo_name,
-        branch=args.branch,
-        offline=args.offline,
-    )
+        if not args.include_legacy_local:
+            index = direct_compatible_entries(index)
 
     output_path = args.output.resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)

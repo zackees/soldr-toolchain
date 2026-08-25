@@ -1,11 +1,14 @@
 {
   "schema_version": 1,
   "generation": "2026-08-24T00:00:00Z-source0001",
-  "source": {"commit": "1111111111111111111111111111111111111111", "tree": "2222222222222222222222222222222222222222"},
-  "www": {"commit": "3333333333333333333333333333333333333333", "tree": "4444444444444444444444444444444444444444"},
+  "source": {"commit": "1111111111111111111111111111111111111111", "tree": "2222222222222222222222222222222222222222", "branch": "assets"},
   "active": {"slot": "public-a", "commit": "5555555555555555555555555555555555555555", "tree": "6666666666666666666666666666666666666666"},
   "previous": {"slot": "public-b", "commit": "7777777777777777777777777777777777777777", "tree": "8888888888888888888888888888888888888888"},
-  "catalogue_sha256": "0007654bba916b207f78ad3f11369d0a06b593a4fde39ed4ee8f4adbda384dfe",
+  "catalogue_sha256": "620fdc2dbd5d8d4561e53cdff035807478b4b269bdcb483c981bf5c68fe2f98c",
   "assets_by_sha256": {},
-  "logical_assets": {}
+  "logical_assets": {},
+  "partitioner_default": {"version": 1, "target_bytes": 3, "max_bytes": 99614720},
+  "published_at": 1,
+  "retained_generations": [{"generation": "2026-08-24T00:00:00Z-source0001", "published_at": 1}],
+  "parts_by_sha256": {}
 }

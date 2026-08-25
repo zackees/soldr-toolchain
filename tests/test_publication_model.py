@@ -25,10 +25,9 @@ def _mapping(full: str, part: str = "b" * 64) -> dict:
 def _verified(full: str = "a" * 64, *, published_at: int = 100):
     catalogue = {"schema_version": 2, "entries": []}
     digest = canonical_json_sha256(catalogue)
-    binding = GenerationBinding("g", "1" * 40, "2" * 40, "3" * 40, "4" * 40,
+    binding = GenerationBinding("g", "1" * 40, "2" * 40,
         "public-a", "5" * 40, "6" * 40, "public-b", "7" * 40, "8" * 40, digest)
     ledger = {"generation": "g", "source": {"commit": "1" * 40, "tree": "2" * 40},
-        "www": {"commit": "3" * 40, "tree": "4" * 40},
         "active": {"slot": "public-a", "commit": "5" * 40, "tree": "6" * 40},
         "previous": {"slot": "public-b", "commit": "7" * 40, "tree": "8" * 40},
         "catalogue_sha256": digest, "published_at": published_at,
@@ -43,6 +42,15 @@ def _verified(full: str = "a" * 64, *, published_at: int = 100):
 def _declared(source: Path) -> tuple[str, int]:
     data = source.read_bytes()
     return hashlib.sha256(data).hexdigest(), len(data)
+
+
+def test_verified_ledger_accepts_only_the_assets_source_branch() -> None:
+    verified = _verified()
+    verified.ledger["source"]["branch"] = "assets"
+    verified_public_ledger(verified.ledger, verified.binding, {"schema_version": 2, "entries": []})
+    verified.ledger["source"]["branch"] = "main"
+    with pytest.raises(ValueError, match="source branch"):
+        verified_public_ledger(verified.ledger, verified.binding, {"schema_version": 2, "entries": []})
 
 
 def test_strict_pointer_and_canonical_paths() -> None:
@@ -146,6 +154,10 @@ def test_verified_ledger_binding_canonical_digest_classification_and_retention()
     verified = _verified(full)
     verified.ledger["active"]["tree"] = "f" * 40
     with pytest.raises(ValueError): classify_inventory([], verified)
+    verified = _verified(full)
+    verified.ledger["www"] = {"commit": "3" * 40, "tree": "4" * 40}
+    with pytest.raises(ValueError, match="self-reference"):
+        classify_inventory([], verified)
 
 
 def test_partition_limits_reject_oversized_target_and_count(tmp_path: Path) -> None:

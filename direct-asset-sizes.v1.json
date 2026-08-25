@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "entries": {
+    "https://api.github.com/repos/zackees/soldr-toolchain-private/releases/assets/505002676": {
+      "size_bytes": 53513366,
+      "sha256": "932d9e36cbad6243b6ca9e50332b258f7efeb086d2f21c80447738064418c714"
+    }
+  }
+}

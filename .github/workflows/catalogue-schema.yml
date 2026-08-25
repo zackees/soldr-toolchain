@@ -32,6 +32,8 @@ jobs:
         run: python -m pip install --quiet jsonschema
       - name: Validate examples/catalogue.v1.json
         run: uv run --group dev python -m scripts.validate_catalogue examples/catalogue.v1.json
+      - name: Validate v2 direct-or-parts example and publication binding
+        run: uv run --group dev pytest -q tests/test_catalogue_v2.py
       - name: Validate external-entries.v1.json
         # Curated entries (soldr-toolchain#msvc) use the same top-level
         # shape as catalogue.v1.json, so the same validator + schema apply.

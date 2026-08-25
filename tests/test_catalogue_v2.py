@@ -21,7 +21,8 @@ def _direct() -> dict:
 
 def _multipart() -> dict:
     return {"owner": "o", "repo": "r", "tag": "t", "asset": "b", "sha256": "b" * 64,
-            "size_bytes": 3, "min_client_version": 2, "parts": [{"number": 1, "sha256": "c" * 64, "size_bytes": 3,
+            "size_bytes": 3, "source_path": "tool/version/platform/b", "min_client_version": 2,
+            "parts": [{"number": 1, "sha256": "c" * 64, "size_bytes": 3,
             "urls": ["https://example.test/b"]}]}
 
 
@@ -48,10 +49,16 @@ def test_schema_and_semantic_agree_on_structural_hostile_inputs() -> None:
     bad = _document([_direct()]); bad["entries"][0]["extra"] = 1; cases.append(bad)
     bad = _document([_direct()]); bad["entries"][0]["size_bytes"] = True; cases.append(bad)
     bad = _document([_direct()]); bad["entries"][0]["parts"] = []; cases.append(bad)
+    bad = _document([_direct()]); bad["entries"][0]["source_path"] = "private/direct.bin"; cases.append(bad)
+    bad = _document([_multipart()]); bad["entries"][0].pop("source_path"); cases.append(bad)
     bad = _document([_multipart()]); bad["entries"][0]["parts"][0]["urls"] = ["http://example.test"]; cases.append(bad)
     bad = _document([_multipart()]); bad["entries"][0]["parts"] *= MAX_PART_COUNT + 1; cases.append(bad)
     bad = _document([_direct()]); bad["origin"] = None; cases.append(bad)
     bad = _document([_direct()]); bad["generated_at"] = None; cases.append(bad)
+    for unsafe_source_path in ("./x", "a/./b", "a//b", "a/"):
+        bad = _document([_multipart()])
+        bad["entries"][0]["source_path"] = unsafe_source_path
+        cases.append(bad)
     for document in cases:
         assert _schema_errors(document), document
         assert validate_document(document), document
