@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import subprocess
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, Protocol
@@ -81,16 +82,23 @@ def github_transport(token: str, *, api_url: str = "https://api.github.com") -> 
         headers = {"Accept": "application/vnd.github+json", "Authorization": "Bearer " + token, "X-GitHub-Api-Version": "2022-11-28"}
         if data is not None:
             headers["Content-Type"] = "application/json"
-        try:
-            with urlopen(Request(base + path, data=data, headers=headers, method=method), timeout=60) as response:
-                parsed = json.loads(response.read().decode("utf-8"))
-        except HTTPError as exc:
-            if exc.code == 404:
-                raise RefNotFound(f"GitHub Git Data API {method} {path} returned 404") from exc
-            raise PublishError(f"GitHub Git Data API {method} {path} failed: {exc}") from exc
-        except (URLError, TimeoutError, json.JSONDecodeError) as exc:
-            raise PublishError(f"GitHub Git Data API {method} {path} failed: {exc}") from exc
-        return parsed
+        object_write = method == "POST" and path.rsplit("/", 1)[-1] in {"blobs", "trees", "commits"}
+        retry_safe = method == "GET" or object_write
+        for attempt in range(5):
+            try:
+                with urlopen(Request(base + path, data=data, headers=headers, method=method), timeout=60) as response:
+                    return json.loads(response.read().decode("utf-8"))
+            except HTTPError as exc:
+                if exc.code == 404:
+                    raise RefNotFound(f"GitHub Git Data API {method} {path} returned 404") from exc
+                transient = exc.code == 429 or 500 <= exc.code < 600
+                if not (retry_safe and transient and attempt < 4):
+                    raise PublishError(f"GitHub Git Data API {method} {path} failed: {exc}") from exc
+            except (URLError, TimeoutError, json.JSONDecodeError) as exc:
+                if not (retry_safe and attempt < 4):
+                    raise PublishError(f"GitHub Git Data API {method} {path} failed: {exc}") from exc
+            time.sleep(2**attempt)
+        raise AssertionError("unreachable GitHub transport retry state")
 
     return request
 
