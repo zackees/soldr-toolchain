@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "policy_revision": 2,
   "expected_source_entries": 150,
   "expected_external_entries": 3,
   "entries": [
