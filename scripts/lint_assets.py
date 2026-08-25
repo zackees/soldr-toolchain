@@ -56,6 +56,7 @@ from typing import Any
 
 from manifest_json import flatten_platform, validate_document
 from manifest_json.validate import ValidationError
+from scripts.generation_reader import load_verified_generation
 
 CDN_HOSTS = (
     "zackees.github.io/soldr-toolchain",
@@ -383,15 +384,47 @@ def lint(assets_root: Path) -> list[LintIssue]:
     return issues
 
 
+def lint_verified_generation(catalogue_path: Path, publication_state_path: Path) -> list[LintIssue]:
+    """Lint the post-cutover control plane, without following asset URLs.
+
+    The generation reader verifies the catalogue/state digest binding, v2
+    direct-or-parts shape, capability-2 multipart requirement, and rejects
+    raw/media/assets/staging transports. Direct private/external URLs are left
+    intact because their authentication contract is not an assets-tree rule.
+    """
+    try:
+        generation = load_verified_generation(catalogue_path, publication_state_path)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        return [LintIssue("V2", "ERROR", "catalogue.v2.json", str(exc))]
+    issues: list[LintIssue] = []
+    for entry in generation.entries:
+        if entry.is_multipart and entry.min_client_version != 2:
+            issues.append(LintIssue("V2", "ERROR", entry.asset, "multipart release min_client_version must be 2"))
+    return issues
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--assets-dir", type=Path, required=True,
+    p.add_argument("--assets-dir", type=Path,
                    help="path to the assets-branch checkout root")
+    p.add_argument("--catalogue-v2", type=Path,
+                   help="verified public catalogue.v2.json (post-cutover mode)")
+    p.add_argument("--publication-state", type=Path,
+                   help="immutable publish-state.v1.json required with --catalogue-v2")
     p.add_argument("--no-warn", action="store_true",
                    help="exit non-zero only on ERROR (default: also on WARN)")
     args = p.parse_args()
 
-    issues = lint(args.assets_dir)
+    if args.catalogue_v2 is not None:
+        if args.publication_state is None:
+            p.error("--catalogue-v2 requires --publication-state")
+        if args.assets_dir is not None:
+            p.error("choose --assets-dir or --catalogue-v2, not both")
+        issues = lint_verified_generation(args.catalogue_v2, args.publication_state)
+    else:
+        if args.assets_dir is None:
+            p.error("--assets-dir is required unless --catalogue-v2 is used")
+        issues = lint(args.assets_dir)
     by_severity = {"ERROR": 0, "WARN": 0}
     for issue in issues:
         print(str(issue))

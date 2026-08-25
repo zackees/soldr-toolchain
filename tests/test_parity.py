@@ -41,6 +41,7 @@ from pathlib import Path
 
 from scripts import build_asset_index as bai
 from scripts import build_manifest as bm
+from scripts.generation_reader import load_verified_generation
 from manifest_json import (
     ChannelNotFoundError,
     ValidationError,
@@ -71,6 +72,24 @@ ASSETS_DIR = _discover_assets_dir()
 _SKIP_REASON = (
     "no assets-branch checkout found; set SOLDR_TOOLCHAIN_ASSETS_DIR or "
     "clone the assets branch as ../soldr-toolchain-assets"
+)
+
+
+def _discover_public_dir() -> Path | None:
+    env = os.environ.get("SOLDR_TOOLCHAIN_PUBLIC_DIR")
+    candidates = [Path(env).resolve()] if env else []
+    here = Path(__file__).resolve().parents[1]
+    candidates.extend((here.parent / "soldr-toolchain-public", here.parent / "public"))
+    for candidate in candidates:
+        if (candidate / "catalogue.v2.json").is_file():
+            return candidate.resolve()
+    return None
+
+
+PUBLIC_DIR = _discover_public_dir()
+_PUBLIC_SKIP_REASON = (
+    "no public generation checkout found; set SOLDR_TOOLCHAIN_PUBLIC_DIR or "
+    "check out the published control-plane tree as ../soldr-toolchain-public"
 )
 
 
@@ -326,6 +345,27 @@ class V5ProducerStillWorksTest(unittest.TestCase):
             msg="build_manifest.py is supposed to emit v5; "
                 "convert_v5_to_v1.py is the v5 -> v1 projection step",
         )
+
+
+@unittest.skipIf(PUBLIC_DIR is None, _PUBLIC_SKIP_REASON)
+class VerifiedGenerationParityTest(unittest.TestCase):
+    """Post-cutover parity uses only the immutable v2 generation, never LFS."""
+
+    def test_catalogue_binds_to_its_generation_state_and_public_urls(self) -> None:
+        catalogue_path = PUBLIC_DIR / "catalogue.v2.json"
+        catalogue = json.loads(catalogue_path.read_text(encoding="utf-8"))
+        generation = catalogue.get("generation")
+        self.assertIsInstance(generation, str)
+        state_path = PUBLIC_DIR / "generations" / generation / "publish-state.v1.json"
+        self.assertTrue(state_path.is_file(), msg=f"missing {state_path}")
+        verified = load_verified_generation(catalogue_path, state_path)
+        self.assertEqual(verified.generation, generation)
+        for entry in verified.entries:
+            if entry.is_multipart:
+                self.assertEqual(entry.min_client_version, 2)
+            for url in entry.download_urls():
+                self.assertNotIn("media.githubusercontent.com", url)
+                self.assertNotIn("staging", url)
 
 
 if __name__ == "__main__":

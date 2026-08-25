@@ -24,6 +24,8 @@ from pathlib import Path
 from typing import Mapping, Sequence
 
 from scripts import forge_to_catalogue
+from scripts.catalogue_v2 import validate_document as validate_catalogue_v2
+from scripts.generation_reader import PublishedEntry, VerifiedGeneration, read_verified_generation
 from scripts.produce_dylint_release import (
     DRIVER_ASSET_VERSION,
     DRIVER_IDENTITY,
@@ -44,11 +46,7 @@ from scripts.produce_dylint_release import (
 )
 
 CATALOGUE_URL = (
-    "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/"
-    "catalogue.v1.json"
-)
-ASSET_BASE_URL = (
-    "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets"
+    "https://zackees.github.io/soldr-toolchain/catalogue.v2.json"
 )
 LFS_POINTER_PREFIX = b"version https://git-lfs.github.com/spec/v1"
 
@@ -89,13 +87,6 @@ def expected_assets() -> tuple[ExpectedAsset, ...]:
             )
         )
     return tuple(assets)
-
-
-def canonical_asset_url(asset: ExpectedAsset) -> str:
-    return (
-        f"{ASSET_BASE_URL}/{asset.tool}/v{asset.version}/"
-        f"{asset.platform_dir}/{asset.filename}"
-    )
 
 
 def _sha256_bytes(content: bytes) -> str:
@@ -259,36 +250,74 @@ def _download(url: str, *, attempts: int = 3) -> bytes:
     raise RuntimeError(f"could not download {url} after {attempts} attempts: {last_error}")
 
 
-def _catalogue_rows(catalogue: Mapping[str, object]) -> list[Mapping[str, object]]:
-    rows = catalogue.get("entries")
-    if catalogue.get("schema_version") != 1 or not isinstance(rows, list):
-        raise RuntimeError("published catalogue is not schema v1 with an entries array")
-    if not all(isinstance(row, Mapping) for row in rows):
-        raise RuntimeError("published catalogue contains a non-object entry")
-    return rows
-
-
 def _catalogue_entry(
-    catalogue: Mapping[str, object], expected: ExpectedAsset
-) -> Mapping[str, object]:
-    matches = [
-        row
-        for row in _catalogue_rows(catalogue)
-        if row.get("owner") == "zackees"
-        and row.get("repo") == "soldr-toolchain"
-        and row.get("tag") == "assets"
-        and row.get("asset") == expected.filename
-    ]
-    if len(matches) != 1:
-        raise RuntimeError(
-            f"published catalogue has {len(matches)} rows for {expected.filename}; expected one"
-        )
-    row = matches[0]
-    _require_equal("catalogue URL", row.get("url"), canonical_asset_url(expected))
-    digest = row.get("sha256")
-    if not isinstance(digest, str) or len(digest) != 64:
-        raise RuntimeError(f"catalogue SHA-256 is invalid for {expected.filename}")
+    generation: VerifiedGeneration, expected: ExpectedAsset
+) -> PublishedEntry:
+    try:
+        row = generation.find("zackees", "soldr-toolchain", "assets", expected.filename)
+    except ValueError as exc:
+        raise RuntimeError(f"published v2 catalogue lacks {expected.filename}: {exc}") from exc
+    if row.is_multipart and row.min_client_version != 2:
+        raise RuntimeError(f"migrated {expected.filename} lacks min_client_version=2")
     return row
+
+
+def _download_verified_entry(entry: PublishedEntry) -> bytes:
+    """Fetch and verify a direct entry or every part from a v2 generation."""
+    if not entry.is_multipart:
+        failures: list[str] = []
+        for url in entry.urls:
+            try:
+                data = _download(url)
+            except RuntimeError as exc:
+                failures.append(str(exc))
+                continue
+            if _sha256_bytes(data) == entry.sha256 and len(data) == entry.size_bytes:
+                return data
+            raise RuntimeError(f"direct asset {entry.asset} failed digest/size verification")
+        raise RuntimeError(f"published direct asset {entry.asset} did not verify: {failures}")
+    chunks: list[bytes] = []
+    for part in entry.parts:
+        failures = []
+        for url in part["urls"]:
+            try:
+                data = _download(url)
+            except RuntimeError as exc:
+                failures.append(str(exc))
+                continue
+            if _sha256_bytes(data) == part["sha256"] and len(data) == part["size_bytes"]:
+                chunks.append(data)
+                break
+            raise RuntimeError(
+                f"published part {part['number']} failed digest/size verification"
+            )
+        else:
+            raise RuntimeError(f"published part {part['number']} did not verify: {failures}")
+    data = b"".join(chunks)
+    if len(data) != entry.size_bytes or _sha256_bytes(data) != entry.sha256:
+        raise RuntimeError(f"reassembled published asset {entry.asset} does not match catalogue identity")
+    return data
+
+
+def _load_generation(catalogue_url: str) -> VerifiedGeneration:
+    catalogue_bytes = _download(catalogue_url)
+    if catalogue_bytes.startswith(LFS_POINTER_PREFIX):
+        raise RuntimeError("published catalogue is a Git LFS pointer")
+    try:
+        catalogue = json.loads(catalogue_bytes)
+        semantic_errors = validate_catalogue_v2(catalogue)
+        if semantic_errors:
+            raise ValueError("; ".join(semantic_errors))
+        state_url = catalogue["publication_state"]["url"]
+        state = json.loads(_download(state_url))
+    except (KeyError, TypeError, ValueError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise RuntimeError(f"published v2 catalogue/state is invalid: {error}") from error
+    if not isinstance(catalogue, dict) or not isinstance(state, dict):
+        raise RuntimeError("published catalogue/state is not an object")
+    try:
+        return read_verified_generation(catalogue, state)
+    except ValueError as error:
+        raise RuntimeError(f"published v2 generation did not verify: {error}") from error
 
 
 def _install_driver_toolchain(repo_root: Path) -> None:
@@ -320,15 +349,7 @@ def validate_lane(
     if any(work_dir.iterdir()):
         raise RuntimeError(f"published-validation work directory is not empty: {work_dir}")
 
-    catalogue_bytes = _download(catalogue_url)
-    if catalogue_bytes.startswith(LFS_POINTER_PREFIX):
-        raise RuntimeError("published catalogue is a Git LFS pointer")
-    try:
-        catalogue = json.loads(catalogue_bytes)
-    except (UnicodeDecodeError, json.JSONDecodeError) as error:
-        raise RuntimeError(f"published catalogue is invalid JSON: {error}") from error
-    if not isinstance(catalogue, dict):
-        raise RuntimeError("published catalogue is not an object")
+    generation = _load_generation(catalogue_url)
 
     published_root = work_dir / "published"
     installed: dict[str, Path] = {}
@@ -336,11 +357,11 @@ def validate_lane(
     for expected in (
         asset for asset in expected_assets() if asset.shape == lane.shape
     ):
-        row = _catalogue_entry(catalogue, expected)
-        archive = _download(canonical_asset_url(expected))
+        row = _catalogue_entry(generation, expected)
+        archive = _download_verified_entry(row)
         component = verify_archive(
             archive,
-            expected_sha256=str(row["sha256"]),
+            expected_sha256=row.sha256,
             lane=lane,
             tool=expected.tool,
         )

@@ -16,6 +16,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from scripts import build_catalogue_v1 as bc
 
 
@@ -58,6 +60,30 @@ def test_transform_round_trips_known_fields() -> None:
     entry = _asset_index_entry()
     payload = bc.transform({"entries": [entry]}, origin="x")
     assert payload["entries"] == [entry]
+
+
+@pytest.mark.parametrize("url", [
+    "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/x",
+    "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/x",
+])
+def test_transform_excludes_repository_hosted_transport_rows(url: str) -> None:
+    payload = bc.transform({"entries": [_asset_index_entry(url=url)]}, origin="x")
+    assert payload["entries"] == []
+
+
+def test_transform_retains_private_or_external_direct_entries() -> None:
+    external = _external_entry()
+    payload = bc.transform({"entries": []}, origin="x", external_entries=[external])
+    assert payload["entries"] == [external]
+
+
+def test_transform_retains_external_raw_direct_entry() -> None:
+    entry = _asset_index_entry(
+        owner="example",
+        repo="tool",
+        url="https://raw.githubusercontent.com/example/tool/v1/install.sh",
+    )
+    assert bc.transform({"entries": [entry]}, origin="x")["entries"] == [entry]
 
 
 def test_transform_drops_unknown_entry_fields() -> None:

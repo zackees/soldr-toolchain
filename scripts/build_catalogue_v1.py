@@ -92,6 +92,26 @@ DEFAULT_ORIGIN = "https://zackees.github.io/soldr-toolchain/catalogue.v1.json"
 # Fields copied straight from a v5 asset-index entry into a v1 catalogue
 # entry. Anything else on an asset-index entry is silently dropped.
 COPIED_ENTRY_FIELDS = ("owner", "repo", "tag", "asset", "url", "sha256")
+def is_direct_compatible_url(url: object) -> bool:
+    """Return whether a URL can safely be exposed to a capability-1 client.
+
+    v1 has no transport discriminator, immutable publication binding, or parts
+    array. Repository/LFS paths therefore belong only in verified v2.
+    """
+    if not isinstance(url, str):
+        return False
+    from urllib.parse import urlsplit
+
+    parsed = urlsplit(url)
+    if parsed.scheme != "https" or not parsed.netloc:
+        return False
+    if parsed.hostname == "media.githubusercontent.com":
+        return False
+    segments = [segment for segment in parsed.path.split("/") if segment]
+    return not (
+        parsed.hostname == "raw.githubusercontent.com"
+        and segments[:3] == ["zackees", "soldr-toolchain", "assets"]
+    )
 
 
 def transform(
@@ -120,14 +140,20 @@ def transform(
             raise ValueError(f"asset-index.json `entries[{i}]` must be an object")
         copied = {k: entry[k] for k in COPIED_ENTRY_FIELDS if k in entry}
         url = copied.get("url")
-        if isinstance(url, str):
-            seen_urls.add(url)
+        if not is_direct_compatible_url(url):
+            # Never offer a v1 bypass around verified v2 multipart control.
+            continue
+        seen_urls.add(url)
         out_entries.append(copied)
 
     for i, entry in enumerate(external_entries or []):
         url = entry.get("url")
         if not isinstance(url, str):
             raise ValueError(f"external-entries.json entries[{i}] missing `url`")
+        if not is_direct_compatible_url(url):
+            raise ValueError(
+                f"external-entries.json entries[{i}] is not a direct-compatible URL: {url}"
+            )
         if url in seen_urls:
             raise ValueError(
                 f"external-entries.json entries[{i}] duplicates an existing "

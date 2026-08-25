@@ -18,6 +18,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from scripts.generation_reader import VerifiedGeneration, load_verified_generation
+
 PAGE_TEMPLATE = """\
 <!doctype html>
 <html lang="en">
@@ -112,13 +114,47 @@ def render(index: dict[str, Any]) -> str:
     )
 
 
+def render_verified_generation(generation: VerifiedGeneration) -> str:
+    """Render the public v2 control plane without reviving assets/LFS links."""
+    rows = []
+    for entry in generation.entries:
+        transport = "multipart (capability 2)" if entry.is_multipart else "direct"
+        rows.append(
+            "<tr><td><code>{}</code></td><td><code>{}</code></td><td>{}</td>"
+            "<td>{}</td></tr>".format(
+                html.escape(entry.asset), html.escape(entry.sha256), transport,
+                entry.size_bytes,
+            )
+        )
+    return """<!doctype html>
+<html lang=\"en\"><meta charset=\"utf-8\"><title>soldr-toolchain catalogue v2</title>
+<body><h1>soldr-toolchain catalogue v2</h1><p>Verified generation <code>{}</code>.</p>
+<p>Download URLs are resolved by capability-aware clients after validating the
+immutable publication state; this page intentionally does not link the legacy
+assets/LFS tree.</p><table><thead><tr><th>Asset</th><th>SHA-256</th><th>Transport</th><th>Bytes</th></tr></thead>
+<tbody>{}</tbody></table></body></html>
+""".format(html.escape(generation.generation), "\n".join(rows))
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--src",    type=Path, required=True, help="v1 tree root containing manifest.json")
+    p.add_argument("--src",    type=Path, help="legacy v1 tree root containing manifest.json")
+    p.add_argument("--catalogue-v2", type=Path, help="verified public catalogue.v2.json")
+    p.add_argument("--publication-state", type=Path, help="publish-state.v1.json required with --catalogue-v2")
     p.add_argument("--output", type=Path, required=True, help="path to write index.html")
     args = p.parse_args()
-    index = json.loads((args.src / "manifest.json").read_text(encoding="utf-8"))
-    args.output.write_text(render(index), encoding="utf-8")
+    if args.catalogue_v2 is not None:
+        if args.publication_state is None or args.src is not None:
+            p.error("--catalogue-v2 requires --publication-state and cannot be combined with --src")
+        page = render_verified_generation(load_verified_generation(
+            args.catalogue_v2, args.publication_state
+        ))
+    else:
+        if args.src is None:
+            p.error("--src is required unless --catalogue-v2 is used")
+        index = json.loads((args.src / "manifest.json").read_text(encoding="utf-8"))
+        page = render(index)
+    args.output.write_text(page, encoding="utf-8")
     print(f"  wrote {args.output} ({args.output.stat().st_size} bytes)")
     return 0
 

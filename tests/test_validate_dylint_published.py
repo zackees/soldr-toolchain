@@ -8,7 +8,9 @@ from pathlib import Path
 
 import pytest
 
+import scripts.validate_dylint_published as published
 from scripts.forge_to_catalogue import FORGE_RUST_PLATFORM_BY_SHAPE
+from scripts.generation_reader import PublishedEntry
 from scripts.produce_dylint_release import (
     DRIVER_ASSET_VERSION,
     DRIVER_IDENTITY,
@@ -19,7 +21,6 @@ from scripts.produce_dylint_release import (
     lane_for_shape,
 )
 from scripts.validate_dylint_published import (
-    canonical_asset_url,
     expected_assets,
     install_verified_asset,
     verify_archive,
@@ -182,20 +183,51 @@ def test_pair_archive_requires_exact_nested_identity(tool: str, archive: bytes) 
         )
 
 
-def test_canonical_urls_include_version_platform_and_filename() -> None:
+def test_expected_assets_include_version_platform_and_filename() -> None:
     lane = lane_for_shape("darwin-arm64")
     assets = [asset for asset in expected_assets() if asset.shape == lane.shape]
 
-    assert {
-        canonical_asset_url(asset) for asset in assets
-    } == {
-        "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/"
-        "cargo-dylint/v6.0.3/darwin-aarch64/"
+    assert {asset.filename for asset in assets} == {
         "cargo-dylint-6.0.3-aarch64-apple-darwin.tar.gz",
-        "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/"
-        "dylint-link/v6.0.3/darwin-aarch64/"
         "dylint-link-6.0.3-aarch64-apple-darwin.tar.gz",
-        "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/"
-        "dylint-driver/v6.0.3-nightly-2026-05-28/darwin-aarch64/"
         "dylint-driver-6.0.3-nightly-2026-05-28-aarch64-apple-darwin.tar.gz",
     }
+
+
+def test_v2_multipart_download_reassembles_and_verifies_every_part(monkeypatch: pytest.MonkeyPatch) -> None:
+    payload = b"part-onepart-two"
+    first, second = b"part-one", b"part-two"
+    entry = PublishedEntry(
+        "o", "r", "t", "bundle", hashlib.sha256(payload).hexdigest(), len(payload), 2,
+        parts=(
+            {"number": 1, "sha256": hashlib.sha256(first).hexdigest(), "size_bytes": len(first), "urls": ["https://example.test/one"]},
+            {"number": 2, "sha256": hashlib.sha256(second).hexdigest(), "size_bytes": len(second), "urls": ["https://example.test/two"]},
+        ),
+    )
+    monkeypatch.setattr(published, "_download", lambda url: {"https://example.test/one": first, "https://example.test/two": second}[url])
+    assert published._download_verified_entry(entry) == payload
+
+
+def test_v2_checksum_mismatch_is_fatal_without_mirror_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    wanted = b"wanted"
+    calls: list[str] = []
+    entry = PublishedEntry(
+        "o", "r", "t", "bundle", hashlib.sha256(wanted).hexdigest(), len(wanted), 2,
+        parts=({
+            "number": 1,
+            "sha256": hashlib.sha256(wanted).hexdigest(),
+            "size_bytes": len(wanted),
+            "urls": ["https://example.test/bad", "https://example.test/good"],
+        },),
+    )
+
+    def download(url: str) -> bytes:
+        calls.append(url)
+        return b"badbad" if url.endswith("/bad") else wanted
+
+    monkeypatch.setattr(published, "_download", download)
+    with pytest.raises(RuntimeError, match="digest/size"):
+        published._download_verified_entry(entry)
+    assert calls == ["https://example.test/bad"]
