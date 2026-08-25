@@ -33,6 +33,16 @@
       "summary": "LukeMathWalker/cargo-chef",
       "kind_hint": "tool"
     },
+    "cargo-dylint": {
+      "descriptor": {
+        "url": "cargo-dylint/manifest.json",
+        "size_bytes": 6550,
+        "media_type": "application/vnd.manifest.v1+json",
+        "sha256": "3f1976d690a1b82c95f82a1a3198a56cefcd33baede99474f5e3d09f94202688"
+      },
+      "summary": "trailofbits/dylint",
+      "kind_hint": "tool"
+    },
     "cargo-nextest": {
       "descriptor": {
         "url": "cargo-nextest/manifest.json",
@@ -71,6 +81,16 @@
         "sha256": "bcbf2bb8af7b44de3cfb4edda1dfcc7b419f0fa439236cdcc1832877d7e5aac9"
       },
       "summary": "yfedoseev/crgx",
+      "kind_hint": "tool"
+    },
+    "dylint-link": {
+      "descriptor": {
+        "url": "dylint-link/manifest.json",
+        "size_bytes": 6507,
+        "media_type": "application/vnd.manifest.v1+json",
+        "sha256": "467886f452a8ef3d56364b028628f25310a0026e0b8b04b0deba7edb500e0a21"
+      },
+      "summary": "trailofbits/dylint",
       "kind_hint": "tool"
     },
     "soldr-maturin": {
