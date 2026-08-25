@@ -26,8 +26,9 @@ from typing import Any
 
 SCHEMA_VERSION = 1
 CURRENT_MANIFEST_URL = "https://static.rust-lang.org/dist/channel-rust-nightly.toml"
-PAGES_URL = (
-    "https://zackees.github.io/soldr-toolchain/rust-nightly-versions.v1.json"
+ASSET_URL = (
+    "https://raw.githubusercontent.com/zackees/soldr-toolchain/"
+    "assets/rust-nightly-versions.v1.json"
 )
 ASSET_NAME = "rust-nightly-versions.v1.json"
 USER_AGENT = "soldr-toolchain-nightly-version-map"
@@ -285,7 +286,7 @@ def catalogue_entry(map_bytes: bytes) -> dict[str, str]:
         "repo": "soldr-toolchain",
         "tag": "assets",
         "asset": ASSET_NAME,
-        "url": PAGES_URL,
+        "url": ASSET_URL,
         "sha256": hashlib.sha256(map_bytes).hexdigest(),
     }
 

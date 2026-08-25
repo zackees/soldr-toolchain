@@ -247,4 +247,5 @@ def test_catalogue_entry_is_replaced_and_sha_verified() -> None:
         if row["asset"] == brnv.ASSET_NAME
     ]
     assert rows == [entry]
+    assert entry["url"] == brnv.ASSET_URL
     assert entry["sha256"] == hashlib.sha256(map_bytes).hexdigest()

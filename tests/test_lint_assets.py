@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -35,14 +36,14 @@ def _catalog(tool: str) -> dict:
     }
 
 
-def _catalogue_entry(rel: str) -> dict:
+def _catalogue_entry(rel: str, payload: bytes) -> dict:
     return {
         "owner": "zackees",
         "repo": "soldr-toolchain",
         "tag": "assets",
         "asset": Path(rel).name,
         "url": f"https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/{rel}",
-        "sha256": "0" * 64,
+        "sha256": hashlib.sha256(payload).hexdigest(),
     }
 
 
@@ -64,7 +65,7 @@ def test_flat_catalogue_reference_allows_version_absent_from_tool_catalog(tmp_pa
     (tmp_path / rel).write_bytes(b"sdk")
     _write_json(
         tmp_path / "catalogue.v1.json",
-        {"schema_version": 1, "entries": [_catalogue_entry(rel)]},
+        {"schema_version": 1, "entries": [_catalogue_entry(rel, b"sdk")]},
     )
 
     issues = lint_assets.lint(tmp_path)
@@ -79,7 +80,7 @@ def test_flat_catalogue_reference_allows_unindexed_tool_directory(tmp_path: Path
     (tmp_path / rel).write_bytes(b"bundle")
     _write_json(
         tmp_path / "catalogue.v1.json",
-        {"schema_version": 1, "entries": [_catalogue_entry(rel)]},
+        {"schema_version": 1, "entries": [_catalogue_entry(rel, b"bundle")]},
     )
 
     issues = lint_assets.lint(tmp_path)
@@ -92,6 +93,23 @@ def test_generated_nightly_catalogue_is_a_reserved_top_level_file(tmp_path: Path
 
     issues = lint_assets.lint(tmp_path)
     assert not [issue for issue in issues if issue.rule == "R9"], [str(issue) for issue in issues]
+
+
+def test_flat_catalogue_sha256_must_match_local_bytes(tmp_path: Path) -> None:
+    _write_json(tmp_path / "manifest.json", _index({}))
+    payload = b"nightly map"
+    rel = "rust-nightly-versions.v1.json"
+    (tmp_path / rel).write_bytes(payload)
+    entry = _catalogue_entry(rel, b"different bytes")
+    _write_json(
+        tmp_path / "catalogue.v1.json",
+        {"schema_version": 1, "entries": [entry]},
+    )
+
+    issues = lint_assets.lint(tmp_path)
+    assert any(issue.rule == "R12" and issue.where == rel for issue in issues), [
+        str(issue) for issue in issues
+    ]
 
 
 def test_unrelated_top_level_file_is_still_an_r9_warning(tmp_path: Path) -> None:

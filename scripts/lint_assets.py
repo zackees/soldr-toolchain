@@ -41,6 +41,8 @@ Rules checked:
   R10. No backslashes in any path field (forward slashes only).
   R11. Index.tools[].descriptor sha256/size_bytes match the referenced
        catalog file bytes when those fields are present.
+  R12. Flat catalogue entries that resolve to local files have a sha256
+       matching those exact bytes.
 
 Exit code 0 = clean. Non-zero = at least one rule violated.
 """
@@ -186,6 +188,16 @@ def _collect_flat_index_refs(
                 "R8", "ERROR", rel,
                 f"{doc_name} references URL -> rel={rel!r} but not on disk",
             ))
+            continue
+        declared_sha = entry.get("sha256", "")
+        if declared_sha and not _is_lfs_pointer(disk):
+            actual_sha = _hash_sha256(disk)
+            if declared_sha != actual_sha:
+                issues.append(LintIssue(
+                    "R12", "ERROR", rel,
+                    f"{doc_name} declares sha256={declared_sha!r} "
+                    f"but hash({rel!r})={actual_sha!r}",
+                ))
 
 
 def lint(assets_root: Path) -> list[LintIssue]:
