@@ -36,9 +36,9 @@
     "cargo-dylint": {
       "descriptor": {
         "url": "cargo-dylint/manifest.json",
-        "size_bytes": 6550,
+        "size_bytes": 6570,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "3f1976d690a1b82c95f82a1a3198a56cefcd33baede99474f5e3d09f94202688"
+        "sha256": "b69919d7c2711a14a4080141befa286d0c8b7ab58064cbd6b1253ed02f9b0b64"
       },
       "summary": "trailofbits/dylint",
       "kind_hint": "tool"
@@ -86,9 +86,9 @@
     "dylint-link": {
       "descriptor": {
         "url": "dylint-link/manifest.json",
-        "size_bytes": 6507,
+        "size_bytes": 6527,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "467886f452a8ef3d56364b028628f25310a0026e0b8b04b0deba7edb500e0a21"
+        "sha256": "0c236f5e72d5c4c4b5336e40af2a1eb61585c1176ccf9c284c751e6738a59e4c"
       },
       "summary": "trailofbits/dylint",
       "kind_hint": "tool"
