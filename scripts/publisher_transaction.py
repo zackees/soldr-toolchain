@@ -247,7 +247,10 @@ class GitDataApi:
         if response.get("encoding") != "base64" or not isinstance(response.get("content"), str):
             raise PublishError("malformed blob response")
         try:
-            return base64.b64decode(response["content"], validate=True)
+            # GitHub wraps base64 blob content with newlines. Strip only
+            # whitespace, then retain strict validation for every other byte.
+            content = "".join(response["content"].split())
+            return base64.b64decode(content, validate=True)
         except ValueError as exc:
             raise PublishError("invalid base64 blob response") from exc
 
