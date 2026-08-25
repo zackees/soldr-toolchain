@@ -533,6 +533,14 @@ def test_update_manifest_catalog_publishes_dylint_components(tmp_path: Path) -> 
     assert set(index["tools"]) == {"cargo-dylint", "dylint-link"}
 
 
+def test_sparse_ingest_stages_optional_manifests_conditionally() -> None:
+    workflow = (
+        Path(__file__).resolve().parents[1] / ".github/workflows/forge-ingest.yml"
+    ).read_text(encoding="utf-8")
+    assert "test ! -f manifest.json || git add --sparse -- manifest.json" in workflow
+    assert 'test ! -f "${{ inputs.tool }}/manifest.json" ||' in workflow
+
+
 def test_nextest_ingest_repoints_channels_to_logical_version(tmp_path: Path) -> None:
     (tmp_path / "manifest.json").write_text(
         json.dumps({"kind": "Index", "schema_version": 1, "tools": {}}),
