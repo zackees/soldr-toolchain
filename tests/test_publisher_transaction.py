@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 from urllib.error import HTTPError
 
 import pytest
 
+from scripts import publisher_transaction as pt
 from scripts.publisher_transaction import (
     FailureInjector,
     GenerationPlan,
@@ -32,8 +34,31 @@ from scripts.publisher_transaction import (
     github_transport,
     raw_asset_verifier,
 )
-from scripts.publication_model import canonical_json_bytes, canonical_json_sha256
-from scripts.publication_model import GenerationBinding, verified_public_ledger
+from scripts.publication_model import GenerationBinding, canonical_json_bytes, canonical_json_sha256, verified_public_ledger
+
+
+def test_git_lease_move_clears_checkout_auth_before_fetch_and_push(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    sha = "a" * 40
+    calls: list[tuple[list[str], dict[str, object]]] = []
+
+    def run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append((command, kwargs))
+        stdout = sha + "\n" if command[1:3] == ["rev-parse", "FETCH_HEAD"] else ""
+        return subprocess.CompletedProcess(command, 0, stdout, "")
+
+    monkeypatch.setattr(pt.subprocess, "run", run)
+    mover = pt.git_force_with_lease(tmp_path, "zackees", "soldr-toolchain", "token")
+    mover("refs/heads/www", sha, "b" * 40, "refs/heads/generations/g-www")
+
+    fetch, fetch_kwargs = calls[0]
+    assert fetch[:4] == ["git", "-c", "http.https://github.com/.extraheader=", "fetch"]
+    assert "env" not in fetch_kwargs
+    push_environment = calls[2][1]["env"]
+    assert push_environment["GIT_CONFIG_COUNT"] == "2"
+    assert push_environment["GIT_CONFIG_VALUE_0"] == ""
+    assert push_environment["GIT_CONFIG_VALUE_1"].startswith("AUTHORIZATION: basic ")
 
 
 class Fake:
