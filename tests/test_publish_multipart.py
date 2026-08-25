@@ -629,6 +629,77 @@ def test_publisher_generation_includes_wire_format_version() -> None:
     assert 'generation="source-${source_commit:0:12}-p2"' in workflow
 
 
+def test_retarget_refreshes_stable_and_generation_descriptor_hashes(
+    tmp_path: Path,
+) -> None:
+    www = tmp_path / "www"
+    generation = "source-test-p2"
+    old_ref = "public-a"
+    new_ref = "public-b"
+    child = {
+        "kind": "Catalog",
+        "schema_version": 1,
+        "releases": [
+            {
+                "version": "1",
+                "platforms": [
+                    {
+                        "asset": {
+                            "sha256": "a" * 64,
+                            "parts": [
+                                {
+                                    "urls": [
+                                        "https://raw.githubusercontent.com/"
+                                        f"zackees/soldr-toolchain/{old_ref}/part"
+                                    ]
+                                }
+                            ],
+                        }
+                    }
+                ],
+            }
+        ],
+    }
+    child_bytes = pm.canonical_json_bytes(child)
+    root = {
+        "kind": "Index",
+        "schema_version": 1,
+        "tools": {
+            "tool": {
+                "descriptor": {
+                    "url": f"generations/{generation}/tool/manifest.json",
+                    "size_bytes": len(child_bytes),
+                    "sha256": _sha(child_bytes),
+                }
+            }
+        },
+    }
+    for base in (www, www / "generations" / generation):
+        (base / "tool").mkdir(parents=True)
+        (base / "tool" / "manifest.json").write_bytes(child_bytes)
+        (base / "manifest.json").write_bytes(pm.canonical_json_bytes(root))
+    catalogue = {"schema_version": 2, "entries": []}
+    (www / "generations" / generation / "catalogue.v2.json").write_bytes(
+        pm.canonical_json_bytes(catalogue)
+    )
+    for state in (
+        www / "publish-state.v1.json",
+        www / "generations" / generation / "publish-state.v1.json",
+    ):
+        state.write_text('{"catalogue_sha256":"old"}', encoding="utf-8")
+
+    pm.retarget_public_data_ref(www, old_ref, new_ref, generation)
+
+    for base in (www, www / "generations" / generation):
+        rewritten = (base / "tool" / "manifest.json").read_bytes()
+        descriptor = json.loads((base / "manifest.json").read_text())["tools"][
+            "tool"
+        ]["descriptor"]
+        assert f"/{new_ref}/" in rewritten.decode()
+        assert descriptor["size_bytes"] == len(rewritten)
+        assert descriptor["sha256"] == _sha(rewritten)
+
+
 def test_wire_generation_change_is_not_a_source_identical_noop() -> None:
     binding = GenerationBinding(
         "source-abc-p1",

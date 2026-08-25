@@ -450,6 +450,28 @@ def _raise_on_lfs_reference(root: Path) -> None:
                 raise ValueError(f"www metadata exposes a mutable data ref: {path}")
 
 
+def _refresh_tool_descriptors(
+    root_manifest: Path, child_root: Path, generation: str
+) -> None:
+    if not root_manifest.is_file():
+        return
+    root = _load(root_manifest)
+    for tool, item in root.get("tools", {}).items():
+        child = child_root / tool / "manifest.json"
+        if (
+            child.is_file()
+            and isinstance(item, dict)
+            and isinstance(item.get("descriptor"), dict)
+        ):
+            content = child.read_bytes()
+            item["descriptor"]["url"] = (
+                f"generations/{generation}/{tool}/manifest.json"
+            )
+            item["descriptor"]["size_bytes"] = len(content)
+            item["descriptor"]["sha256"] = hashlib.sha256(content).hexdigest()
+    _write(root_manifest, root)
+
+
 def retarget_public_data_ref(www_dir: Path, old_ref: str, new_ref: str, generation: str) -> None:
     """Retarget a metadata-only build and restore its catalogue binding."""
     old = f"/soldr-toolchain/{old_ref}/".encode()
@@ -458,6 +480,11 @@ def retarget_public_data_ref(www_dir: Path, old_ref: str, new_ref: str, generati
         raw = path.read_bytes()
         if old in raw:
             path.write_bytes(raw.replace(old, new))
+    generation_root = www_dir / "generations" / generation
+    _refresh_tool_descriptors(
+        generation_root / "manifest.json", generation_root, generation
+    )
+    _refresh_tool_descriptors(www_dir / "manifest.json", www_dir, generation)
     catalogue = _load(www_dir / "generations" / generation / "catalogue.v2.json")
     digest = canonical_json_sha256(catalogue)
     for state_path in (www_dir / "publish-state.v1.json", www_dir / "generations" / generation / "publish-state.v1.json"):
@@ -676,17 +703,9 @@ def build_publication(
                     release["min_client_version"] = 2
         _write(generation_root / rel, document)
 
-    root_manifest = generation_root / "manifest.json"
-    if root_manifest.is_file():
-        root = _load(root_manifest)
-        for tool, item in root.get("tools", {}).items():
-            child = generation_root / tool / "manifest.json"
-            if child.is_file() and isinstance(item, dict) and isinstance(item.get("descriptor"), dict):
-                content = child.read_bytes()
-                item["descriptor"]["url"] = f"generations/{generation}/{tool}/manifest.json"
-                item["descriptor"]["size_bytes"] = len(content)
-                item["descriptor"]["sha256"] = hashlib.sha256(content).hexdigest()
-        _write(root_manifest, root)
+    _refresh_tool_descriptors(
+        generation_root / "manifest.json", generation_root, generation
+    )
 
     state_url = f"https://zackees.github.io/soldr-toolchain/generations/{generation}/publish-state.v1.json"
     catalogue_v2 = build_document(
