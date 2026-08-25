@@ -36,7 +36,7 @@ def test_reader_rejects_legacy_or_staging_public_transports(url: str) -> None:
     catalogue, state = _bound_document()
     catalogue["entries"][0]["parts"][0]["urls"] = [url]
     state["catalogue_sha256"] = canonical_json_sha256(catalogue)
-    with pytest.raises(ValueError, match="forbidden|immutable public slot|assets branch"):
+    with pytest.raises(ValueError, match="forbidden|public data slot|assets branch"):
         read_verified_generation(catalogue, state)
 
 

@@ -61,7 +61,7 @@ _LOCAL_URL = re.compile(
     r"zackees/soldr-toolchain/assets/(?P<path>.+)$"
 )
 _LFS_SIGNATURE = b"version https://git-lfs.github.com/spec/v1\n"
-_IMMUTABLE_DATA_REF = re.compile(r"^generations/[A-Za-z0-9._-]+-data$")
+_PUBLIC_DATA_REF = re.compile(r"^public-[ab]$")
 
 
 @dataclass(frozen=True)
@@ -242,13 +242,13 @@ def _raise_on_lfs_reference(root: Path) -> None:
         if "media.githubusercontent.com/media/zackees/soldr-toolchain/assets" in text or "raw.githubusercontent.com/zackees/soldr-toolchain/assets" in text:
             raise ValueError(f"www metadata retains an LFS delivery URL: {path}")
         raw_base = "https://raw.githubusercontent.com/zackees/soldr-toolchain/"
-        allowed = re.compile(re.escape(raw_base) + r"generations/[A-Za-z0-9._-]+-data/")
+        allowed = re.compile(re.escape(raw_base) + r"public-[ab]/")
         for match in re.finditer(re.escape(raw_base), text):
             if allowed.match(text, match.start()) is None:
                 raise ValueError(f"www metadata exposes a mutable data ref: {path}")
 
 
-def retarget_immutable_data_ref(www_dir: Path, old_ref: str, new_ref: str, generation: str) -> None:
+def retarget_public_data_ref(www_dir: Path, old_ref: str, new_ref: str, generation: str) -> None:
     """Retarget a metadata-only build and restore its catalogue binding."""
     old = f"/soldr-toolchain/{old_ref}/".encode()
     new = f"/soldr-toolchain/{new_ref}/".encode()
@@ -286,9 +286,9 @@ def build_publication(
     if active_slot not in {"public-a", "public-b"}:
         raise ValueError("active slot must be public-a or public-b")
     if data_ref is None:
-        data_ref = f"generations/{generation}-data"
-    if not _IMMUTABLE_DATA_REF.fullmatch(data_ref):
-        raise ValueError("data ref must name an immutable generation-data branch")
+        data_ref = active_slot
+    if not _PUBLIC_DATA_REF.fullmatch(data_ref):
+        raise ValueError("data ref must name public-a or public-b")
     publish_timestamp = int(time.time()) if published_at is None else published_at
     if public_dir.exists() or www_dir.exists():
         raise ValueError("publication outputs must not already exist")
@@ -683,7 +683,7 @@ def main() -> int:
         raise ValueError("--active-slot is required for a local-only publication build")
     metadata_only = ledger is not None and all(kind in {"metadata_only", "direct", "exact_hit", "alias", "removed"} for kind in classifications.values())
     published_slot = ledger.binding.active_slot if metadata_only and ledger is not None else args.active_slot
-    data_ref = f"generations/{ledger.binding.generation}-data" if metadata_only and ledger is not None else f"generations/{args.generation}-data"
+    data_ref = published_slot
     result = (
         None
         if args.publish_existing
@@ -779,10 +779,10 @@ def main() -> int:
                 for part in mapping["parts"]:
                     desired_entries[part["path"]] = part["git_blob"]
             if active_tree_covers(api, ledger.binding.active_tree, desired_entries):
-                retarget_immutable_data_ref(
+                retarget_public_data_ref(
                     args.www_dir,
-                    f"generations/{args.generation}-data",
-                    f"generations/{ledger.binding.generation}-data",
+                    args.active_slot,
+                    ledger.binding.active_slot,
                     args.generation,
                 )
                 metadata_only = True
