@@ -626,7 +626,7 @@ def test_refresh_never_materializes_the_assets_lfs_checkout() -> None:
 
 def test_publisher_generation_includes_wire_format_version() -> None:
     workflow = (Path(__file__).parents[1] / ".github/workflows/publish-multipart.yml").read_text()
-    assert 'generation="source-${source_commit:0:12}-p2"' in workflow
+    assert 'generation="source-${source_commit:0:12}-p3"' in workflow
 
 
 def test_retarget_refreshes_stable_and_generation_descriptor_hashes(
