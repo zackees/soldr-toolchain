@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "expected_source_entries": 150,
+  "expected_external_entries": 3,
+  "entries": [
+    {
+      "owner": "zackees",
+      "repo": "clang-tool-chain-bins",
+      "tag": "main",
+      "asset": "llvm-21.1.5-linux-x86_64.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/clang-tool-chain-bins/main/assets/clang/linux/x86_64/llvm-21.1.5-linux-x86_64.tar.zst",
+      "sha256": "4021cc49d70472122761709e7376835dfc857b5ec77183fa969b5f61d0f13a2f",
+      "size_bytes": 98921700
+    },
+    {
+      "owner": "zackees",
+      "repo": "clang-tool-chain-bins",
+      "tag": "main",
+      "asset": "llvm-21.1.5-linux-arm64.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/clang-tool-chain-bins/main/assets/clang/linux/arm64/llvm-21.1.5-linux-arm64.tar.zst",
+      "sha256": "df774b7fc1e392458325552addb67bf8c11bd452ad7bc660cf77103c617f89c5",
+      "size_bytes": 95393222
+    },
+    {
+      "owner": "zackees",
+      "repo": "clang-tool-chain-bins",
+      "tag": "main",
+      "asset": "llvm-21.1.5-win-x86_64.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/clang-tool-chain-bins/main/assets/clang/win/x86_64/llvm-21.1.5-win-x86_64.tar.zst",
+      "sha256": "8d6dd1cbc2261f8e6fa657b48f10a6e44223441d4b5487f056838cb8c2403a77",
+      "size_bytes": 61647904
+    }
+  ]
+}
