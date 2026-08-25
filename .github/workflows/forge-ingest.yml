@@ -69,7 +69,9 @@ jobs:
           sparse-checkout: |
             .gitattributes
             catalogue.v1.json
+            manifest.json
             .forge-ingest.log.jsonl
+            ${{ inputs.tool }}/manifest.json
 
       - name: Assert selective LFS checkout
         shell: bash
@@ -81,6 +83,7 @@ jobs:
           export GIT_LFS_SKIP_SMUDGE=1
           unexpected=$(find assets -type f -not -path 'assets/.git/*' \
             ! -name '.gitattributes' ! -name 'catalogue.v1.json' \
+            ! -name 'manifest.json' \
             ! -name '.forge-ingest.log.jsonl' -print)
           if [[ -n "$unexpected" ]]; then
             echo "unexpected pre-existing asset materialized:" >&2
@@ -140,6 +143,9 @@ jobs:
           # subtree so its new LFS pointer is staged despite skip-worktree;
           # staging the whole index would turn omitted files into deletions.
           git add --sparse -- catalogue.v1.json .forge-ingest.log.jsonl
+          test ! -f manifest.json || git add --sparse -- manifest.json
+          test ! -f "${{ inputs.tool }}/manifest.json" || \
+            git add --sparse -- "${{ inputs.tool }}/manifest.json"
           git add --sparse -f -- "${{ inputs.tool }}/${{ inputs.version }}"
           if git diff --cached --quiet; then
             echo "no diff; nothing to ingest"
