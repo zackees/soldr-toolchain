@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from urllib.error import HTTPError
 
 import pytest
 
@@ -28,6 +29,7 @@ from scripts.publisher_transaction import (
     verified_retained_entries,
     active_tree_covers,
     fetch_staging_ledger,
+    github_transport,
     raw_asset_verifier,
 )
 from scripts.publication_model import canonical_json_bytes, canonical_json_sha256
@@ -89,6 +91,39 @@ class Fake:
         if self.refs.get(ref) != expected:
             raise LeaseRace(ref)
         self.refs[ref] = sha
+
+
+def test_github_transport_retries_idempotent_object_writes(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = 0
+    delays: list[int] = []
+
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+        def read(self):
+            return b'{"sha":"1111111111111111111111111111111111111111"}'
+
+    def opener(*_args, **_kwargs):
+        nonlocal calls
+        calls += 1
+        if calls < 3:
+            raise HTTPError("https://api.github.test", 502, "Bad Gateway", {}, None)
+        return Response()
+
+    monkeypatch.setattr("scripts.publisher_transaction.urlopen", opener)
+    monkeypatch.setattr("scripts.publisher_transaction.time.sleep", delays.append)
+
+    result = github_transport("token", api_url="https://api.github.test")(
+        "POST", "/repos/o/r/git/blobs", {"content": "eA==", "encoding": "base64"},
+    )
+
+    assert result["sha"] == "1" * 40
+    assert calls == 3
+    assert delays == [1, 2]
 
 
 def test_inventory_materializer_retention_and_tree() -> None:
