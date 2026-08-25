@@ -1,0 +1,148 @@
+{
+  "$schema": "https://zackees.github.io/manifest.json/v1/manifest.schema.json",
+  "kind": "Catalog",
+  "schema_version": 1,
+  "tool": "dylint-link",
+  "online_url": "https://zackees.github.io/soldr-toolchain/dylint-link/manifest.json",
+  "channels": {
+    "pinned": "v6.0.3",
+    "latest-stable": "v6.0.3",
+    "stable": "v6.0.3"
+  },
+  "releases": [
+    {
+      "schema_version": 1,
+      "version": "v6.0.3",
+      "published_at": "",
+      "min_client_version": 2,
+      "platforms": [
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "dylint-link-6.0.3-aarch64-apple-darwin.tar.gz",
+            "size_bytes": 998419,
+            "sha256": "e3082425a3430649e169a4f5a03860b1fa160038a7f34a2f833e8f8816096f83",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-link/v6.0.3/darwin-aarch64/dylint-link-6.0.3-aarch64-apple-darwin.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/dylint-link/v6.0.3/darwin-aarch64/dylint-link-6.0.3-aarch64-apple-darwin.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "dylint-link-6.0.3-x86_64-apple-darwin.tar.gz",
+            "size_bytes": 1049374,
+            "sha256": "1618ca063c93d1c6c9c12c21652674045b405631905287731a428aff70d416a2",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-link/v6.0.3/darwin-x86_64/dylint-link-6.0.3-x86_64-apple-darwin.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/dylint-link/v6.0.3/darwin-x86_64/dylint-link-6.0.3-x86_64-apple-darwin.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "dylint-link-6.0.3-aarch64-unknown-linux-gnu.tar.gz",
+            "size_bytes": 1119928,
+            "sha256": "21eb9dbac970e2e5815f3f23c050ccedab9378a2e6f43cc18da70d5bf7fda8c8",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-link/v6.0.3/linux-aarch64-glibc/dylint-link-6.0.3-aarch64-unknown-linux-gnu.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/dylint-link/v6.0.3/linux-aarch64-glibc/dylint-link-6.0.3-aarch64-unknown-linux-gnu.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "dylint-link-6.0.3-aarch64-unknown-linux-musl.tar.gz",
+            "size_bytes": 1140223,
+            "sha256": "40d45bc37d07233b3050ddd2baea8044ad70f11fad033a11c624e59024987a19",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-link/v6.0.3/linux-aarch64-musl/dylint-link-6.0.3-aarch64-unknown-linux-musl.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/dylint-link/v6.0.3/linux-aarch64-musl/dylint-link-6.0.3-aarch64-unknown-linux-musl.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "dylint-link-6.0.3-x86_64-unknown-linux-gnu.tar.gz",
+            "size_bytes": 1178666,
+            "sha256": "e414f89936d606690e7920335c81f37e825b180a8e07856fd4cef2f870c375e2",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-link/v6.0.3/linux-x86_64-glibc/dylint-link-6.0.3-x86_64-unknown-linux-gnu.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/dylint-link/v6.0.3/linux-x86_64-glibc/dylint-link-6.0.3-x86_64-unknown-linux-gnu.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "dylint-link-6.0.3-x86_64-unknown-linux-musl.tar.gz",
+            "size_bytes": 1226974,
+            "sha256": "874f85c1cab31218d8062a13665ec36da51d5aa62466f466761802c955d47a27",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-link/v6.0.3/linux-x86_64-musl/dylint-link-6.0.3-x86_64-unknown-linux-musl.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/dylint-link/v6.0.3/linux-x86_64-musl/dylint-link-6.0.3-x86_64-unknown-linux-musl.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "aarch64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "dylint-link-6.0.3-aarch64-pc-windows-msvc.tar.gz",
+            "size_bytes": 1536399,
+            "sha256": "a3d2ec6c79251b5fa111463791c658beabea3c1653be64ad64500a32c4fd4fc7",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-link/v6.0.3/windows-aarch64-msvc/dylint-link-6.0.3-aarch64-pc-windows-msvc.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/dylint-link/v6.0.3/windows-aarch64-msvc/dylint-link-6.0.3-aarch64-pc-windows-msvc.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "x86_64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "dylint-link-6.0.3-x86_64-pc-windows-msvc.tar.gz",
+            "size_bytes": 1659647,
+            "sha256": "6787e530646c6859a757f9300140fbfab285e16ac13191ec67d9c7b4debddc44",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-link/v6.0.3/windows-x86_64-msvc/dylint-link-6.0.3-x86_64-pc-windows-msvc.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/dylint-link/v6.0.3/windows-x86_64-msvc/dylint-link-6.0.3-x86_64-pc-windows-msvc.tar.gz"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

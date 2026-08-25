@@ -1,0 +1,148 @@
+{
+  "$schema": "https://zackees.github.io/manifest.json/v1/manifest.schema.json",
+  "kind": "Catalog",
+  "schema_version": 1,
+  "tool": "cargo-dylint",
+  "online_url": "https://zackees.github.io/soldr-toolchain/cargo-dylint/manifest.json",
+  "channels": {
+    "pinned": "v6.0.3",
+    "latest-stable": "v6.0.3",
+    "stable": "v6.0.3"
+  },
+  "releases": [
+    {
+      "schema_version": 1,
+      "version": "v6.0.3",
+      "published_at": "",
+      "min_client_version": 2,
+      "platforms": [
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "cargo-dylint-6.0.3-aarch64-apple-darwin.tar.gz",
+            "size_bytes": 3062189,
+            "sha256": "54b04bd95134835592104bb84109946ca0ca739515677f07b9416dbabc69f4f7",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/darwin-aarch64/cargo-dylint-6.0.3-aarch64-apple-darwin.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/darwin-aarch64/cargo-dylint-6.0.3-aarch64-apple-darwin.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "cargo-dylint-6.0.3-x86_64-apple-darwin.tar.gz",
+            "size_bytes": 3198309,
+            "sha256": "ec54b0c27949d1f4ddf434903545bc0cc5001500599823e1680a27a25271dd77",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/darwin-x86_64/cargo-dylint-6.0.3-x86_64-apple-darwin.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/darwin-x86_64/cargo-dylint-6.0.3-x86_64-apple-darwin.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "cargo-dylint-6.0.3-aarch64-unknown-linux-gnu.tar.gz",
+            "size_bytes": 3403684,
+            "sha256": "d2491b1aede808fe4b6a639ec719de8fb554599f81a9582fa68d957c8f39998e",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/linux-aarch64-glibc/cargo-dylint-6.0.3-aarch64-unknown-linux-gnu.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/linux-aarch64-glibc/cargo-dylint-6.0.3-aarch64-unknown-linux-gnu.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "cargo-dylint-6.0.3-aarch64-unknown-linux-musl.tar.gz",
+            "size_bytes": 3525796,
+            "sha256": "efb771a53abbdd1a09d41985a6c282c6f6ae1c71379b590c38ead11a40f477bc",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/linux-aarch64-musl/cargo-dylint-6.0.3-aarch64-unknown-linux-musl.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/linux-aarch64-musl/cargo-dylint-6.0.3-aarch64-unknown-linux-musl.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "cargo-dylint-6.0.3-x86_64-unknown-linux-gnu.tar.gz",
+            "size_bytes": 3453450,
+            "sha256": "7f4009ffe0dbb1ef12cf615d8bee6fbd638bfd7ffaa590f20ad3556b0a1109ff",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/linux-x86_64-glibc/cargo-dylint-6.0.3-x86_64-unknown-linux-gnu.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/linux-x86_64-glibc/cargo-dylint-6.0.3-x86_64-unknown-linux-gnu.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "cargo-dylint-6.0.3-x86_64-unknown-linux-musl.tar.gz",
+            "size_bytes": 3667425,
+            "sha256": "8d00bee12c71401366134567b9e68def0a85caf1b4bdf37448a1c4e013d368f8",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/linux-x86_64-musl/cargo-dylint-6.0.3-x86_64-unknown-linux-musl.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/linux-x86_64-musl/cargo-dylint-6.0.3-x86_64-unknown-linux-musl.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "aarch64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "cargo-dylint-6.0.3-aarch64-pc-windows-msvc.tar.gz",
+            "size_bytes": 2971912,
+            "sha256": "320704910b73375eb161f29d74df0450f2138ac2a48c1a4c7abfb771c863b380",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/windows-aarch64-msvc/cargo-dylint-6.0.3-aarch64-pc-windows-msvc.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/windows-aarch64-msvc/cargo-dylint-6.0.3-aarch64-pc-windows-msvc.tar.gz"
+            ]
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "x86_64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "cargo-dylint-6.0.3-x86_64-pc-windows-msvc.tar.gz",
+            "size_bytes": 3171953,
+            "sha256": "b059fd64094ee1f8968c7c6518c38443ad2cff7a6acff9a0d3418f4d52768b43",
+            "urls": [
+              "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/windows-x86_64-msvc/cargo-dylint-6.0.3-x86_64-pc-windows-msvc.tar.gz",
+              "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets/cargo-dylint/v6.0.3/windows-x86_64-msvc/cargo-dylint-6.0.3-x86_64-pc-windows-msvc.tar.gz"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
