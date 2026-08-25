@@ -16,6 +16,8 @@ _TOP_KEYS = frozenset(("schema_version", "generation", "publication_state", "gen
 _ENTRY_KEYS = frozenset(("owner", "repo", "tag", "asset", "sha256", "size_bytes", "source_path", "min_client_version", "urls", "parts"))
 _PART_KEYS = frozenset(("number", "sha256", "size_bytes", "urls"))
 _GENERATION = re.compile(r"^[A-Za-z0-9._:-]+$", re.ASCII)
+_PAGES_HOST = "zackees.github.io"
+_PAGES_PATH = "/soldr-toolchain/"
 
 
 def _is_int(value: Any) -> bool:
@@ -45,6 +47,31 @@ def _publication_state_url(value: Any, generation: str) -> bool:
     segments = parsed.path.split("/")
     return (len(segments) >= 4 and segments[-3:] == ["generations", generation, "publish-state.v1.json"] and
             not parsed.query and not parsed.fragment)
+
+
+def _self_hosted_direct_url(value: str, generation: str) -> bool:
+    """Require producer-owned direct payloads to use one immutable generation."""
+    try:
+        parsed = urlsplit(value)
+    except ValueError:
+        # _urls reports the malformed HTTPS URL; semantic validation must
+        # collect errors rather than raising on hostile authority syntax.
+        return True
+    if parsed.hostname != _PAGES_HOST or not parsed.path.startswith(_PAGES_PATH):
+        return True
+    expected = f"{_PAGES_PATH}generations/{generation}/"
+    relative = parsed.path.removeprefix(expected)
+    return (
+        parsed.scheme == "https"
+        and parsed.netloc == _PAGES_HOST
+        and not parsed.query
+        and not parsed.fragment
+        and parsed.path.startswith(expected)
+        and bool(relative)
+        and "%" not in relative
+        and "\\" not in relative
+        and all(segment not in {"", ".", ".."} for segment in relative.split("/"))
+    )
 
 
 def _urls(value: Any, prefix: str, errors: list[str], all_urls: set[str], part_urls: Mapping[str, tuple[str, int]] | None = None) -> None:
@@ -157,6 +184,12 @@ def validate_document(document: Any) -> list[str]:
             if "source_path" in entry:
                 errors.append(f"{prefix}.source_path is reserved for publisher-owned multipart assets")
             _urls(entry["urls"], f"{prefix}.urls", errors, all_urls, part_urls)
+            if isinstance(generation, str) and isinstance(entry["urls"], list):
+                for url in entry["urls"]:
+                    if isinstance(url, str) and not _self_hosted_direct_url(url, generation):
+                        errors.append(
+                            f"{prefix}.urls contains a producer-owned URL that is not immutable and generation-qualified"
+                        )
             continue
         if "source_path" not in entry:
             errors.append(f"{prefix}.parts requires source_path")

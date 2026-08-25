@@ -22,6 +22,7 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping
+from urllib.parse import urlsplit
 
 from scripts.catalogue_v2 import build_document
 from scripts.publication_model import (
@@ -40,6 +41,7 @@ from scripts.publisher_transaction import (
     PublicStateAbsent,
     active_tree_covers,
     fetch_staging_ledger,
+    fetch_retained_direct_payloads,
     fetch_retained_public_ledgers,
     fetch_verified_public_ledger,
     git_force_with_lease,
@@ -84,9 +86,7 @@ _EXTERNAL_LLVM_POLICY: dict[str, dict[str, str | int]] = {
 }
 _SOURCE_INVENTORY = "source-inventory.v1.json"
 _EXTERNAL_INVENTORY = "multipart-external-entries.v1.json"
-_LOCAL_PAGES_JSON = re.compile(
-    r"^https://zackees\.github\.io/soldr-toolchain/(?P<path>[^?#]+\.json)$"
-)
+_PAGES_ORIGIN = "https://zackees.github.io/soldr-toolchain"
 _LFS_SIGNATURE = b"version https://git-lfs.github.com/spec/v1\n"
 _PUBLIC_DATA_REF = re.compile(r"^public-[ab]$")
 
@@ -134,6 +134,30 @@ def _entry_path(url: str) -> str | None:
         return match.group("path")
     policy = _EXTERNAL_LLVM_POLICY.get(url)
     return str(policy["path"]) if policy is not None else None
+
+
+def _local_pages_path(url: str) -> str | None:
+    """Return a safe repo-relative path for producer-owned Pages payloads."""
+    try:
+        parsed = urlsplit(url)
+    except ValueError as exc:
+        raise ValueError(f"local Pages catalogue URL is invalid: {url}") from exc
+    if parsed.scheme != "https" or parsed.hostname != "zackees.github.io":
+        return None
+    prefix = "/soldr-toolchain/"
+    if not parsed.path.startswith(prefix):
+        return None
+    relative = parsed.path.removeprefix(prefix)
+    if (
+        parsed.netloc != "zackees.github.io"
+        or parsed.query
+        or parsed.fragment
+        or "%" in relative
+        or "\\" in relative
+        or any(segment in {"", ".", ".."} for segment in relative.split("/"))
+    ):
+        raise ValueError(f"local Pages catalogue URL is not a safe immutable path: {url}")
+    return relative
 
 
 def _source_entries(assets_dir: Path) -> list[dict[str, Any]]:
@@ -442,6 +466,21 @@ def retarget_public_data_ref(www_dir: Path, old_ref: str, new_ref: str, generati
         _write(state_path, state)
 
 
+def source_identical_noop(
+    *,
+    source_commit: str,
+    generation: str,
+    ledger: VerifiedPublicLedger,
+    classifications: Mapping[str, str],
+) -> bool:
+    """Return true only when both source bytes and wire generation are live."""
+    return (
+        source_commit == ledger.binding.source_commit
+        and generation == ledger.binding.generation
+        and all(kind in {"exact_hit", "direct"} for kind in classifications.values())
+    )
+
+
 def build_publication(
     assets_dir: Path,
     public_dir: Path,
@@ -458,6 +497,7 @@ def build_publication(
     reuse_part_blobs: dict[tuple[str, int], str] | None = None,
     retained_generations: list[dict[str, Any]] | None = None,
     retained_ledgers: list[VerifiedPublicLedger] | None = None,
+    retained_direct_payloads: Mapping[str, bytes] | None = None,
     published_at: int | None = None,
 ) -> PublicationResult:
     """Build one complete data tree plus one generation-qualified site."""
@@ -501,6 +541,7 @@ def build_publication(
     published: dict[str, PartitionedAsset] = {}
     entries_v2: list[dict[str, Any]] = []
     logical_assets: dict[str, Any] = {}
+    direct_pages_payloads: dict[str, bytes] = {}
     for row in sorted(entries_v1, key=lambda value: tuple(str(value.get(key, "")) for key in ("owner", "repo", "tag", "asset")) if isinstance(value, dict) else ("",)):
         if not isinstance(row, dict):
             raise ValueError("catalogue v1 contains a non-object entry")
@@ -520,20 +561,30 @@ def build_publication(
             base["asset"] = rel
         logical_key = "\0".join(str(base[key]) for key in ("owner", "repo", "tag", "asset"))
         if rel is None:
-            pages_match = _LOCAL_PAGES_JSON.fullmatch(url)
-            if pages_match is not None:
-                pages_source = _source_path(assets_dir, pages_match.group("path"))
+            pages_path = _local_pages_path(url)
+            if pages_path is not None:
+                pages_source = _source_path(assets_dir, pages_path)
                 if not pages_source.is_file():
                     raise ValueError(f"local Pages catalogue source is missing: {url}")
-                deployed = canonical_json_bytes(_load(pages_source))
+                deployed = pages_source.read_bytes()
+                if hashlib.sha256(deployed).hexdigest() != sha:
+                    raise ValueError(f"local Pages catalogue source failed SHA-256 verification: {url}")
+                declared_size = row.get("size_bytes")
+                if declared_size is not None and (
+                    not isinstance(declared_size, int)
+                    or isinstance(declared_size, bool)
+                    or declared_size != len(deployed)
+                ):
+                    raise ValueError(f"local Pages catalogue source failed size verification: {url}")
+                old = direct_pages_payloads.setdefault(pages_path, deployed)
+                if old != deployed:
+                    raise ValueError(f"local Pages catalogue path has conflicting payloads: {url}")
                 entries_v2.append(
                     {
                         **base,
-                        "sha256": hashlib.sha256(deployed).hexdigest(),
                         "size_bytes": len(deployed),
                         "urls": [
-                            "https://zackees.github.io/soldr-toolchain/"
-                            f"generations/{generation}/{pages_match.group('path')}"
+                            f"{_PAGES_ORIGIN}/generations/{generation}/{pages_path}"
                         ],
                     }
                 )
@@ -602,9 +653,14 @@ def build_publication(
     generation_root.mkdir(parents=True)
     if (assets_dir / "index.html").is_file():
         shutil.copyfile(assets_dir / "index.html", generation_root / "index.html")
+    for relative, payload in sorted(direct_pages_payloads.items()):
+        target = generation_root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(payload)
     for source in sorted(assets_dir.rglob("*.json"), key=lambda item: item.as_posix()):
         rel = source.relative_to(assets_dir)
-        if rel.as_posix() in {
+        relative = rel.as_posix()
+        if relative in direct_pages_payloads or relative in {
             "catalogue.v1.json",
             "asset-index.json",
             _SOURCE_INVENTORY,
@@ -699,6 +755,19 @@ def build_publication(
         old_root = www_dir / "generations" / old_generation
         _write(old_root / "publish-state.v1.json", retained.ledger)
         _write(old_root / "catalogue.v2.json", retained.catalogue)
+    for relative, payload in sorted((retained_direct_payloads or {}).items()):
+        if (
+            not relative.startswith("generations/")
+            or "%" in relative
+            or "\\" in relative
+            or any(segment in {"", ".", ".."} for segment in relative.split("/"))
+        ):
+            raise ValueError("retained direct payload has an unsafe Pages path")
+        target = www_dir / relative
+        if target.is_file() and target.read_bytes() != payload:
+            raise ValueError("retained direct payload conflicts with the current generation")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(payload)
 
     schema_source = Path(__file__).resolve().parent.parent / "schemas" / "catalogue.v2.schema.json"
     if schema_source.is_file():
@@ -764,7 +833,11 @@ def main() -> int:
     if args.verify_public:
         token = os.environ.get(args.token_env, "")
         verified_api = GitDataApi(args.owner, args.repo, github_transport(token))
-        verified, www_commit, www_tree = fetch_verified_public_ledger(verified_api, pages_base=f"https://{args.owner}.github.io/{args.repo}")
+        verified, www_commit, www_tree = fetch_verified_public_ledger(
+            verified_api,
+            pages_base=f"https://{args.owner}.github.io/{args.repo}",
+            verify_direct_payloads=True,
+        )
         record_public_proof(verified_api, generation=verified.binding.generation, www_commit=www_commit)
         print(json.dumps({"public_verified": True, "generation": verified.binding.generation, "generation_www_commit": www_commit, "generation_www_tree": www_tree}, sort_keys=True))
         return 0
@@ -777,6 +850,7 @@ def main() -> int:
     reuse_part_blobs: dict[tuple[str, int], str] = {}
     retained_index: list[dict[str, Any]] = []
     retained_ledgers: list[VerifiedPublicLedger] = []
+    retained_direct_payloads: dict[str, bytes] = {}
     staged_metadata: Mapping[str, Any] | None = None
     staged_entries: dict[str, str] = {}
     staged_part_blobs: dict[tuple[str, int], str] = {}
@@ -836,7 +910,12 @@ def main() -> int:
             classifications = classify_inventory(inventory_rows, ledger)
             # A source-identical exact inventory is a true no-op: no LFS,
             # blobs, trees, commits, or refs are created.
-            if not recovered_public_state and args.source_commit == ledger.binding.source_commit and all(kind in {"exact_hit", "direct"} for kind in classifications.values()):
+            if not recovered_public_state and source_identical_noop(
+                source_commit=args.source_commit,
+                generation=args.generation,
+                ledger=ledger,
+                classifications=classifications,
+            ):
                 # Pages proof binds metadata, while this separately proves the
                 # complete path/blob/type/size set in the active data tree.
                 verified_reused_entries(api, ledger)
@@ -863,6 +942,10 @@ def main() -> int:
             materialize_selected(inventory_rows, classifications, args.assets_dir)
             retained = fetch_retained_public_ledgers(api, pages_base=f"https://{args.owner}.github.io/{args.repo}", stable=ledger)
             retained_ledgers = retained
+            retained_direct_payloads = fetch_retained_direct_payloads(
+                retained,
+                pages_base=f"https://{args.owner}.github.io/{args.repo}",
+            )
             reuse_mappings = reuse_mappings | {sha: mapping for retained_ledger in retained for sha, mapping in retained_ledger.ledger["assets_by_sha256"].items()}
             retained_entries = verified_retained_entries(api, retained)
             reuse_part_blobs = staged_part_blobs | verified_retained_part_index(api, retained)
@@ -905,6 +988,7 @@ def main() -> int:
             reuse_part_blobs=reuse_part_blobs,
             retained_generations=retained_index or None,
             retained_ledgers=retained_ledgers,
+            retained_direct_payloads=retained_direct_payloads,
             published_at=publication_time,
         )
     )

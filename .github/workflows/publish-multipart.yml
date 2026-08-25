@@ -49,7 +49,9 @@ jobs:
           # The source determines the idempotent staging ref; retention age is
           # this transaction attempt and staging persists it across retries.
           attempt_published_at=$(date -u +%s)
-          generation="source-${source_commit:0:12}"
+          # Bump the publication-format suffix whenever immutable Pages wire
+          # semantics change; an existing generation ref is never overwritten.
+          generation="source-${source_commit:0:12}-p2"
           {
             echo "source_commit=$source_commit"
             echo "source_tree=$source_tree"

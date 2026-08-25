@@ -99,6 +99,23 @@ def test_semantic_limits_duplicates_contiguity_and_utf8_url_bytes() -> None:
     assert validate_document(_document([too_large]))
 
 
+def test_producer_owned_direct_urls_are_generation_qualified() -> None:
+    direct = _direct()
+    direct["urls"] = ["https://zackees.github.io/soldr-toolchain/rust-nightly-versions.v1.json"]
+    assert any("generation-qualified" in error for error in validate_document(_document([direct])))
+
+    direct["urls"] = [
+        f"https://zackees.github.io/soldr-toolchain/generations/{GENERATION}/rust-nightly-versions.v1.json"
+    ]
+    assert validate_document(_document([direct])) == []
+
+    direct["urls"] = [direct["urls"][0] + "?mutable=1"]
+    assert any("generation-qualified" in error for error in validate_document(_document([direct])))
+
+    direct["urls"] = ["https://[invalid/rust-nightly-versions.v1.json"]
+    assert any("invalid HTTPS" in error for error in validate_document(_document([direct])))
+
+
 def test_schema_semantic_parity_for_example() -> None:
     document = json.loads(Path("examples/catalogue.v2.json").read_text())
     assert not _schema_errors(document)
