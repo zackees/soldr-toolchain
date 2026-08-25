@@ -1047,7 +1047,14 @@ def _update_manifest_catalog(
     Pages ``manifest.json`` tree, so the per-tool Catalog must know
     about locally built bundles too.
     """
-    if tool not in {"cargo-chef", "crgx", "cargo-binstall", "cargo-nextest"}:
+    if tool not in {
+        "cargo-chef",
+        "crgx",
+        "cargo-binstall",
+        "cargo-nextest",
+        "cargo-dylint",
+        "dylint-link",
+    }:
         return
     platform = SHAPE_TO_PLATFORM_TUPLE.get(shape)
     if platform is None:

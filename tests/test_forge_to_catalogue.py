@@ -506,6 +506,33 @@ def test_update_manifest_catalog_merges_rust_cli_platform(tmp_path: Path) -> Non
     )
 
 
+def test_update_manifest_catalog_publishes_dylint_components(tmp_path: Path) -> None:
+    (tmp_path / "manifest.json").write_text(
+        json.dumps({"kind": "Index", "schema_version": 1, "tools": {}}),
+        encoding="utf-8",
+    )
+
+    for tool in ("cargo-dylint", "dylint-link"):
+        asset_name = f"{tool}-6.0.3-x86_64-unknown-linux-gnu.tar.gz"
+        fc._update_manifest_catalog(
+            tmp_path,
+            tool=tool,
+            package_version="6.0.3",
+            shape="linux-x64-gnu",
+            asset_rel=Path(f"{tool}/v6.0.3/linux-x86_64-glibc/{asset_name}"),
+            asset_name=asset_name,
+            asset_size=123,
+            sha256="a" * 64,
+        )
+
+        catalog = json.loads((tmp_path / tool / "manifest.json").read_text())
+        assert catalog["channels"]["pinned"] == "v6.0.3"
+        assert catalog["releases"][0]["version"] == "v6.0.3"
+
+    index = json.loads((tmp_path / "manifest.json").read_text())
+    assert set(index["tools"]) == {"cargo-dylint", "dylint-link"}
+
+
 def test_nextest_ingest_repoints_channels_to_logical_version(tmp_path: Path) -> None:
     (tmp_path / "manifest.json").write_text(
         json.dumps({"kind": "Index", "schema_version": 1, "tools": {}}),
