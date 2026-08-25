@@ -31,8 +31,15 @@ def _public_url(url: object) -> str:
     if hostname == "raw.githubusercontent.com":
         segments = [segment for segment in parsed.path.split("/") if segment]
         is_toolchain_repo = len(segments) >= 2 and segments[:2] == ["zackees", "soldr-toolchain"]
-        if is_toolchain_repo and (len(segments) < 4 or segments[2] not in {"public-a", "public-b"}):
-            raise ValueError(f"published URL is not an immutable public slot: {url}")
+        immutable_generation = (
+            len(segments) >= 4
+            and segments[2] == "generations"
+            and segments[3].endswith("-data")
+            and segments[3][:-5]
+            and all(character.isalnum() or character in "._-" for character in segments[3][:-5])
+        )
+        if is_toolchain_repo and not immutable_generation:
+            raise ValueError(f"published URL is not an immutable generation ref: {url}")
     return url
 
 

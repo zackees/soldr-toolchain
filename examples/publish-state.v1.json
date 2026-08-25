@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "generation": "2026-08-24T00:00:00Z-source0001",
+  "generation": "2026-08-24T00-00-00Z-source0001",
   "source": {"commit": "1111111111111111111111111111111111111111", "tree": "2222222222222222222222222222222222222222", "branch": "assets"},
   "active": {"slot": "public-a", "commit": "5555555555555555555555555555555555555555", "tree": "6666666666666666666666666666666666666666"},
   "previous": {"slot": "public-b", "commit": "7777777777777777777777777777777777777777", "tree": "8888888888888888888888888888888888888888"},
-  "catalogue_sha256": "620fdc2dbd5d8d4561e53cdff035807478b4b269bdcb483c981bf5c68fe2f98c",
+  "catalogue_sha256": "da26891e34b163b276cce919d53e8834b4d5e156680242a99e5e45d4d9f4933d",
   "assets_by_sha256": {},
   "logical_assets": {},
   "partitioner_default": {"version": 1, "target_bytes": 3, "max_bytes": 99614720},
   "published_at": 1,
-  "retained_generations": [{"generation": "2026-08-24T00:00:00Z-source0001", "published_at": 1}],
+  "retained_generations": [{"generation": "2026-08-24T00-00-00Z-source0001", "published_at": 1}],
   "parts_by_sha256": {}
 }

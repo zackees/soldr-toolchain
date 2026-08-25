@@ -10,7 +10,7 @@ from jsonschema import Draft202012Validator
 from scripts.catalogue_v2 import CURRENT_CLIENT_CAPABILITY, bind_catalogue_to_publication_state, build_document, validate_document
 from scripts.publication_model import MAX_PART_COUNT, canonical_json_sha256
 
-GENERATION = "2026-08-24T00:00:00Z-source0001"
+GENERATION = "2026-08-24T00-00-00Z-source0001"
 STATE_URL = f"https://zackees.github.io/soldr-toolchain/generations/{GENERATION}/publish-state.v1.json"
 
 
@@ -76,7 +76,7 @@ def test_generation_ascii_and_capability_hostile_inputs() -> None:
         assert _schema_errors(document), generation
         assert validate_document(document), generation
     document = _document([_direct()])
-    document["publication_state"]["url"] = STATE_URL.replace("00:00", "00%3A00")
+    document["publication_state"]["url"] = STATE_URL.replace("T00-00", "T00%2D00")
     assert validate_document(document)
     missing = _document([_multipart()]); missing["entries"][0].pop("min_client_version")
     assert _schema_errors(missing) and validate_document(missing)

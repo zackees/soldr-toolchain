@@ -2,26 +2,26 @@
   "description": "Cross-repository Soldr catalogue-v2/publication-state contract fixture. catalogue is bound by publication_state.catalogue_sha256 over canonical JSON bytes.",
   "catalogue": {
     "schema_version": 2,
-    "generation": "2026-08-24T00:00:00Z-source0001",
+    "generation": "2026-08-24T00-00-00Z-source0001",
     "publication_state": {
-      "generation": "2026-08-24T00:00:00Z-source0001",
-      "url": "https://zackees.github.io/soldr-toolchain/generations/2026-08-24T00:00:00Z-source0001/publish-state.v1.json"
+      "generation": "2026-08-24T00-00-00Z-source0001",
+      "url": "https://zackees.github.io/soldr-toolchain/generations/2026-08-24T00-00-00Z-source0001/publish-state.v1.json"
     },
     "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v2.json",
-    "entries": [{"owner":"zackees","repo":"soldr-toolchain","tag":"assets","asset":"sdk.tar.zstd","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","size_bytes":3,"source_path":"apple-sdk/14.5/darwin-universal2/sdk.tar.zst","min_client_version":2,"parts":[{"number":1,"sha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","size_bytes":3,"urls":["https://raw.githubusercontent.com/zackees/soldr-toolchain/public-a/sha256/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/0001-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.part"]}]}]
+    "entries": [{"owner":"zackees","repo":"soldr-toolchain","tag":"assets","asset":"sdk.tar.zstd","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","size_bytes":3,"source_path":"apple-sdk/14.5/darwin-universal2/sdk.tar.zst","min_client_version":2,"parts":[{"number":1,"sha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","size_bytes":3,"urls":["https://raw.githubusercontent.com/zackees/soldr-toolchain/generations/2026-08-24T00-00-00Z-source0001-data/sha256/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/0001-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.part"]}]}]
   },
   "publication_state": {
     "schema_version": 1,
-    "generation": "2026-08-24T00:00:00Z-source0001",
+    "generation": "2026-08-24T00-00-00Z-source0001",
     "source": {"commit": "1111111111111111111111111111111111111111", "tree": "2222222222222222222222222222222222222222", "branch": "assets"},
     "active": {"slot": "public-a", "commit": "5555555555555555555555555555555555555555", "tree": "6666666666666666666666666666666666666666"},
     "previous": {"slot": "public-b", "commit": "7777777777777777777777777777777777777777", "tree": "8888888888888888888888888888888888888888"},
-    "catalogue_sha256": "e529e8d6d89e95bb1e752f91bca12ef8ca332411b2a4cd7fdb11415d52497a4c",
+    "catalogue_sha256": "5875e36bd926ffe66112bee3004d7709e11f96072649dafaa8df0676345d510e",
     "assets_by_sha256": {},
     "logical_assets": {},
     "partitioner_default": {"version": 1, "target_bytes": 3, "max_bytes": 99614720},
     "published_at": 1,
-    "retained_generations": [{"generation": "2026-08-24T00:00:00Z-source0001", "published_at": 1}],
+    "retained_generations": [{"generation": "2026-08-24T00-00-00Z-source0001", "published_at": 1}],
     "parts_by_sha256": {}
   }
 }
