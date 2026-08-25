@@ -1,0 +1,5 @@
+{
+  "schema_version": 2,
+  "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v2.json",
+  "entries": [{"owner":"zackees","repo":"soldr-toolchain","tag":"assets","asset":"sdk.tar.zstd","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","size_bytes":3,"parts":[{"number":1,"sha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","size_bytes":3,"urls":["https://raw.githubusercontent.com/zackees/soldr-toolchain/public-a/sha256/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/0001-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.part"]}]}]
+}
