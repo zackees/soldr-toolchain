@@ -126,6 +126,20 @@ def test_github_transport_retries_idempotent_object_writes(monkeypatch: pytest.M
     assert delays == [1, 2]
 
 
+def test_blob_bytes_accepts_github_wrapped_base64_but_rejects_invalid_data() -> None:
+    def wrapped(method, path, body):
+        assert (method, path, body) == ("GET", "/repos/o/r/git/blobs/blob", None)
+        return {"encoding": "base64", "content": "aGVs\n bG8=\n"}
+
+    assert GitDataApi("o", "r", wrapped).blob_bytes("blob") == b"hello"
+
+    def invalid(*_args):
+        return {"encoding": "base64", "content": "aGVs!bG8="}
+
+    with pytest.raises(PublishError, match="invalid base64 blob response"):
+        GitDataApi("o", "r", invalid).blob_bytes("blob")
+
+
 def test_inventory_materializer_retention_and_tree() -> None:
     oid = hashlib.sha256(b"abc").hexdigest()
     pointer = f"version https://git-lfs.github.com/spec/v1\noid sha256:{oid}\nsize 3\n".encode()
