@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from scripts.publish_multipart import GitLfsPathMaterializer, build_publication, materialize_selected, scan_unsmudged_catalogue
-from scripts.publication_model import GenerationBinding, VerifiedPublicLedger
+from scripts.publish_multipart import GitLfsPathMaterializer, _rewrite_assets, build_publication, materialize_selected, scan_unsmudged_catalogue
+from scripts.publication_model import GenerationBinding, PartitionedAsset, PublishedPart, VerifiedPublicLedger
 
 
 def _sha(data: bytes) -> str:
@@ -287,3 +287,29 @@ def test_exact_lfs_materializer_pulls_only_the_current_ref_path(
             "--include=tool/bundle.tar.zst",
         ]
     ]
+
+
+def test_asset_rewrite_handles_deep_manifests_without_recursion() -> None:
+    sha = "a" * 64
+    part = PublishedPart(1, "b" * 64, 3, "sha256/a/0001.part")
+    published = {
+        sha: PartitionedAsset(sha, 3, 1, 3, (part,)),
+    }
+    leaf: dict[str, object] = {
+        "sha256": sha,
+        "urls": ["https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/deep"],
+    }
+    document: dict[str, object] = leaf
+    for _ in range(2_000):
+        document = {"child": document}
+
+    _rewrite_assets(document, published, "generations/g-data")
+
+    assert "urls" not in leaf
+    assert leaf["size_bytes"] == 3
+    assert leaf["parts"] == [{
+        "number": 1,
+        "sha256": "b" * 64,
+        "size_bytes": 3,
+        "urls": ["https://raw.githubusercontent.com/zackees/soldr-toolchain/generations/g-data/sha256/a/0001.part"],
+    }]

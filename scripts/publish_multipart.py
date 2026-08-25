@@ -219,17 +219,20 @@ def _part_wire(asset: PartitionedAsset, data_ref: str) -> list[dict[str, Any]]:
 
 
 def _rewrite_assets(value: Any, published: dict[str, PartitionedAsset], data_ref: str) -> None:
-    if isinstance(value, dict):
-        sha = value.get("sha256")
-        if isinstance(sha, str) and sha in published and "urls" in value:
-            value.pop("urls", None)
-            value["size_bytes"] = published[sha].size_bytes
-            value["parts"] = _part_wire(published[sha], data_ref)
-        for child in value.values():
-            _rewrite_assets(child, published, data_ref)
-    elif isinstance(value, list):
-        for child in value:
-            _rewrite_assets(child, published, data_ref)
+    pending = [value]
+    while pending:
+        current = pending.pop()
+        if isinstance(current, dict):
+            # Queue only the original children. Generated multipart descriptors
+            # are already final wire data and must not be traversed or rewritten.
+            pending.extend(current.values())
+            sha = current.get("sha256")
+            if isinstance(sha, str) and sha in published and "urls" in current:
+                current.pop("urls", None)
+                current["size_bytes"] = published[sha].size_bytes
+                current["parts"] = _part_wire(published[sha], data_ref)
+        elif isinstance(current, list):
+            pending.extend(current)
 
 
 def _raise_on_lfs_reference(root: Path) -> None:
