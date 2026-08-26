@@ -51,7 +51,7 @@ jobs:
           attempt_published_at=$(date -u +%s)
           # Bump the publication-format suffix whenever immutable Pages wire
           # semantics change; an existing generation ref is never overwritten.
-          generation="source-${source_commit:0:12}-p3"
+          generation="source-${source_commit:0:12}-p4"
           {
             echo "source_commit=$source_commit"
             echo "source_tree=$source_tree"
