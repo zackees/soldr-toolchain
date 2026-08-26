@@ -91,7 +91,17 @@ jobs:
             (( size <= 99614720 ))
             ! head -c 42 "$part" | grep -q 'version https://git-lfs.github.com/spec/v1'
           done < <(find public-snapshot/sha256 -type f -name '*.part' -print0)
-          ! grep -R -E -n 'media.githubusercontent.com/media/|raw.githubusercontent.com/zackees/soldr-toolchain/assets' www-snapshot
+          ! grep -R -E -n \
+            --exclude='catalogue.v1.json' \
+            'media.githubusercontent.com/media/|raw.githubusercontent.com/zackees/soldr-toolchain/assets' \
+            www-snapshot
+
+      - name: Verify legacy catalogue compatibility
+        if: steps.publish.outputs.published == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmp assets/catalogue.v1.json www-snapshot/catalogue.v1.json
 
       - name: Configure Pages
         if: steps.publish.outputs.published == 'true'

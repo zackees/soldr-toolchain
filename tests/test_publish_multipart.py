@@ -141,7 +141,14 @@ def test_build_publication_rewrites_lfs_rows_and_hierarchical_assets(tmp_path: P
     asset = rendered["releases"][0]["platforms"][0]["asset"]
     assert "urls" not in asset and len(asset["parts"]) == 3
     assert rendered["releases"][0]["min_client_version"] == 2
-    published_text = "\n".join(path.read_text() for path in www.rglob("*.json"))
+    legacy_bytes = (assets / "catalogue.v1.json").read_bytes()
+    assert (www / "catalogue.v1.json").read_bytes() == legacy_bytes
+    assert (www / "generations" / "g" / "catalogue.v1.json").read_bytes() == legacy_bytes
+    published_text = "\n".join(
+        path.read_text()
+        for path in www.rglob("*.json")
+        if path.name != "catalogue.v1.json"
+    )
     assert "media.githubusercontent.com" not in published_text
     assert result.max_part_bytes == 4
     assert result.part_count == 3
