@@ -440,6 +440,12 @@ def _rewrite_assets(value: Any, published: dict[str, PartitionedAsset], data_ref
 
 def _raise_on_lfs_reference(root: Path) -> None:
     for path in root.rglob("*.json"):
+        # Released v1 Soldr clients still fetch this stable compatibility
+        # document and only understand its legacy single-URL transport.  Keep
+        # the exemption path-specific; every v2 and tool manifest remains
+        # subject to the multipart-only transport checks below.
+        if path.name == "catalogue.v1.json":
+            continue
         text = path.read_text(encoding="utf-8")
         if "media.githubusercontent.com/media/" in text or "raw.githubusercontent.com/zackees/soldr-toolchain/assets" in text:
             raise ValueError(f"www metadata retains an LFS delivery URL: {path}")
@@ -680,6 +686,13 @@ def build_publication(
     generation_root.mkdir(parents=True)
     if (assets_dir / "index.html").is_file():
         shutil.copyfile(assets_dir / "index.html", generation_root / "index.html")
+    # Pages deployments replace the previous tree wholesale.  Preserve the
+    # v1 API for already-released Soldr clients while v2 remains canonical for
+    # multipart-aware clients.
+    shutil.copyfile(
+        assets_dir / "catalogue.v1.json",
+        generation_root / "catalogue.v1.json",
+    )
     for relative, payload in sorted(direct_pages_payloads.items()):
         target = generation_root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
