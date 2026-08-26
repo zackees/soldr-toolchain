@@ -141,9 +141,11 @@ def test_build_publication_rewrites_lfs_rows_and_hierarchical_assets(tmp_path: P
     asset = rendered["releases"][0]["platforms"][0]["asset"]
     assert "urls" not in asset and len(asset["parts"]) == 3
     assert rendered["releases"][0]["min_client_version"] == 2
-    legacy_bytes = (assets / "catalogue.v1.json").read_bytes()
-    assert (www / "catalogue.v1.json").read_bytes() == legacy_bytes
-    assert (www / "generations" / "g" / "catalogue.v1.json").read_bytes() == legacy_bytes
+    legacy = json.loads((www / "catalogue.v1.json").read_text())
+    assert legacy == json.loads((assets / "catalogue.v1.json").read_text())
+    assert (www / "generations" / "g" / "catalogue.v1.json").read_bytes() == (
+        www / "catalogue.v1.json"
+    ).read_bytes()
     published_text = "\n".join(
         path.read_text()
         for path in www.rglob("*.json")
@@ -633,7 +635,7 @@ def test_refresh_never_materializes_the_assets_lfs_checkout() -> None:
 
 def test_publisher_generation_includes_wire_format_version() -> None:
     workflow = (Path(__file__).parents[1] / ".github/workflows/publish-multipart.yml").read_text()
-    assert 'generation="source-${source_commit:0:12}-p3"' in workflow
+    assert 'generation="source-${source_commit:0:12}-p5"' in workflow
 
 
 def test_retarget_refreshes_stable_and_generation_descriptor_hashes(
@@ -773,6 +775,65 @@ def test_new_logical_aliases_share_one_materialized_oid_regardless_of_sort_order
     catalogue = json.loads((tmp_path / "www" / "catalogue.v2.json").read_text())
     assert len(result.assets) == 1
     assert catalogue["entries"][0]["parts"] == catalogue["entries"][1]["parts"]
+
+
+def test_legacy_catalogue_combines_local_direct_and_external_inventories(
+    tmp_path: Path,
+) -> None:
+    assets = tmp_path / "assets"
+    assets.mkdir()
+    payload = b"legacy local bytes"
+    digest = _sha(payload)
+    source_url = (
+        "https://media.githubusercontent.com/media/zackees/"
+        "soldr-toolchain/assets/tool/1/linux-x64/bundle.tar.zst"
+    )
+    source = assets / "tool" / "1" / "linux-x64" / "bundle.tar.zst"
+    source.parent.mkdir(parents=True)
+    source.write_bytes(payload)
+    source_row = {
+        "owner": "zackees",
+        "repo": "soldr-toolchain",
+        "tag": "assets",
+        "asset": "bundle.tar.zst",
+        "url": source_url,
+        "sha256": digest,
+    }
+    (assets / "source-inventory.v1.json").write_text(
+        json.dumps({"schema_version": 5, "entries": [source_row]})
+    )
+    direct_row = {
+        "owner": "zackees",
+        "repo": "metadata",
+        "tag": "1",
+        "asset": "map.json",
+        "url": "https://example.test/map.json",
+        "sha256": "1" * 64,
+    }
+    (assets / "catalogue.v1.json").write_text(
+        json.dumps({"schema_version": 1, "entries": [direct_row]})
+    )
+    external_row = {
+        "owner": "zackees",
+        "repo": "external",
+        "tag": "1",
+        "asset": "archive.tar.zst",
+        "url": "https://example.test/archive.tar.zst",
+        "sha256": "2" * 64,
+    }
+    (assets / "multipart-external-entries.v1.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "expected_source_entries": 1,
+                "expected_external_entries": 1,
+                "entries": [external_row],
+            }
+        )
+    )
+
+    legacy = pm._legacy_v1_document(assets)
+    assert legacy["entries"] == [source_row, direct_row, external_row]
 
 
 def test_pages_snapshot_preserves_retained_generation_metadata(tmp_path: Path) -> None:
