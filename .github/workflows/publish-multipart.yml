@@ -51,7 +51,7 @@ jobs:
           attempt_published_at=$(date -u +%s)
           # Bump the publication-format suffix whenever immutable Pages wire
           # semantics change; an existing generation ref is never overwritten.
-          generation="source-${source_commit:0:12}-p4"
+          generation="source-${source_commit:0:12}-p5"
           {
             echo "source_commit=$source_commit"
             echo "source_tree=$source_tree"
@@ -101,7 +101,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cmp assets/catalogue.v1.json www-snapshot/catalogue.v1.json
+          expected=$(jq -s '[.[].entries[]] | unique_by(.url) | length' \
+            assets/source-inventory.v1.json \
+            assets/catalogue.v1.json \
+            assets/multipart-external-entries.v1.json)
+          actual=$(jq '.entries | length' www-snapshot/catalogue.v1.json)
+          test "$actual" -eq "$expected"
+          cmp \
+            www-snapshot/catalogue.v1.json \
+            "www-snapshot/generations/${{ steps.plan.outputs.generation }}/catalogue.v1.json"
 
       - name: Configure Pages
         if: steps.publish.outputs.published == 'true'

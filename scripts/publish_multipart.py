@@ -205,6 +205,13 @@ def _source_entries(assets_dir: Path) -> list[dict[str, Any]]:
     return entries
 
 
+def _legacy_v1_document(assets_dir: Path) -> dict[str, Any]:
+    """Build the complete compatibility view consumed by released clients."""
+    document = _load(assets_dir / "catalogue.v1.json")
+    document["entries"] = _source_entries(assets_dir)
+    return document
+
+
 def _external_entries(assets_dir: Path) -> dict[str, dict[str, Any]]:
     path = assets_dir / _EXTERNAL_INVENTORY
     if not path.is_file():
@@ -687,11 +694,14 @@ def build_publication(
     if (assets_dir / "index.html").is_file():
         shutil.copyfile(assets_dir / "index.html", generation_root / "index.html")
     # Pages deployments replace the previous tree wholesale.  Preserve the
-    # v1 API for already-released Soldr clients while v2 remains canonical for
-    # multipart-aware clients.
-    shutil.copyfile(
-        assets_dir / "catalogue.v1.json",
+    # complete v1 API for already-released Soldr clients while v2 remains
+    # canonical for multipart-aware clients.  assets/catalogue.v1.json is now
+    # only the direct-entry projection; the legacy local rows live in the
+    # source inventory, so copying that small document would publish a valid
+    # but nearly empty compatibility catalogue.
+    _write(
         generation_root / "catalogue.v1.json",
+        _legacy_v1_document(assets_dir),
     )
     for relative, payload in sorted(direct_pages_payloads.items()):
         target = generation_root / relative
