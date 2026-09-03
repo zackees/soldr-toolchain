@@ -5,10 +5,127 @@
   "tool": "cargo-zigbuild",
   "online_url": "https://zackees.github.io/soldr-toolchain/cargo-zigbuild/manifest.json",
   "channels": {
-    "latest-stable": "v0.23.3",
-    "stable": "v0.23.3"
+    "latest-stable": "v0.23.4",
+    "stable": "v0.23.4"
   },
   "releases": [
+    {
+      "schema_version": 1,
+      "version": "v0.23.4",
+      "published_at": "2026-09-02T14:12:54Z",
+      "min_client_version": 1,
+      "platforms": [
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "cargo-zigbuild-aarch64-apple-darwin.tar.xz",
+            "size_bytes": 1035284,
+            "urls": [
+              "https://github.com/rust-cross/cargo-zigbuild/releases/download/v0.23.4/cargo-zigbuild-aarch64-apple-darwin.tar.xz"
+            ],
+            "sha256": "ca2369ae1a9995542206a6c18dd372acff94dddeb9d7c07e09bfb7594197cea3"
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "cargo-zigbuild-x86_64-apple-darwin.tar.xz",
+            "size_bytes": 1113364,
+            "urls": [
+              "https://github.com/rust-cross/cargo-zigbuild/releases/download/v0.23.4/cargo-zigbuild-x86_64-apple-darwin.tar.xz"
+            ],
+            "sha256": "79463de3b10811fcebe91a3771f9658a2e40178eb6de66a2d379d12fe5317b6c"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "cargo-zigbuild-aarch64-unknown-linux-gnu.tar.xz",
+            "size_bytes": 1074380,
+            "urls": [
+              "https://github.com/rust-cross/cargo-zigbuild/releases/download/v0.23.4/cargo-zigbuild-aarch64-unknown-linux-gnu.tar.xz"
+            ],
+            "sha256": "25cf2cdc6cde848b33a761ff2cf46d1efe6ba7e1adfc4b6f3ee2d570cacb5419"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "cargo-zigbuild-x86_64-unknown-linux-gnu.tar.xz",
+            "size_bytes": 1160688,
+            "urls": [
+              "https://github.com/rust-cross/cargo-zigbuild/releases/download/v0.23.4/cargo-zigbuild-x86_64-unknown-linux-gnu.tar.xz"
+            ],
+            "sha256": "6b69963040818ca1ef573d8135a95aa902e17cf7f873c32c6426642dadfe7f59"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "cargo-zigbuild-x86_64-unknown-linux-musl.tar.xz",
+            "size_bytes": 1227160,
+            "urls": [
+              "https://github.com/rust-cross/cargo-zigbuild/releases/download/v0.23.4/cargo-zigbuild-x86_64-unknown-linux-musl.tar.xz"
+            ],
+            "sha256": "9e3cf73485edbd45905c8aadbc0fdf869c7ddc3848f0c898229f2680db52e44b"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "aarch64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "cargo-zigbuild-aarch64-pc-windows-msvc.zip",
+            "size_bytes": 1587814,
+            "urls": [
+              "https://github.com/rust-cross/cargo-zigbuild/releases/download/v0.23.4/cargo-zigbuild-aarch64-pc-windows-msvc.zip"
+            ],
+            "sha256": "46a3ea4a927477035c6d0b030ed27e7c69dab8f6038d03785738887c6f57a707"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "x86_64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "cargo-zigbuild-x86_64-pc-windows-msvc.zip",
+            "size_bytes": 1622431,
+            "urls": [
+              "https://github.com/rust-cross/cargo-zigbuild/releases/download/v0.23.4/cargo-zigbuild-x86_64-pc-windows-msvc.zip"
+            ],
+            "sha256": "cd1226091f9f99ac7b46fb413968fb0b46edbe3ea961817d31b968352de4d4a6"
+          }
+        }
+      ],
+      "source": {
+        "vcs": "git",
+        "repo_url": "https://github.com/rust-cross/cargo-zigbuild",
+        "ref": "v0.23.4",
+        "archive_url": "https://github.com/rust-cross/cargo-zigbuild/archive/refs/tags/v0.23.4.tar.gz"
+      }
+    },
     {
       "schema_version": 1,
       "version": "v0.23.3",
@@ -7464,76 +7581,6 @@
         "repo_url": "https://github.com/rust-cross/cargo-zigbuild",
         "ref": "v0.5.4",
         "archive_url": "https://github.com/rust-cross/cargo-zigbuild/archive/refs/tags/v0.5.4.tar.gz"
-      }
-    },
-    {
-      "schema_version": 1,
-      "version": "v0.5.3",
-      "published_at": "2022-02-22T13:44:05Z",
-      "min_client_version": 1,
-      "platforms": [
-        {
-          "platform": {
-            "os": "linux",
-            "arch": "aarch64",
-            "libc": "musl"
-          },
-          "asset": {
-            "filename": "cargo-zigbuild-v0.5.3.aarch64-unknown-linux-musl.tar.gz",
-            "size_bytes": 474804,
-            "urls": [
-              "https://github.com/rust-cross/cargo-zigbuild/releases/download/v0.5.3/cargo-zigbuild-v0.5.3.aarch64-unknown-linux-musl.tar.gz"
-            ]
-          }
-        },
-        {
-          "platform": {
-            "os": "linux",
-            "arch": "x86_64",
-            "libc": "musl"
-          },
-          "asset": {
-            "filename": "cargo-zigbuild-v0.5.3.x86_64-unknown-linux-musl.tar.gz",
-            "size_bytes": 523011,
-            "urls": [
-              "https://github.com/rust-cross/cargo-zigbuild/releases/download/v0.5.3/cargo-zigbuild-v0.5.3.x86_64-unknown-linux-musl.tar.gz"
-            ]
-          }
-        },
-        {
-          "platform": {
-            "os": "windows",
-            "arch": "aarch64",
-            "abi": "msvc"
-          },
-          "asset": {
-            "filename": "cargo-zigbuild-v0.5.3.windows-arm64.zip",
-            "size_bytes": 381448,
-            "urls": [
-              "https://github.com/rust-cross/cargo-zigbuild/releases/download/v0.5.3/cargo-zigbuild-v0.5.3.windows-arm64.zip"
-            ]
-          }
-        },
-        {
-          "platform": {
-            "os": "windows",
-            "arch": "x86_64",
-            "abi": "msvc"
-          },
-          "asset": {
-            "filename": "cargo-zigbuild-v0.5.3.windows-x64.zip",
-            "size_bytes": 397937,
-            "urls": [
-              "https://github.com/rust-cross/cargo-zigbuild/releases/download/v0.5.3/cargo-zigbuild-v0.5.3.windows-x64.zip"
-            ]
-          }
-        }
-      ],
-      "source": {
-        "vcs": "git",
-        "repo_url": "https://github.com/rust-cross/cargo-zigbuild",
-        "ref": "v0.5.3",
-        "archive_url": "https://github.com/rust-cross/cargo-zigbuild/archive/refs/tags/v0.5.3.tar.gz"
       }
     }
   ]
