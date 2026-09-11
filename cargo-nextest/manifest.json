@@ -5,11 +5,129 @@
   "tool": "cargo-nextest",
   "online_url": "https://zackees.github.io/soldr-toolchain/cargo-nextest/manifest.json",
   "channels": {
-    "latest-stable": "0.9.143",
-    "stable": "0.9.143",
+    "latest-stable": "0.9.144",
+    "stable": "0.9.144",
     "pinned": "0.9.140"
   },
   "releases": [
+    {
+      "schema_version": 1,
+      "version": "0.9.144",
+      "published_at": "2026-09-10T21:04:01Z",
+      "min_client_version": 1,
+      "platforms": [
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "universal2"
+          },
+          "asset": {
+            "filename": "cargo-nextest-0.9.144-universal-apple-darwin.tar.gz",
+            "size_bytes": 16407475,
+            "urls": [
+              "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.144/cargo-nextest-0.9.144-universal-apple-darwin.tar.gz"
+            ],
+            "sha256": "87472b2c3ee09154cadd34d168a5cdede478806810f095c3dc4dc499943da42e"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "cargo-nextest-0.9.144-aarch64-unknown-linux-gnu.tar.gz",
+            "size_bytes": 11219542,
+            "urls": [
+              "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.144/cargo-nextest-0.9.144-aarch64-unknown-linux-gnu.tar.gz"
+            ],
+            "sha256": "7fecfd431b810c05c589d800524286b8f80ce2fe9fb1fef05caf16d095cea407"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "cargo-nextest-0.9.144-aarch64-unknown-linux-musl.tar.gz",
+            "size_bytes": 8872998,
+            "urls": [
+              "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.144/cargo-nextest-0.9.144-aarch64-unknown-linux-musl.tar.gz"
+            ],
+            "sha256": "1b17ee6d30820c9c993dd0745fdab5df9b3d8706e67f9bf72c31979180ee60d9"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "cargo-nextest-0.9.144-x86_64-unknown-linux-gnu.tar.gz",
+            "size_bytes": 11852336,
+            "urls": [
+              "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.144/cargo-nextest-0.9.144-x86_64-unknown-linux-gnu.tar.gz"
+            ],
+            "sha256": "8a4f726272b0a1c499bd87ca3978bfbb1a8c20bb08ccf075b9996e2081bd1e1e"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "cargo-nextest-0.9.144-x86_64-unknown-linux-musl.tar.gz",
+            "size_bytes": 9529526,
+            "urls": [
+              "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.144/cargo-nextest-0.9.144-x86_64-unknown-linux-musl.tar.gz"
+            ],
+            "sha256": "20ed0a7d3d6f8dda9bb1b0bcb5838aea5784d3e2360746280868996d709dde0a"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "aarch64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "cargo-nextest-0.9.144-aarch64-pc-windows-msvc.tar.gz",
+            "size_bytes": 7351823,
+            "urls": [
+              "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.144/cargo-nextest-0.9.144-aarch64-pc-windows-msvc.tar.gz"
+            ],
+            "sha256": "cc18cdc04e38f6f7a2aff25f338dc73a93970b7455cd1838f967d91779349cb0"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "x86_64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "cargo-nextest-0.9.144-x86_64-pc-windows-msvc.tar.gz",
+            "size_bytes": 7707755,
+            "urls": [
+              "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.144/cargo-nextest-0.9.144-x86_64-pc-windows-msvc.tar.gz"
+            ],
+            "sha256": "b0d6a6569d4ef63a095c5a574a6856c17fb755b51a02a17e4651e738e9192831"
+          }
+        }
+      ],
+      "source": {
+        "vcs": "git",
+        "repo_url": "https://github.com/nextest-rs/nextest",
+        "ref": "cargo-nextest-0.9.144",
+        "archive_url": "https://github.com/nextest-rs/nextest/archive/refs/tags/cargo-nextest-0.9.144.tar.gz"
+      }
+    },
     {
       "schema_version": 1,
       "version": "0.9.143",
@@ -5051,109 +5169,6 @@
         "repo_url": "https://github.com/nextest-rs/nextest",
         "ref": "cargo-nextest-0.9.111",
         "archive_url": "https://github.com/nextest-rs/nextest/archive/refs/tags/cargo-nextest-0.9.111.tar.gz"
-      }
-    },
-    {
-      "schema_version": 1,
-      "version": "0.9.110",
-      "published_at": "2025-10-31T21:50:31Z",
-      "min_client_version": 1,
-      "platforms": [
-        {
-          "platform": {
-            "os": "darwin",
-            "arch": "universal2"
-          },
-          "asset": {
-            "filename": "cargo-nextest-0.9.110-universal-apple-darwin.tar.gz",
-            "size_bytes": 12370987,
-            "urls": [
-              "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.110/cargo-nextest-0.9.110-universal-apple-darwin.tar.gz"
-            ],
-            "sha256": "cff837cb3cb2035444fafcd5addf89a86751590da434828a591e0803e6d50d98"
-          }
-        },
-        {
-          "platform": {
-            "os": "linux",
-            "arch": "aarch64",
-            "libc": "glibc"
-          },
-          "asset": {
-            "filename": "cargo-nextest-0.9.110-aarch64-unknown-linux-gnu.tar.gz",
-            "size_bytes": 6952398,
-            "urls": [
-              "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.110/cargo-nextest-0.9.110-aarch64-unknown-linux-gnu.tar.gz"
-            ],
-            "sha256": "5b2f9d09d093371c85f78402d8122879d30af07858ac66102b31a551139baad7"
-          }
-        },
-        {
-          "platform": {
-            "os": "linux",
-            "arch": "x86_64",
-            "libc": "glibc"
-          },
-          "asset": {
-            "filename": "cargo-nextest-0.9.110-x86_64-unknown-linux-gnu.tar.gz",
-            "size_bytes": 8590654,
-            "urls": [
-              "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.110/cargo-nextest-0.9.110-x86_64-unknown-linux-gnu.tar.gz"
-            ],
-            "sha256": "dd7ad86eb0eefa0ad1143b9692da8fc341b83a238356f630f39e4f199b4caa76"
-          }
-        },
-        {
-          "platform": {
-            "os": "linux",
-            "arch": "x86_64",
-            "libc": "musl"
-          },
-          "asset": {
-            "filename": "cargo-nextest-0.9.110-x86_64-unknown-linux-musl.tar.gz",
-            "size_bytes": 7905670,
-            "urls": [
-              "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.110/cargo-nextest-0.9.110-x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "5f88e16c15a2cced1c56fc210a2ce225dd97c228322ccaed9029a698500931aa"
-          }
-        },
-        {
-          "platform": {
-            "os": "windows",
-            "arch": "aarch64",
-            "abi": "msvc"
-          },
-          "asset": {
-            "filename": "cargo-nextest-0.9.110-aarch64-pc-windows-msvc.tar.gz",
-            "size_bytes": 5524097,
-            "urls": [
-              "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.110/cargo-nextest-0.9.110-aarch64-pc-windows-msvc.tar.gz"
-            ],
-            "sha256": "cd619991757fbc0a7075d0e1d98849c2eb47679ce0465250b76e1f9f16560896"
-          }
-        },
-        {
-          "platform": {
-            "os": "windows",
-            "arch": "x86_64",
-            "abi": "msvc"
-          },
-          "asset": {
-            "filename": "cargo-nextest-0.9.110-x86_64-pc-windows-msvc.tar.gz",
-            "size_bytes": 5919605,
-            "urls": [
-              "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.110/cargo-nextest-0.9.110-x86_64-pc-windows-msvc.tar.gz"
-            ],
-            "sha256": "35de2f8fd3abe79b0a84147d973c10a537c21d6edbfe195658fd6f1d791c858c"
-          }
-        }
-      ],
-      "source": {
-        "vcs": "git",
-        "repo_url": "https://github.com/nextest-rs/nextest",
-        "ref": "cargo-nextest-0.9.110",
-        "archive_url": "https://github.com/nextest-rs/nextest/archive/refs/tags/cargo-nextest-0.9.110.tar.gz"
       }
     }
   ]
