@@ -9,6 +9,11 @@ on:
         default: 9adfa398661273ca7dc99df9bf2c26ae6f61b1c5
         type: string
 
+# Never cancelled and never coalesced: every publish runs to completion.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.run_id }}
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
