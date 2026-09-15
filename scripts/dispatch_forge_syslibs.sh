@@ -57,6 +57,7 @@ declare -A VERSIONS=(
     [zlib-ng]=2.2.5
     [lzma]=5.6.3
     [bzip2]=1.0.8
+    [openssl]=3.5.8
 )
 
 dry_run=0

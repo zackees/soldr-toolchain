@@ -29,7 +29,7 @@ _syslib = _load_helper()
 
 
 class SyslibRecipe(ConanFile):
-    name = "openssl-windows-x64"
+    name = "openssl-darwin-x64"
     description = "OpenSSL libssl and libcrypto static libraries and headers for openssl-sys"
     license = "Apache-2.0"
     package_type = "header-library"

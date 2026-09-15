@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
-# soldr#1010 Phase 3 — direct forge dispatch for the four new tool
-# families (python / nodelib / openssl / llvm-tools) plus the
-# xwin-cache windows-arm64 ingest gap and the mimalloc retry sweep
-# from soldr#1064 Phase B.
+# soldr#1010 Phase 3 — direct forge dispatch for the new tool
+# families (python / nodelib / llvm-tools) plus the xwin-cache
+# windows-arm64 ingest gap and the mimalloc retry sweep from
+# soldr#1064 Phase B.
+#
+# openssl moved to `dispatch_forge_syslibs.sh` in soldr#3246: it is now
+# a static, source-built syslib for all nine shapes.
 #
 # Same dispatch pattern as `dispatch_forge_syslibs.sh` in
 # zackees/soldr-toolchain: fans out one `gh workflow run
@@ -14,7 +17,6 @@ set -euo pipefail
 declare -A VERSIONS=(
     [python]=3.13.14
     [nodelib]=22.18.0
-    [openssl]=3.5.0
     [llvm-tools]=20.1.7
     [xwin-cache]=2026-06-22
     [mimalloc]=3.3.2
@@ -31,7 +33,6 @@ declare -A VERSIONS=(
 # in zig-cc compose against the autotools build.
 PYTHON_SHAPES=( windows-x64 windows-arm64 darwin-x64 darwin-arm64 linux-x64-gnu linux-arm64-gnu linux-x64-musl linux-arm64-musl )
 NODELIB_SHAPES=( windows-x64 windows-arm64 )
-OPENSSL_SHAPES=( windows-x64 windows-arm64 )
 LLVM_TOOLS_SHAPES=( linux-x64-gnu )
 XWIN_CACHE_SHAPES=( windows-arm64 )
 MIMALLOC_SHAPES=( windows-x64 windows-arm64 darwin-x64 darwin-arm64 linux-x64-gnu linux-arm64-gnu linux-x64-musl linux-arm64-musl )
@@ -66,7 +67,6 @@ shapes_for() {
     case "$1" in
         python) printf '%s\n' "${PYTHON_SHAPES[@]}" ;;
         nodelib) printf '%s\n' "${NODELIB_SHAPES[@]}" ;;
-        openssl) printf '%s\n' "${OPENSSL_SHAPES[@]}" ;;
         llvm-tools) printf '%s\n' "${LLVM_TOOLS_SHAPES[@]}" ;;
         xwin-cache) printf '%s\n' "${XWIN_CACHE_SHAPES[@]}" ;;
         mimalloc) printf '%s\n' "${MIMALLOC_SHAPES[@]}" ;;
