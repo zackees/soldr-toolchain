@@ -272,10 +272,19 @@ def test_perl_shim_env_prepends_an_msys_form_include_path(tmp_path: Path) -> Non
     assert (shim_root / "Locale" / "Maketext" / "Simple.pm").is_file()
     assert not (shim_root / "ExtUtils").exists(), "only missing modules are shimmed"
     assert env["PERL5LIB"] == f"{_syslib._msys_path(shim_root)}:/existing"
+    # Run 34923387721: a recursive native make received PERL5LIB as "C:/...".
+    assert env["MSYS2_ENV_CONV_EXCL"] == "PERL5LIB"
+    kept = _syslib._perl_shim_env(
+        {"MSYS2_ENV_CONV_EXCL": "CFLAGS;PERL5LIB"}, shim_root, "msys", ("Locale::Maketext::Simple",)
+    )
+    assert kept["MSYS2_ENV_CONV_EXCL"] == "CFLAGS;PERL5LIB"
+    appended = _syslib._perl_shim_env({"MSYS2_ENV_CONV_EXCL": "CFLAGS"}, shim_root, "msys", ())
+    assert appended["MSYS2_ENV_CONV_EXCL"] == "CFLAGS;PERL5LIB"
     assert _syslib._msys_path(r"D:\a\_temp\perl-shims") == "/d/a/_temp/perl-shims"
     native = _syslib._perl_shim_env({}, shim_root, "MSWin32", tuple(_syslib._PERL_SHIMS))
     assert (shim_root / "ExtUtils" / "MakeMaker.pm").is_file()
     assert native["PERL5LIB"] == str(shim_root)
+    assert "MSYS2_ENV_CONV_EXCL" not in native
 
 
 @pytest.mark.skipif(shutil.which("perl") is None, reason="needs a perl interpreter")

@@ -784,6 +784,15 @@ def _perl_shim_env(
     separator = ":" if unix_like else ";"
     shimmed = dict(env)
     shimmed["PERL5LIB"] = separator.join(part for part in (entry, env.get("PERL5LIB")) if part)
+    if unix_like:
+        # OpenSSL's Makefile re-invokes make; when MSYS sh starts that native
+        # make.exe, the MSYS2 runtime rewrites path-like variables to "C:/...",
+        # which MSYS perl then splits on ':' (forge run 34923387721). Keep
+        # PERL5LIB out of that environment conversion.
+        excluded = [part for part in env.get("MSYS2_ENV_CONV_EXCL", "").split(";") if part]
+        if "PERL5LIB" not in excluded:
+            excluded.append("PERL5LIB")
+        shimmed["MSYS2_ENV_CONV_EXCL"] = ";".join(excluded)
     return shimmed
 
 
