@@ -1,6 +1,8 @@
 import dataclasses
 import hashlib
+import os
 import shutil
+import subprocess
 import tarfile
 from pathlib import Path
 
@@ -260,6 +262,31 @@ def test_openssl_perl_prefers_complete_msys2_perl_for_mingw(tmp_path: Path, monk
     assert _syslib._openssl_perl("windows-x64-gnu", {}) == str(msys2_perl)
     assert _syslib._openssl_perl("linux-x64-gnu", {}) == "perl"
     assert _syslib._openssl_perl("windows-x64-gnu", {"SOLDR_OPENSSL_PERL": "/x/perl"}) == "/x/perl"
+
+
+def test_perl_shim_env_prepends_an_msys_form_include_path(tmp_path: Path) -> None:
+    # Forge run 34921638947: no MSYS2 perl on the runner, only Git's trimmed one.
+    shim_root = tmp_path / "perl-shims"
+    env = _syslib._perl_shim_env({"PERL5LIB": "/existing"}, shim_root, "msys")
+    assert (shim_root / "Locale" / "Maketext" / "Simple.pm").is_file()
+    assert env["PERL5LIB"] == f"{_syslib._msys_path(shim_root)}:/existing"
+    assert _syslib._msys_path(r"D:\a\_temp\perl-shims") == "/d/a/_temp/perl-shims"
+    native = _syslib._perl_shim_env({}, shim_root, "MSWin32")
+    assert native["PERL5LIB"] == str(shim_root)
+
+
+@pytest.mark.skipif(shutil.which("perl") is None, reason="needs a perl interpreter")
+def test_locale_maketext_simple_shim_serves_ipc_cmd_style_callers(tmp_path: Path) -> None:
+    env = _syslib._perl_shim_env({"PATH": os.environ.get("PATH", "")}, tmp_path, "linux")
+    script = (
+        "use Locale::Maketext::Simple Style => 'gettext'; "
+        "print $INC{'Locale/Maketext/Simple.pm'}, \"\\n\", loc('%1 of [_2]', 'one', 'two'), \"\\n\";"
+    )
+    result = subprocess.run(["perl", "-e", script], env=env, capture_output=True, text=True, check=True)
+    loaded, rendered = result.stdout.splitlines()
+    assert Path(loaded).resolve() == (tmp_path / "Locale" / "Maketext" / "Simple.pm").resolve()
+    assert rendered == "one of two"
+    assert _syslib._perl_has_module("perl", "Locale::Maketext::Simple", env)
 
 
 @pytest.mark.parametrize(("shape", "multiarch"), [("linux-x64-musl", "x86_64-linux-gnu"), ("linux-arm64-musl", "aarch64-linux-gnu")])

@@ -490,6 +490,28 @@ _STRAWBERRY_PERL = r"C:\Strawberry\perl\bin\perl.exe"
 # OpenSSL's Configure needs through IPC::Cmd). The runner images' MSYS2 perl
 # is complete and is the Perl OpenSSL documents for mingw builds.
 _MSYS2_PERL = r"C:\msys64\usr\bin\perl.exe"
+# When that perl is absent, Git for Windows' perl is all there is, and it
+# ships without /usr/share/perl5/core_perl/Locale/ (git-for-windows/build-extra
+# make-file-list.sh). Configure reaches Locale::Maketext::Simple only through
+# IPC::Cmd and Params::Check, which call loc() with %N or [_N] placeholders.
+_LOCALE_MAKETEXT_SIMPLE_SHIM = r"""package Locale::Maketext::Simple;
+use strict;
+use warnings;
+our $VERSION = '0.21';
+
+sub import {
+    my $caller = caller;
+    no strict 'refs';
+    *{"${caller}::loc"} = sub {
+        my ($text, @args) = @_;
+        $text =~ s{%(\d+)|\[_(\d+)\]}{$args[(defined $1 ? $1 : $2) - 1] // ''}ge;
+        return $text;
+    };
+    *{"${caller}::loc_lang"} = sub { 1 };
+}
+
+1;
+"""
 
 # musl-gcc's specs drop the host include path, which also hides the kernel
 # UAPI headers OpenSSL includes on Linux (crypto/mem_sec.c: <linux/mman.h>).
@@ -686,6 +708,32 @@ def _perl_os(perl: str, env: Mapping[str, str]) -> str:
     return result.stdout.strip()
 
 
+def _msys_path(path: Path | str) -> str:
+    posix = str(path).replace("\\", "/")
+    if len(posix) >= 2 and posix[1] == ":":
+        posix = f"/{posix[0].lower()}{posix[2:]}"
+    return posix
+
+
+def _perl_has_module(perl: str, module: str, env: Mapping[str, str]) -> bool:
+    probe = subprocess.run([perl, f"-M{module}", "-e", "1"], capture_output=True, env=dict(env), check=False)
+    return probe.returncode == 0
+
+
+def _perl_shim_env(env: Mapping[str, str], shim_root: Path, perl_os: str | None) -> dict[str, str]:
+    """Put a Locale::Maketext::Simple shim first on a trimmed perl's @INC."""
+    module = shim_root / "Locale" / "Maketext" / "Simple.pm"
+    module.parent.mkdir(parents=True, exist_ok=True)
+    module.write_text(_LOCALE_MAKETEXT_SIMPLE_SHIM, encoding="utf-8", newline="\n")
+    # MSYS perl splits PERL5LIB on ':', so a "C:/..." entry would break apart.
+    unix_like = perl_os != "MSWin32"
+    entry = _msys_path(shim_root) if unix_like else str(shim_root)
+    separator = ":" if unix_like else ";"
+    shimmed = dict(env)
+    shimmed["PERL5LIB"] = separator.join(part for part in (entry, env.get("PERL5LIB")) if part)
+    return shimmed
+
+
 def _env_path(env: Mapping[str, str]) -> str | None:
     # vcvarsall's `set` output spells it "Path"; POSIX environments use "PATH".
     return next((value for key, value in env.items() if key.upper() == "PATH"), None)
@@ -714,6 +762,8 @@ def _build_openssl(source_root: Path, package_root: Path, shape_name: str, lib: 
         # Configure records $ENV{PERL} (else $^X, an MSYS path that Git Bash
         # would resolve to its own trimmed perl) for the Makefile's recipes.
         env["PERL"] = perl.replace("\\", "/")
+        if not _perl_has_module(perl, "Locale::Maketext::Simple", env):
+            env = _perl_shim_env(env, source_root.parent / "perl-shims", perl_os)
     if _is_msvc_shape(shape_name):
         env = _msvc_env(shape_name, env)
     make = _openssl_make_program(shape_name, env)
