@@ -266,27 +266,45 @@ def test_openssl_perl_prefers_complete_msys2_perl_for_mingw(tmp_path: Path, monk
 
 def test_perl_shim_env_prepends_an_msys_form_include_path(tmp_path: Path) -> None:
     # Forge run 34921638947: no MSYS2 perl on the runner, only Git's trimmed one.
+    # Run 34922722583 then needed ExtUtils::MakeMaker, also stripped by Git.
     shim_root = tmp_path / "perl-shims"
-    env = _syslib._perl_shim_env({"PERL5LIB": "/existing"}, shim_root, "msys")
+    env = _syslib._perl_shim_env({"PERL5LIB": "/existing"}, shim_root, "msys", ("Locale::Maketext::Simple",))
     assert (shim_root / "Locale" / "Maketext" / "Simple.pm").is_file()
+    assert not (shim_root / "ExtUtils").exists(), "only missing modules are shimmed"
     assert env["PERL5LIB"] == f"{_syslib._msys_path(shim_root)}:/existing"
     assert _syslib._msys_path(r"D:\a\_temp\perl-shims") == "/d/a/_temp/perl-shims"
-    native = _syslib._perl_shim_env({}, shim_root, "MSWin32")
+    native = _syslib._perl_shim_env({}, shim_root, "MSWin32", tuple(_syslib._PERL_SHIMS))
+    assert (shim_root / "ExtUtils" / "MakeMaker.pm").is_file()
     assert native["PERL5LIB"] == str(shim_root)
 
 
 @pytest.mark.skipif(shutil.which("perl") is None, reason="needs a perl interpreter")
-def test_locale_maketext_simple_shim_serves_ipc_cmd_style_callers(tmp_path: Path) -> None:
-    env = _syslib._perl_shim_env({"PATH": os.environ.get("PATH", "")}, tmp_path, "linux")
-    script = (
-        "use Locale::Maketext::Simple Style => 'gettext'; "
-        "print $INC{'Locale/Maketext/Simple.pm'}, \"\\n\", loc('%1 of [_2]', 'one', 'two'), \"\\n\";"
+def test_perl_shims_serve_ipc_cmd_and_its_can_run(tmp_path: Path) -> None:
+    shim_root = tmp_path / "shims"
+    env = _syslib._perl_shim_env(
+        {"PATH": os.environ.get("PATH", "")}, shim_root, "linux", tuple(_syslib._PERL_SHIMS)
     )
-    result = subprocess.run(["perl", "-e", script], env=env, capture_output=True, text=True, check=True)
-    loaded, rendered = result.stdout.splitlines()
-    assert Path(loaded).resolve() == (tmp_path / "Locale" / "Maketext" / "Simple.pm").resolve()
+    tool = tmp_path / "bin" / "fake-cc"
+    tool.parent.mkdir()
+    tool.write_text("#!/bin/sh\n")
+    tool.chmod(0o755)
+    script = (
+        "use Locale::Maketext::Simple Style => 'gettext'; require ExtUtils::MakeMaker; "
+        "print $INC{'Locale/Maketext/Simple.pm'}, \"\\n\", $INC{'ExtUtils/MakeMaker.pm'}, \"\\n\", "
+        "loc('%1 of [_2]', 'one', 'two'), \"\\n\", MM->maybe_command($ARGV[0]) // 'undef', \"\\n\", "
+        "MM->maybe_command($ARGV[1]) // 'undef', \"\\n\";"
+    )
+    result = subprocess.run(
+        ["perl", "-e", script, str(tool), str(tmp_path / "bin")], env=env, capture_output=True, text=True, check=True
+    )
+    locale, makemaker, rendered, found, directory = result.stdout.splitlines()
+    assert Path(locale).resolve() == (shim_root / "Locale" / "Maketext" / "Simple.pm").resolve()
+    assert Path(makemaker).resolve() == (shim_root / "ExtUtils" / "MakeMaker.pm").resolve()
     assert rendered == "one of two"
-    assert _syslib._perl_has_module("perl", "Locale::Maketext::Simple", env)
+    assert found == str(tool)
+    assert directory == "undef"
+    for name in _syslib._PERL_SHIMS:
+        assert _syslib._perl_has_module("perl", name, env)
 
 
 @pytest.mark.parametrize(("shape", "multiarch"), [("linux-x64-musl", "x86_64-linux-gnu"), ("linux-arm64-musl", "aarch64-linux-gnu")])

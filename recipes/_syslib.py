@@ -491,9 +491,13 @@ _STRAWBERRY_PERL = r"C:\Strawberry\perl\bin\perl.exe"
 # is complete and is the Perl OpenSSL documents for mingw builds.
 _MSYS2_PERL = r"C:\msys64\usr\bin\perl.exe"
 # When that perl is absent, Git for Windows' perl is all there is, and it
-# ships without /usr/share/perl5/core_perl/Locale/ (git-for-windows/build-extra
-# make-file-list.sh). Configure reaches Locale::Maketext::Simple only through
-# IPC::Cmd and Params::Check, which call loc() with %N or [_N] placeholders.
+# ships without core_perl/Locale/ and core_perl/ExtUtils/
+# (git-for-windows/build-extra make-file-list.sh). OpenSSL's Configure reaches
+# both only through IPC::Cmd: Params::Check and Module::Load::Conditional call
+# loc() with %N or [_N] placeholders, and can_run() loads ExtUtils::MakeMaker
+# solely for MM->maybe_command. No other build-time perl in OpenSSL 3.5.8 uses
+# a stripped directory (Pod::Usage and Pod::Html serve only docs and the
+# configdata.pm command line).
 _LOCALE_MAKETEXT_SIMPLE_SHIM = r"""package Locale::Maketext::Simple;
 use strict;
 use warnings;
@@ -512,6 +516,29 @@ sub import {
 
 1;
 """
+_EXTUTILS_MAKEMAKER_SHIM = r"""package ExtUtils::MakeMaker;
+use strict;
+use warnings;
+our $VERSION = '7.70';
+
+package MM;
+
+# IPC::Cmd::can_run's only use of MakeMaker: an executable regular file, with
+# the Windows executable suffixes MSYS resolves implicitly.
+sub maybe_command {
+    my ($self, $file) = @_;
+    for my $candidate ($file, map { "$file$_" } qw(.exe .com .bat .cmd)) {
+        return $candidate if -f $candidate && -x _;
+    }
+    return;
+}
+
+1;
+"""
+_PERL_SHIMS: dict[str, str] = {
+    "Locale::Maketext::Simple": _LOCALE_MAKETEXT_SIMPLE_SHIM,
+    "ExtUtils::MakeMaker": _EXTUTILS_MAKEMAKER_SHIM,
+}
 
 # musl-gcc's specs drop the host include path, which also hides the kernel
 # UAPI headers OpenSSL includes on Linux (crypto/mem_sec.c: <linux/mman.h>).
@@ -720,11 +747,14 @@ def _perl_has_module(perl: str, module: str, env: Mapping[str, str]) -> bool:
     return probe.returncode == 0
 
 
-def _perl_shim_env(env: Mapping[str, str], shim_root: Path, perl_os: str | None) -> dict[str, str]:
-    """Put a Locale::Maketext::Simple shim first on a trimmed perl's @INC."""
-    module = shim_root / "Locale" / "Maketext" / "Simple.pm"
-    module.parent.mkdir(parents=True, exist_ok=True)
-    module.write_text(_LOCALE_MAKETEXT_SIMPLE_SHIM, encoding="utf-8", newline="\n")
+def _perl_shim_env(
+    env: Mapping[str, str], shim_root: Path, perl_os: str | None, modules: tuple[str, ...]
+) -> dict[str, str]:
+    """Put shims for the named core modules first on a trimmed perl's @INC."""
+    for name in modules:
+        module = shim_root.joinpath(*name.split("::")).with_suffix(".pm")
+        module.parent.mkdir(parents=True, exist_ok=True)
+        module.write_text(_PERL_SHIMS[name], encoding="utf-8", newline="\n")
     # MSYS perl splits PERL5LIB on ':', so a "C:/..." entry would break apart.
     unix_like = perl_os != "MSWin32"
     entry = _msys_path(shim_root) if unix_like else str(shim_root)
@@ -762,8 +792,10 @@ def _build_openssl(source_root: Path, package_root: Path, shape_name: str, lib: 
         # Configure records $ENV{PERL} (else $^X, an MSYS path that Git Bash
         # would resolve to its own trimmed perl) for the Makefile's recipes.
         env["PERL"] = perl.replace("\\", "/")
-        if not _perl_has_module(perl, "Locale::Maketext::Simple", env):
-            env = _perl_shim_env(env, source_root.parent / "perl-shims", perl_os)
+        missing = tuple(name for name in _PERL_SHIMS if not _perl_has_module(perl, name, env))
+        if missing:
+            print(f"openssl: shimming perl modules absent from {perl}: {', '.join(missing)}", flush=True)
+            env = _perl_shim_env(env, source_root.parent / "perl-shims", perl_os, missing)
     if _is_msvc_shape(shape_name):
         env = _msvc_env(shape_name, env)
     make = _openssl_make_program(shape_name, env)
