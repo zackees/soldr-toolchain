@@ -292,12 +292,16 @@ def test_perl_shims_serve_ipc_cmd_and_its_can_run(tmp_path: Path) -> None:
         "use Locale::Maketext::Simple Style => 'gettext'; require ExtUtils::MakeMaker; "
         "print $INC{'Locale/Maketext/Simple.pm'}, \"\\n\", $INC{'ExtUtils/MakeMaker.pm'}, \"\\n\", "
         "loc('%1 of [_2]', 'one', 'two'), \"\\n\", MM->maybe_command($ARGV[0]) // 'undef', \"\\n\", "
-        "MM->maybe_command($ARGV[1]) // 'undef', \"\\n\";"
+        "MM->maybe_command($ARGV[1]) // 'undef', \"\\n\"; "
+        # Run 34923015688: configdata.pm's compile-time `use Pod::Usage`.
+        "use Pod::Usage; print $INC{'Pod/Usage.pm'}, \"\\n\", defined &pod2usage ? 'pod2usage' : 'missing', \"\\n\";"
     )
     result = subprocess.run(
         ["perl", "-e", script, str(tool), str(tmp_path / "bin")], env=env, capture_output=True, text=True, check=True
     )
-    locale, makemaker, rendered, found, directory = result.stdout.splitlines()
+    locale, makemaker, rendered, found, directory, pod_usage, exported = result.stdout.splitlines()
+    assert Path(pod_usage).resolve() == (shim_root / "Pod" / "Usage.pm").resolve()
+    assert exported == "pod2usage"
     assert Path(locale).resolve() == (shim_root / "Locale" / "Maketext" / "Simple.pm").resolve()
     assert Path(makemaker).resolve() == (shim_root / "ExtUtils" / "MakeMaker.pm").resolve()
     assert rendered == "one of two"

@@ -492,12 +492,12 @@ _STRAWBERRY_PERL = r"C:\Strawberry\perl\bin\perl.exe"
 _MSYS2_PERL = r"C:\msys64\usr\bin\perl.exe"
 # When that perl is absent, Git for Windows' perl is all there is, and it
 # ships without core_perl/Locale/ and core_perl/ExtUtils/
-# (git-for-windows/build-extra make-file-list.sh). OpenSSL's Configure reaches
-# both only through IPC::Cmd: Params::Check and Module::Load::Conditional call
-# loc() with %N or [_N] placeholders, and can_run() loads ExtUtils::MakeMaker
-# solely for MM->maybe_command. No other build-time perl in OpenSSL 3.5.8 uses
-# a stripped directory (Pod::Usage and Pod::Html serve only docs and the
-# configdata.pm command line).
+# and core_perl/Pod/ (git-for-windows/build-extra make-file-list.sh).
+# OpenSSL's Configure reaches Locale and ExtUtils only through IPC::Cmd:
+# Params::Check and Module::Load::Conditional call loc() with %N or [_N]
+# placeholders, and can_run() loads ExtUtils::MakeMaker solely for
+# MM->maybe_command. Configure then runs configdata.pm to write the Makefile,
+# and configdata.pm loads Pod::Usage at compile time.
 _LOCALE_MAKETEXT_SIMPLE_SHIM = r"""package Locale::Maketext::Simple;
 use strict;
 use warnings;
@@ -535,9 +535,32 @@ sub maybe_command {
 
 1;
 """
+_POD_USAGE_SHIM = r"""package Pod::Usage;
+use strict;
+use warnings;
+use Exporter 'import';
+our $VERSION = '2.03';
+our @EXPORT = qw(pod2usage);
+
+# configdata.pm loads Pod::Usage at compile time but calls pod2usage only for
+# --help or an unknown option, neither of which the recipe passes.
+sub pod2usage {
+    my %args = @_ == 1 && ref $_[0] eq 'HASH' ? %{$_[0]}
+             : @_ == 1                        ? (-exitval => $_[0])
+             :                                  @_;
+    my $message = defined $args{-message} ? $args{-message} : $args{-msg};
+    print STDERR "$message\n" if defined $message;
+    my $exit = defined $args{-exitval} ? $args{-exitval} : 2;
+    exit($exit) unless $exit eq 'NOEXIT';
+    return;
+}
+
+1;
+"""
 _PERL_SHIMS: dict[str, str] = {
     "Locale::Maketext::Simple": _LOCALE_MAKETEXT_SIMPLE_SHIM,
     "ExtUtils::MakeMaker": _EXTUTILS_MAKEMAKER_SHIM,
+    "Pod::Usage": _POD_USAGE_SHIM,
 }
 
 # musl-gcc's specs drop the host include path, which also hides the kernel
