@@ -101,7 +101,10 @@ _SYSLIB_SHAPES = (
     "linux-arm64-musl",
 )
 
-for _tool in ("zstd", "sqlite", "mimalloc", "zlib-ng", "lzma", "bzip2"):
+# openssl joined the all-shape syslibs in soldr#3246 (static, source-built
+# 3.5.8). Its old FireDaemon DLL rows (3.5.0, Windows only) keep the same
+# recipe names, so re-ingesting them still resolves.
+for _tool in ("zstd", "sqlite", "mimalloc", "zlib-ng", "lzma", "bzip2", "openssl"):
     TOOL_RECIPE_NAME[_tool] = {shape: f"{_tool}-{shape}" for shape in _SYSLIB_SHAPES}
 
 # jemalloc is not buildable for Windows in the current upstream.
@@ -127,16 +130,12 @@ TOOL_RECIPE_NAME["python"] = {
     )
 }
 
-# nodelib + openssl + llvm-tools are Windows-MSVC- and Linux-host-
-# centric. Don't widen to shapes we don't actually build today: each
-# recipe family ships only the shapes we have producers for.
+# nodelib + llvm-tools are Windows-MSVC- and Linux-host-centric. Don't
+# widen them to shapes we don't actually build today: each recipe family
+# ships only the shapes we have producers for.
 TOOL_RECIPE_NAME["nodelib"] = {
     "windows-x64": "nodelib-windows-x64",
     "windows-arm64": "nodelib-windows-arm64",
-}
-TOOL_RECIPE_NAME["openssl"] = {
-    "windows-x64": "openssl-windows-x64",
-    "windows-arm64": "openssl-windows-arm64",
 }
 TOOL_RECIPE_NAME["llvm-tools"] = {
     "linux-x64-gnu": "llvm-tools-linux-x64",
@@ -253,11 +252,11 @@ DEFAULT_ASSET_NAME = {
     "zlib-ng": "bundle.tar.zst",
     "lzma": "bundle.tar.zst",
     "bzip2": "bundle.tar.zst",
+    "openssl": "bundle.tar.zst",
     # soldr#1010 phase 2 — new tools all ship a single bundle.tar.zst
     # per (tool, version, shape) tuple, same shape as the syslibs.
     "python": "bundle.tar.zst",
     "nodelib": "bundle.tar.zst",
-    "openssl": "bundle.tar.zst",
     "llvm-tools": "bundle.tar.zst",
     # cmake + ninja + uv prebuilt-repackage bundles.
     "cmake": "bundle.tar.zst",

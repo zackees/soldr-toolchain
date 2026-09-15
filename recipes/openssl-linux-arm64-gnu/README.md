@@ -1,7 +1,7 @@
-# `openssl-windows-x64`
+# `openssl-linux-arm64-gnu`
 
 Forge-built Conan recipe for `openssl` `3.5.8` targeting
-`x86_64-pc-windows-msvc`.
+`aarch64-unknown-linux-gnu`.
 
 The shared implementation is in `recipes/_syslib.py`; this directory is
 kept as a thin wrapper so forge can dispatch and cache one package per
@@ -17,14 +17,14 @@ https://github.com/openssl/openssl/releases/download/openssl-3.5.8/openssl-3.5.8
 gh workflow run forge-conan.yml --repo zackees/forge \
     -f recipe_repo=zackees/soldr-toolchain \
     -f recipe_ref=main \
-    -f recipe_path=recipes/openssl-windows-x64 \
-    -f name=openssl-windows-x64 \
+    -f recipe_path=recipes/openssl-linux-arm64-gnu \
+    -f name=openssl-linux-arm64-gnu \
     -f version=3.5.8 \
-    -f windows_x64=true \
+    -f windows_x64=false \
     -f windows_x64_gnu=false \
     -f windows_arm64=false \
     -f linux_x64=false \
-    -f linux_arm64=false \
+    -f linux_arm64=true \
     -f linux_x64_musl=false \
     -f linux_arm64_musl=false \
     -f macos_x64=false \
@@ -32,4 +32,4 @@ gh workflow run forge-conan.yml --repo zackees/forge \
 ```
 
 Ingested catalogue path:
-`openssl/3.5.8/windows-x64/bundle.tar.zst`
+`openssl/3.5.8/linux-arm64-gnu/bundle.tar.zst`

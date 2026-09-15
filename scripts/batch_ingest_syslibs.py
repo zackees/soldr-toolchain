@@ -162,10 +162,10 @@ def main() -> int:
             "zlib-ng",
             "lzma",
             "bzip2",
+            "openssl",
             # blessed-build tool families (soldr#1010 phase 2-3)
             "python",
             "nodelib",
-            "openssl",
             "llvm-tools",
             # prebuilt-repackage tools (cmake 4.3.4 + ninja 1.13.2 +
             # uv 0.11.26)

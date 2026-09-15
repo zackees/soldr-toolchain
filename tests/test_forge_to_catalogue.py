@@ -332,6 +332,15 @@ def test_syslib_recipe_mapping_and_default_asset_names() -> None:
     assert fc.DEFAULT_ASSET_NAME["mingw-w64-gcc"] == "bundle.tar.zst"
 
 
+def test_openssl_maps_every_syslib_shape() -> None:
+    assert set(fc.TOOL_RECIPE_NAME["openssl"]) == set(fc._SYSLIB_SHAPES)
+    assert len(fc._SYSLIB_SHAPES) == 9
+    for shape in fc._SYSLIB_SHAPES:
+        assert fc._resolve_recipe_name("openssl", shape) == f"openssl-{shape}"
+        assert fc.SHAPE_TO_PLATFORM[shape] == shape
+    assert fc.DEFAULT_ASSET_NAME["openssl"] == "bundle.tar.zst"
+
+
 def test_jemalloc_windows_shapes_are_not_mapped() -> None:
     try:
         fc._resolve_recipe_name("jemalloc", "windows-x64")
