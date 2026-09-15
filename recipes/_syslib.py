@@ -486,6 +486,17 @@ OPENSSL_PKG_CONFIG_NAMES: tuple[str, ...] = ("libcrypto", "libssl", "openssl")
 OPENSSL_WINDOWS_SYSTEM_LIBS: tuple[str, ...] = ("ws2_32", "gdi32", "crypt32", "advapi32", "user32")
 
 _STRAWBERRY_PERL = r"C:\Strawberry\perl\bin\perl.exe"
+# Git for Windows trims its MSYS perl (no Locale::Maketext::Simple, which
+# OpenSSL's Configure needs through IPC::Cmd). The runner images' MSYS2 perl
+# is complete and is the Perl OpenSSL documents for mingw builds.
+_MSYS2_PERL = r"C:\msys64\usr\bin\perl.exe"
+
+# musl-gcc's specs drop the host include path, which also hides the kernel
+# UAPI headers OpenSSL includes on Linux (crypto/mem_sec.c: <linux/mman.h>).
+_MUSL_KERNEL_MULTIARCH: dict[str, str] = {
+    "linux-x64-musl": "x86_64-linux-gnu",
+    "linux-arm64-musl": "aarch64-linux-gnu",
+}
 
 
 def _is_msvc_shape(shape_name: str) -> bool:
@@ -523,6 +534,7 @@ def _openssl_configure_args(
     *,
     perl: str = "perl",
     perl_os: str | None = None,
+    include_dirs: tuple[str, ...] = (),
 ) -> list[str]:
     shape = SHAPES[shape_name]
     prefix = _openssl_prefix_arg(shape_name, package_root, perl_os)
@@ -534,6 +546,7 @@ def _openssl_configure_args(
     if shape.musl:
         # musl lacks the ucontext API OpenSSL's async jobs use.
         args.append("no-async")
+    args.extend(f"-I{include_dir}" for include_dir in include_dirs)
     args.extend(
         [
             f"--prefix={prefix}",
@@ -555,9 +568,36 @@ def _openssl_build_env(shape_name: str, base_env: Mapping[str, str]) -> dict[str
     return env
 
 
-def _openssl_make_commands(shape_name: str, jobs: int, make: str = "make") -> list[list[str]]:
+def _musl_kernel_header_dir(
+    shape_name: str, build_root: Path, system_include: Path = Path("/usr/include")
+) -> Path:
+    """Expose only the host's kernel UAPI headers to musl-gcc.
+
+    Adding ``/usr/include`` itself would put glibc's headers behind musl's;
+    a directory holding just ``linux``, ``asm`` and ``asm-generic`` does not.
+    """
+    multiarch = _MUSL_KERNEL_MULTIARCH[shape_name]
+    sources = {
+        "linux": system_include / "linux",
+        "asm": system_include / multiarch / "asm",
+        "asm-generic": system_include / "asm-generic",
+    }
+    missing = [str(path) for path in sources.values() if not path.is_dir()]
+    if missing:
+        raise RuntimeError(f"openssl: kernel headers missing for {shape_name}: {', '.join(missing)}")
+    header_dir = build_root / "musl-kernel-headers"
+    header_dir.mkdir(parents=True, exist_ok=True)
+    for name, source in sources.items():
+        link = header_dir / name
+        if not link.is_symlink():
+            link.symlink_to(source, target_is_directory=True)
+    return header_dir
+
+
+def _openssl_make_commands(shape_name: str, jobs: int, make: str | None = None) -> list[list[str]]:
     if _is_msvc_shape(shape_name):
-        return [["nmake", "install_sw"]]
+        return [[make or "nmake", "install_sw"]]
+    make = make or "make"
     return [[make, f"-j{max(1, jobs)}", "build_sw"], [make, "install_sw"]]
 
 
@@ -634,6 +674,8 @@ def _openssl_perl(shape_name: str, env: Mapping[str, str]) -> str:
     # Strawberry Perl on PATH inside a Git Bash step.
     if _is_msvc_shape(shape_name) and Path(_STRAWBERRY_PERL).is_file():
         return _STRAWBERRY_PERL
+    if shape_name == "windows-x64-gnu" and Path(_MSYS2_PERL).is_file():
+        return _MSYS2_PERL
     return "perl"
 
 
@@ -644,28 +686,44 @@ def _perl_os(perl: str, env: Mapping[str, str]) -> str:
     return result.stdout.strip()
 
 
+def _env_path(env: Mapping[str, str]) -> str | None:
+    # vcvarsall's `set` output spells it "Path"; POSIX environments use "PATH".
+    return next((value for key, value in env.items() if key.upper() == "PATH"), None)
+
+
 def _openssl_make_program(shape_name: str, env: Mapping[str, str]) -> str:
     if SHAPES[shape_name].conan_os != "Windows":
         return "make"
-    path = env.get("PATH") or env.get("Path")
-    for candidate in ("make", "mingw32-make", "gmake"):
+    # Windows process creation searches the *parent's* PATH, not the child
+    # env's, so a program that only the developer environment provides
+    # (nmake) must be spawned by absolute path.
+    candidates = ("nmake",) if _is_msvc_shape(shape_name) else ("make", "mingw32-make", "gmake")
+    path = _env_path(env)
+    for candidate in candidates:
         found = shutil.which(candidate, path=path)
         if found:
             return found
-    raise RuntimeError("openssl: no make program (make, mingw32-make or gmake) on PATH")
+    raise RuntimeError(f"openssl: no make program ({', '.join(candidates)}) on the build PATH")
 
 
 def _build_openssl(source_root: Path, package_root: Path, shape_name: str, lib: Library) -> None:
     env = _openssl_build_env(shape_name, os.environ)
     perl = _openssl_perl(shape_name, env)
     perl_os = _perl_os(perl, env) if shape_name == "windows-x64-gnu" else None
+    if shape_name == "windows-x64-gnu":
+        # Configure records $ENV{PERL} (else $^X, an MSYS path that Git Bash
+        # would resolve to its own trimmed perl) for the Makefile's recipes.
+        env["PERL"] = perl.replace("\\", "/")
     if _is_msvc_shape(shape_name):
         env = _msvc_env(shape_name, env)
-        make = "nmake"
-    else:
-        make = _openssl_make_program(shape_name, env)
+    make = _openssl_make_program(shape_name, env)
+    include_dirs: tuple[str, ...] = ()
+    if SHAPES[shape_name].musl:
+        include_dirs = (str(_musl_kernel_header_dir(shape_name, source_root.parent)),)
     _run(
-        _openssl_configure_args(shape_name, package_root, perl=perl, perl_os=perl_os),
+        _openssl_configure_args(
+            shape_name, package_root, perl=perl, perl_os=perl_os, include_dirs=include_dirs
+        ),
         cwd=source_root,
         env=env,
     )

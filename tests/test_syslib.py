@@ -230,6 +230,53 @@ def test_openssl_make_commands() -> None:
         ["mingw32-make", "-j1", "build_sw"],
         ["mingw32-make", "install_sw"],
     ]
+    nmake = r"C:\VS\VC\Tools\MSVC\bin\Hostx64\x64\nmake.exe"
+    assert _syslib._openssl_make_commands("windows-x64", 8, nmake) == [[nmake, "install_sw"]]
+
+
+def test_openssl_make_program_resolves_nmake_on_the_developer_path(tmp_path: Path) -> None:
+    # Forge run 34920971861: a bare "nmake" argv raised FileNotFoundError
+    # because CreateProcess searched the parent's PATH, not vcvarsall's.
+    tools = tmp_path / "msvc-bin"
+    tools.mkdir()
+    nmake = tools / "nmake"
+    nmake.write_text("")
+    nmake.chmod(0o755)
+    # A Windows host also needs PATHEXT for shutil.which; POSIX ignores it.
+    env = {"Path": str(tools), "PATHEXT": ""}
+    for shape in ("windows-x64", "windows-arm64"):
+        assert _syslib._openssl_make_program(shape, env) == str(nmake)
+    with pytest.raises(RuntimeError, match="nmake"):
+        _syslib._openssl_make_program("windows-x64", {"Path": str(tmp_path / "empty")})
+    assert _syslib._openssl_make_program("linux-x64-musl", env) == "make"
+
+
+def test_openssl_perl_prefers_complete_msys2_perl_for_mingw(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # Forge run 34920992491: Git for Windows' perl lacks Locale::Maketext::Simple.
+    msys2_perl = tmp_path / "perl.exe"
+    monkeypatch.setattr(_syslib, "_MSYS2_PERL", str(msys2_perl))
+    assert _syslib._openssl_perl("windows-x64-gnu", {}) == "perl"
+    msys2_perl.write_text("")
+    assert _syslib._openssl_perl("windows-x64-gnu", {}) == str(msys2_perl)
+    assert _syslib._openssl_perl("linux-x64-gnu", {}) == "perl"
+    assert _syslib._openssl_perl("windows-x64-gnu", {"SOLDR_OPENSSL_PERL": "/x/perl"}) == "/x/perl"
+
+
+@pytest.mark.parametrize(("shape", "multiarch"), [("linux-x64-musl", "x86_64-linux-gnu"), ("linux-arm64-musl", "aarch64-linux-gnu")])
+def test_musl_kernel_header_dir_exposes_only_kernel_headers(tmp_path: Path, shape: str, multiarch: str) -> None:
+    # Forge run 34921049216: musl-gcc could not find <linux/mman.h>.
+    system = tmp_path / "usr-include"
+    for sub in ("linux", f"{multiarch}/asm", "asm-generic", "sys"):
+        (system / sub).mkdir(parents=True)
+    header_dir = _syslib._musl_kernel_header_dir(shape, tmp_path / "build", system)
+    assert sorted(p.name for p in header_dir.iterdir()) == ["asm", "asm-generic", "linux"]
+    assert (header_dir / "asm").resolve() == (system / multiarch / "asm").resolve()
+    # Idempotent across a rebuild in the same folder.
+    assert _syslib._musl_kernel_header_dir(shape, tmp_path / "build", system) == header_dir
+    args = _syslib._openssl_configure_args(shape, "/b/package", include_dirs=(str(header_dir),))
+    assert args[args.index("no-async") + 1] == f"-I{header_dir}"
+    with pytest.raises(RuntimeError, match="kernel headers missing"):
+        _syslib._musl_kernel_header_dir(shape, tmp_path / "other", tmp_path / "nothing")
 
 
 def test_vcvars_arch_mapping() -> None:
