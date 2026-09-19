@@ -11,6 +11,12 @@ standard catalogue bundle:
 The recipe intentionally uses the host runner selected by forge for the
 requested shape. Linux musl shapes rely on forge's existing musl-tools
 setup before Conan invokes the recipe.
+
+The compiler is pinned: ``RUST_TOOLCHAIN`` is installed explicitly and
+exported as ``RUSTUP_TOOLCHAIN`` for the build, so the published binary
+never depends on whatever ``stable`` the runner image happens to carry.
+It tracks the toolchain pinned by zackees/soldr's ``rust-toolchain.toml``
+and forge's ``forge-rust.yml`` default.
 """
 
 from __future__ import annotations
@@ -21,6 +27,10 @@ import shutil
 import subprocess
 from pathlib import Path
 
+
+# Exact rustc release every rust-cli bundle is compiled with. Never a
+# floating channel (``stable``/``beta``/``nightly``).
+RUST_TOOLCHAIN = "1.98.1"
 
 RUST_CLI_SHAPES = (
     "windows-x64",
@@ -117,9 +127,18 @@ def build_tool(
     for path in (staging_root, cargo_home, target_dir, bin_dir):
         path.mkdir(parents=True, exist_ok=True)
 
-    _run(["rustup", "target", "add", target], output=output)
+    _run(toolchain_install_command(target), output=output)
 
     env = os.environ.copy()
+    # RUSTUP_TOOLCHAIN outranks rustup's default and any rust-toolchain.toml,
+    # so every rustc/cargo proxy below resolves to the pinned release.
+    env["RUSTUP_TOOLCHAIN"] = RUST_TOOLCHAIN
+    rustc_version = verify_rustc_version(
+        subprocess.run(
+            ["rustc", "--version"], check=True, env=env, capture_output=True, text=True
+        ).stdout
+    )
+    output.info(rustc_version)
     env["CARGO_HOME"] = str(cargo_home)
     env["CARGO_TARGET_DIR"] = str(target_dir)
     if shape == "linux-x64-musl":
@@ -162,11 +181,38 @@ def build_tool(
         "target_triple": target,
         "binary": f"bin/{binary}{exe}",
         "source": f"crates.io:{crate}@{version}",
+        "rust_toolchain": RUST_TOOLCHAIN,
+        "rustc_version": rustc_version,
     }
     (build_folder / "meta.json").write_text(
         json.dumps(meta, indent=2) + "\n", encoding="utf-8"
     )
     return meta
+
+
+def toolchain_install_command(target: str) -> list[str]:
+    """Install the pinned toolchain plus ``target`` (idempotent)."""
+    return [
+        "rustup",
+        "toolchain",
+        "install",
+        RUST_TOOLCHAIN,
+        "--profile",
+        "minimal",
+        "--target",
+        target,
+        "--no-self-update",
+    ]
+
+
+def verify_rustc_version(rustc_version: str) -> str:
+    """Require ``rustc --version`` output to report exactly RUST_TOOLCHAIN."""
+    line = rustc_version.strip()
+    if not line.startswith(f"rustc {RUST_TOOLCHAIN} "):
+        raise RuntimeError(
+            f"compiler reported {line!r}, expected rustc {RUST_TOOLCHAIN}"
+        )
+    return line
 
 
 def _run(cmd: list[str], *, output, env: dict[str, str] | None = None) -> None:

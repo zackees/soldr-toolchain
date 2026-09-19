@@ -225,6 +225,11 @@ def test_driver_build_is_native_so_rustc_private_crates_come_from_host_sysroot(
     )
 
     pair_command = release.pair_build_command(musl)
+    # The CLI pair builds on soldr's pinned stable; the driver keeps the
+    # lint libraries' exact nightly.
+    assert release.PAIR_TOOLCHAIN == "1.98.1"
+    assert pair_command[1] == "+1.98.1"
+    assert release.DRIVER_TOOLCHAIN == "nightly-2026-05-28"
     target_index = pair_command.index("--target")
     assert pair_command[target_index + 1] == "x86_64-unknown-linux-musl"
 

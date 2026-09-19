@@ -109,6 +109,23 @@ def test_mingw_w64_gcc_helper_shape():
     assert "mingw-w64msvcrt" in asset
 
 
+def test_rust_cli_helper_pins_exact_toolchain():
+    rust_cli = _load_helper("_rust_cli")
+    assert rust_cli.RUST_TOOLCHAIN == "1.98.1"
+    command = rust_cli.toolchain_install_command("x86_64-unknown-linux-musl")
+    assert command[:4] == ["rustup", "toolchain", "install", "1.98.1"]
+    assert "stable" not in command
+    assert command[command.index("--target") + 1] == "x86_64-unknown-linux-musl"
+    line = "rustc 1.98.1 (0123abcd 2026-09-01)"
+    assert rust_cli.verify_rustc_version(line + "\n") == line
+    for wrong in ("rustc 1.97.1 (x 2026-08-01)", "rustc 1.98.10 (x 2026-10-01)"):
+        try:
+            rust_cli.verify_rustc_version(wrong)
+        except RuntimeError:
+            continue
+        raise AssertionError(f"accepted mismatched compiler {wrong!r}")
+
+
 def test_rust_cli_helper_shapes_release_matrix():
     rust_cli = _load_helper("_rust_cli")
     assert set(rust_cli.RUST_CLI_SHAPES) == RUST_CLI_EXPECTED_SHAPES
