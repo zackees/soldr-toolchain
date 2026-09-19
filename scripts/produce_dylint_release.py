@@ -36,7 +36,10 @@ DRIVER_IDENTITY = {
     "rustc_release": "1.98.0-nightly",
     "rustc_commit": "57d06900fd7d9ee06d3a7f323bb77f17ab3cfaf8",
 }
-PAIR_TOOLCHAIN = "1.97.1"
+# Stable toolchain that compiles the relocatable cargo-dylint / dylint-link
+# pair. Tracks zackees/soldr's rust-toolchain.toml. The driver is built by
+# DRIVER_TOOLCHAIN (the lint libraries' nightly) and is unaffected.
+PAIR_TOOLCHAIN = "1.98.1"
 DRIVER_TOOLCHAIN = str(DRIVER_IDENTITY["toolchain"])
 DYLINT_TOOLS = ("cargo-dylint", "dylint-link")
 GLIBC_CEILING = "2.17"
