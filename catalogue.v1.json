@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-19T11:19:32Z",
+  "generated_at": "2026-09-19T19:04:46Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -18,6 +18,70 @@
       "asset": "bundle.tar.zst",
       "url": "https://api.github.com/repos/zackees/soldr-toolchain-private/releases/assets/505002676",
       "sha256": "932d9e36cbad6243b6ca9e50332b258f7efeb086d2f21c80447738064418c714"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "soldr-maturin-1.14.1.post1-x86_64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/windows-x86_64-msvc/soldr-maturin-1.14.1.post1-x86_64-pc-windows-msvc.tar.gz",
+      "sha256": "7e716d40d4087aa766636618797c57e62f876e5f005cb9d34f43a1e967ad16cf"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "soldr-maturin-1.14.1.post1-aarch64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/windows-aarch64-msvc/soldr-maturin-1.14.1.post1-aarch64-pc-windows-msvc.tar.gz",
+      "sha256": "c7d13a5e783023b88ad54449c242aa3fd188129c0f5f34094a99795ae41dc2be"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "soldr-maturin-1.14.1.post1-aarch64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/darwin-aarch64/soldr-maturin-1.14.1.post1-aarch64-apple-darwin.tar.gz",
+      "sha256": "4cb4af3373dccb2a7f15c770d69070aadec7d0d4ce4eaf9f3698bb56fefeab97"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "soldr-maturin-1.14.1.post1-x86_64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/darwin-x86_64/soldr-maturin-1.14.1.post1-x86_64-apple-darwin.tar.gz",
+      "sha256": "847105dd0ba8ff4f2699124b75b070c57c71f3007c39f2be3a5d18956117e53d"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "soldr-maturin-1.14.1.post1-x86_64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/linux-x86_64-glibc/soldr-maturin-1.14.1.post1-x86_64-unknown-linux-gnu.tar.gz",
+      "sha256": "16eb627787aec6bb78373aaa87c73e7e6693f75ecbeecc07c6af03ecd8995edf"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "soldr-maturin-1.14.1.post1-aarch64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/linux-aarch64-glibc/soldr-maturin-1.14.1.post1-aarch64-unknown-linux-gnu.tar.gz",
+      "sha256": "a6e100d03febd10b8f5afd2a59a9ff6da4ebefd9f2e447960c2aa176473f499c"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "soldr-maturin-1.14.1.post1-x86_64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/linux-x86_64-musl/soldr-maturin-1.14.1.post1-x86_64-unknown-linux-musl.tar.gz",
+      "sha256": "ce1fb9193ea6be86c74fa9f5f474b25dfe07c0bd2204373ebc5e70b3749069dd"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "soldr-maturin-1.14.1.post1-aarch64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/soldr-maturin/1.14.1.post1/linux-aarch64-musl/soldr-maturin-1.14.1.post1-aarch64-unknown-linux-musl.tar.gz",
+      "sha256": "a3512ea6c12573803a2ae6e1dd3ad3b611fab6b267a71a7be8305310198929f6"
     }
   ]
 }
