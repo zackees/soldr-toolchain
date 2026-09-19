@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-19T11:19:32Z",
+  "generated_at": "2026-09-19T19:05:26Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -18,6 +18,70 @@
       "asset": "bundle.tar.zst",
       "url": "https://api.github.com/repos/zackees/soldr-toolchain-private/releases/assets/505002676",
       "sha256": "932d9e36cbad6243b6ca9e50332b258f7efeb086d2f21c80447738064418c714"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-binstall-1.20.1-x86_64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-binstall/1.20.1/windows-x86_64-msvc/cargo-binstall-1.20.1-x86_64-pc-windows-msvc.tar.gz",
+      "sha256": "0d3182a91ca504fe941ab4c7af85d54fce230c2ddeb8a1ed536847f2812f85d6"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-binstall-1.20.1-aarch64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-binstall/1.20.1/windows-aarch64-msvc/cargo-binstall-1.20.1-aarch64-pc-windows-msvc.tar.gz",
+      "sha256": "f4c838b63e4a7b72fc1180daa65f42c195d897001a338fa4f1e1cb9560751b81"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-binstall-1.20.1-aarch64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-binstall/1.20.1/darwin-aarch64/cargo-binstall-1.20.1-aarch64-apple-darwin.tar.gz",
+      "sha256": "8c489659943771e252f626526c5b4e2d086d2419b8e431d5848ca7854e6d5334"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-binstall-1.20.1-x86_64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-binstall/1.20.1/darwin-x86_64/cargo-binstall-1.20.1-x86_64-apple-darwin.tar.gz",
+      "sha256": "ee83ec3b7c7804b0c711bb3acfc69b9833dd41318cb933b449b0398e4365b7eb"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-binstall-1.20.1-x86_64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-binstall/1.20.1/linux-x86_64-glibc/cargo-binstall-1.20.1-x86_64-unknown-linux-gnu.tar.gz",
+      "sha256": "10652661ae69428c5d3bb394570cee8765db0444ee3b985026aebdc33ffaad9d"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-binstall-1.20.1-aarch64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-binstall/1.20.1/linux-aarch64-glibc/cargo-binstall-1.20.1-aarch64-unknown-linux-gnu.tar.gz",
+      "sha256": "077c498631563639304e20d960a9582bd428a77495e90549897ae5693ceb61ae"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-binstall-1.20.1-x86_64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-binstall/1.20.1/linux-x86_64-musl/cargo-binstall-1.20.1-x86_64-unknown-linux-musl.tar.gz",
+      "sha256": "fced910eff4ccc93b1fc1b18095ec41495bfa2c0f8157378aa18b70b1a62b701"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-binstall-1.20.1-aarch64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-binstall/1.20.1/linux-aarch64-musl/cargo-binstall-1.20.1-aarch64-unknown-linux-musl.tar.gz",
+      "sha256": "8438901ac09c966e10255cb6b9bbd2da89e0f047e12bcf058a83ad06724e4e58"
     }
   ]
 }
