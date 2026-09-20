@@ -76,9 +76,9 @@
     "crgx": {
       "descriptor": {
         "url": "crgx/manifest.json",
-        "size_bytes": 4990,
+        "size_bytes": 6398,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "bcbf2bb8af7b44de3cfb4edda1dfcc7b419f0fa439236cdcc1832877d7e5aac9"
+        "sha256": "c32c70fdb204a9d0ada012bf95b76d0248cca16a051091c6d9f50aeed21db417"
       },
       "summary": "yfedoseev/crgx",
       "kind_hint": "tool"

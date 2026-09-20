@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-20T00:37:46Z",
+  "generated_at": "2026-09-20T00:58:52Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -82,6 +82,70 @@
       "asset": "cargo-nextest-0.9.140-rust1.98.1-aarch64-unknown-linux-musl.tar.gz",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-aarch64-musl/cargo-nextest-0.9.140-rust1.98.1-aarch64-unknown-linux-musl.tar.gz",
       "sha256": "6055e492bf50594507bcff48fd9b1936d86e642bb98cbdfb542ec24868d7cdd6"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "crgx-0.1.0-x86_64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/crgx/v0.1.0/windows-x86_64-msvc/crgx-0.1.0-x86_64-pc-windows-msvc.tar.gz",
+      "sha256": "5cb6c49889cd05ffcfab90595bb47bb68730123f986aa7ac202e015af4ed0f74"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "crgx-0.1.0-aarch64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/crgx/v0.1.0/windows-aarch64-msvc/crgx-0.1.0-aarch64-pc-windows-msvc.tar.gz",
+      "sha256": "96e7609f2fe88c2acf8fee56e4e40c37e156622d870f5f7c0c936c8517999260"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "crgx-0.1.0-aarch64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/crgx/v0.1.0/darwin-aarch64/crgx-0.1.0-aarch64-apple-darwin.tar.gz",
+      "sha256": "591d6c4c2714f154a2221857d478292a0ae3e995cba83ef9f17b408d7f40b6b7"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "crgx-0.1.0-x86_64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/crgx/v0.1.0/darwin-x86_64/crgx-0.1.0-x86_64-apple-darwin.tar.gz",
+      "sha256": "6c975404438513085d4a09de5e27bf4b0053a7871a625f466df8db83b960bb9d"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "crgx-0.1.0-x86_64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/crgx/v0.1.0/linux-x86_64-glibc/crgx-0.1.0-x86_64-unknown-linux-gnu.tar.gz",
+      "sha256": "f1f018957ccafa18c25982fe5b3d23897ed3e18d2d146cc9bb2ff6c04e2622bb"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "crgx-0.1.0-aarch64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/crgx/v0.1.0/linux-aarch64-glibc/crgx-0.1.0-aarch64-unknown-linux-gnu.tar.gz",
+      "sha256": "8548d12b3c46507a179162c1a59e81b04db859637046ce7278ed1a8320a8f85c"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "crgx-0.1.0-x86_64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/crgx/v0.1.0/linux-x86_64-musl/crgx-0.1.0-x86_64-unknown-linux-musl.tar.gz",
+      "sha256": "25c7f34c0c6c474793d229a8c71ceeb74c844a7ca80a57ef4be32767531cb3d0"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "crgx-0.1.0-aarch64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/crgx/v0.1.0/linux-aarch64-musl/crgx-0.1.0-aarch64-unknown-linux-musl.tar.gz",
+      "sha256": "ab901d9572f05d43d172e0d9539c009368d0b605f3cdbb39a36ba4ea43938c12"
     }
   ]
 }
