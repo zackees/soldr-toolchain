@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-20T00:37:46Z",
+  "generated_at": "2026-09-20T00:58:45Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -82,6 +82,70 @@
       "asset": "cargo-nextest-0.9.140-rust1.98.1-aarch64-unknown-linux-musl.tar.gz",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-aarch64-musl/cargo-nextest-0.9.140-rust1.98.1-aarch64-unknown-linux-musl.tar.gz",
       "sha256": "6055e492bf50594507bcff48fd9b1936d86e642bb98cbdfb542ec24868d7cdd6"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-chef-0.1.73-x86_64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/windows-x86_64-msvc/cargo-chef-0.1.73-x86_64-pc-windows-msvc.tar.gz",
+      "sha256": "7b273c347ebed201592644c8ddfe4a16f6f530186039ac1f3fdc9aa718ff8236"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-chef-0.1.73-aarch64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/windows-aarch64-msvc/cargo-chef-0.1.73-aarch64-pc-windows-msvc.tar.gz",
+      "sha256": "fa88725abb60fb9474edc7ad77fdb6a1443150449dc49ac026ee52b3b1e46205"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-chef-0.1.73-aarch64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/darwin-aarch64/cargo-chef-0.1.73-aarch64-apple-darwin.tar.gz",
+      "sha256": "9ef05d70fed44985582de9a2b946f5c05fa1be154d9b739eccfc330351dedd49"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-chef-0.1.73-x86_64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/darwin-x86_64/cargo-chef-0.1.73-x86_64-apple-darwin.tar.gz",
+      "sha256": "bf36a0f76a8b44f936ae2288719166a4e052734c8244c498a5b21817f3cb69e8"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-chef-0.1.73-x86_64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/linux-x86_64-glibc/cargo-chef-0.1.73-x86_64-unknown-linux-gnu.tar.gz",
+      "sha256": "8f63fbc2e4dee3d023ae6290d3b640ada567aaeeb2fc7ade1c0e155e7c97f75b"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-chef-0.1.73-aarch64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/linux-aarch64-glibc/cargo-chef-0.1.73-aarch64-unknown-linux-gnu.tar.gz",
+      "sha256": "ec4c07fb1a1ab287c6ba0b83f0ed3835208e1675a868518a665d69fb58be126f"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-chef-0.1.73-x86_64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/linux-x86_64-musl/cargo-chef-0.1.73-x86_64-unknown-linux-musl.tar.gz",
+      "sha256": "aa44d1f68cbdce635e139061f597ed622e3fe8fe79f2a5cff7178c284fc4d69c"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-chef-0.1.73-aarch64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-chef/v0.1.73/linux-aarch64-musl/cargo-chef-0.1.73-aarch64-unknown-linux-musl.tar.gz",
+      "sha256": "1cee5098e1c56da1736763f72d5366e922eb6020d26a30d34c1e594f179b74a1"
     }
   ]
 }
