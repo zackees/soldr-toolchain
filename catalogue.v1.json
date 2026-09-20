@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-19T11:19:32Z",
+  "generated_at": "2026-09-20T00:37:46Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -18,6 +18,70 @@
       "asset": "bundle.tar.zst",
       "url": "https://api.github.com/repos/zackees/soldr-toolchain-private/releases/assets/505002676",
       "sha256": "932d9e36cbad6243b6ca9e50332b258f7efeb086d2f21c80447738064418c714"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-nextest-0.9.140-rust1.98.1-x86_64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/windows-x86_64-msvc/cargo-nextest-0.9.140-rust1.98.1-x86_64-pc-windows-msvc.tar.gz",
+      "sha256": "9adedc5947f453be553671549079dc1ceb0a4c48089c4862070390f7d77b90ad"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-nextest-0.9.140-rust1.98.1-aarch64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/windows-aarch64-msvc/cargo-nextest-0.9.140-rust1.98.1-aarch64-pc-windows-msvc.tar.gz",
+      "sha256": "b9681f05397a90444e1dec3d3ec5375d5e06d03e90c1a6bc7b7bd72c3b4688d4"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-nextest-0.9.140-rust1.98.1-aarch64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/darwin-aarch64/cargo-nextest-0.9.140-rust1.98.1-aarch64-apple-darwin.tar.gz",
+      "sha256": "e87e483c94b52552a8cadcc7181eaa79caf05c829c62d9424edaf1012878eea1"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-nextest-0.9.140-rust1.98.1-x86_64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/darwin-x86_64/cargo-nextest-0.9.140-rust1.98.1-x86_64-apple-darwin.tar.gz",
+      "sha256": "8665670d66b6c2728c0190d09aa8f725c82a8610e8ef1bc4cbfe598cc1f07f71"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-nextest-0.9.140-rust1.98.1-x86_64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-x86_64-glibc/cargo-nextest-0.9.140-rust1.98.1-x86_64-unknown-linux-gnu.tar.gz",
+      "sha256": "8b925e8f12855da7e0894c06a36a1a1b8fc57c5f629c32dab6f568e3e7c6a815"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-nextest-0.9.140-rust1.98.1-aarch64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-aarch64-glibc/cargo-nextest-0.9.140-rust1.98.1-aarch64-unknown-linux-gnu.tar.gz",
+      "sha256": "35443c67c81cf2f84e6a77c209c77a94900cb59c5b2936a0cd58a5ab5086b450"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-nextest-0.9.140-rust1.98.1-x86_64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-x86_64-musl/cargo-nextest-0.9.140-rust1.98.1-x86_64-unknown-linux-musl.tar.gz",
+      "sha256": "e5b8d4a4248f3564abdb82391c8acb5c04bfdbf6e7dc38f1198a3df470844a2b"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-nextest-0.9.140-rust1.98.1-aarch64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-nextest/0.9.140/linux-aarch64-musl/cargo-nextest-0.9.140-rust1.98.1-aarch64-unknown-linux-musl.tar.gz",
+      "sha256": "6055e492bf50594507bcff48fd9b1936d86e642bb98cbdfb542ec24868d7cdd6"
     }
   ]
 }
