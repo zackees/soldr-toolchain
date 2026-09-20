@@ -184,13 +184,40 @@ contains its crosstool-NG config, license files, and downloaded corresponding
 source archives. The recipe measures both target `libc.so.6` and host tool ELF
 version requirements and refuses any result above GLIBC 2.17.
 
+## Rebuilding an already-published version
+
+Published bytes are immutable. A consumer pins `(filename, sha256)` from
+whatever catalogue it fetched, so replacing the bytes behind a published
+filename breaks those pins until the catalogue republishes — and permanently
+for any older catalogue that is still in use.
+
+So a *rebuild of the same version* (for example the same tool recompiled with
+a newer rustc) is published **beside** the original under a build label:
+
+```sh
+uv run --group dev python -m scripts.ingest_forge_rust_run \
+    --forge-dir ../forge-artifacts --tool cargo-nextest --version 0.9.140 \
+    --forge-run-id <run-id> --assets-root ../soldr-toolchain-assets \
+    --schema schemas/catalogue.v1.schema.json --build-label rust1.98.1
+```
+
+That writes `cargo-nextest-0.9.140-rust1.98.1-<triple>.tar.gz`, repoints the
+release in `cargo-nextest/manifest.json` at it, and leaves the original file
+and its catalogue rows untouched and still resolvable. `forge-ingest.yml`
+takes the same value as its `build_label` input.
+
+`forge_to_catalogue.py` enforces this: an ingest whose asset filename is
+already published with a *different* sha256 fails closed. `--replace` is the
+deliberate, owner-approved override.
+
 ## Tracked tools
 
 | Tool | Upstream | Pin source |
 |---|---|---|
 | zccache | `zackees/zccache` | soldr `MANAGED_ZCCACHE_VERSION` |
 | crgx | `yfedoseev/crgx` | soldr `MANAGED_CRGX_VERSION` |
-| cargo-chef | `LukeMathWalker/cargo-chef` | soldr `CARGO_CHEF_PINNED_VERSION` |
+| cargo-chef | `LukeMathWalker/cargo-chef` | soldr `CARGO_CHEF_PINNED_VERSION`; binaries built by forge-rust |
+| crgx (binaries) | `yfedoseev/crgx` | soldr `MANAGED_CRGX_VERSION`; binaries built by forge-rust |
 | cargo-zigbuild | `rust-cross/cargo-zigbuild` | latest |
 | cargo-xwin | `rust-cross/cargo-xwin` | latest |
 | mingw-w64-gcc | `brechtsanders/winlibs_mingw` | pinned WinLibs release |

@@ -23,6 +23,11 @@ on:
         description: "Tool/SDK version (e.g. 14.5)"
         required: true
         type: string
+      build_label:
+        description: "Label for a rebuild of an already-published version (e.g. rust1.98.1); blank for a first publication"
+        required: false
+        default: ""
+        type: string
       shape:
         description: "Artifact shape"
         required: true
@@ -115,7 +120,12 @@ jobs:
             --dir forge-downloads
 
       - name: Run ingest
+        shell: bash
         run: |
+          label=()
+          if [ -n "${{ inputs.build_label }}" ]; then
+            label=(--build-label "${{ inputs.build_label }}")
+          fi
           if [ "${{ inputs.shape }}" = all ]; then
             PYTHONPATH=main python main/scripts/ingest_forge_rust_run.py \
               --forge-dir forge-downloads \
@@ -123,7 +133,8 @@ jobs:
               --version "${{ inputs.version }}" \
               --forge-run-id "${{ inputs.forge_run_id }}" \
               --assets-root assets \
-              --schema main/schemas/catalogue.v1.schema.json
+              --schema main/schemas/catalogue.v1.schema.json \
+              "${label[@]}"
           else
             python main/scripts/forge_to_catalogue.py \
               --forge-dir forge-downloads \
@@ -132,7 +143,8 @@ jobs:
               --shape "${{ inputs.shape }}" \
               --forge-run-id "${{ inputs.forge_run_id }}" \
               --assets-root assets \
-              --schema main/schemas/catalogue.v1.schema.json
+              --schema main/schemas/catalogue.v1.schema.json \
+              "${label[@]}"
           fi
 
       - name: Commit + open PR against assets
@@ -144,7 +156,11 @@ jobs:
           cd assets
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          branch="ingest/${{ inputs.tool }}-${{ inputs.version }}-${{ inputs.shape }}-run${{ inputs.forge_run_id }}"
+          label_suffix=""
+          if [ -n "${{ inputs.build_label }}" ]; then
+            label_suffix="-${{ inputs.build_label }}"
+          fi
+          branch="ingest/${{ inputs.tool }}-${{ inputs.version }}${label_suffix}-${{ inputs.shape }}-run${{ inputs.forge_run_id }}"
           git checkout -B "$branch"
           # Keep the sparse tree intact. Force-add only the generated version
           # subtree so its new LFS pointer is staged despite skip-worktree;

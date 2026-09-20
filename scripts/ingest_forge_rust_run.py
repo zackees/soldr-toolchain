@@ -14,13 +14,18 @@ def main() -> int:
     parser.add_argument("--forge-dir", type=Path, required=True)
     parser.add_argument(
         "--tool",
-        choices=("cargo-binstall", "cargo-nextest", "cargo-dylint", "dylint-link", "soldr-maturin"),
+        choices=forge_to_catalogue.FORGE_RUST_TOOLS,
         required=True,
     )
     parser.add_argument("--version", required=True)
     parser.add_argument("--forge-run-id", required=True)
     parser.add_argument("--assets-root", type=Path, required=True)
     parser.add_argument("--schema", type=Path, required=True)
+    parser.add_argument(
+        "--build-label",
+        help="Distinguishing label for a rebuild of an already-published "
+        "version (e.g. rust1.98.1).",
+    )
     args = parser.parse_args()
 
     for shape in forge_to_catalogue.RUST_CLI_SHAPES:
@@ -40,6 +45,11 @@ def main() -> int:
                 str(args.assets_root),
                 "--schema",
                 str(args.schema),
+                *(
+                    ["--build-label", args.build_label]
+                    if args.build_label
+                    else []
+                ),
             ]
         )
         if result != 0:

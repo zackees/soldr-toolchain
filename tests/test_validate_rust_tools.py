@@ -10,12 +10,19 @@ def test_pinned_vertical_slice_has_dylint_triplet_and_eight_platforms():
     doc = validate(ROOT / "managed-rust-tools.json")
     assert set(doc["tools"]) == {
         "cargo-binstall",
+        "cargo-chef",
         "cargo-nextest",
+        "crgx",
         "cargo-dylint",
         "dylint-link",
         "dylint-driver",
         "soldr-maturin",
     }
+    # cargo-chef and crgx are built by forge-rust.yml but their upstream
+    # releases are already catalogued through build_manifest's own pin list,
+    # so the managed entry must not add a second release query.
+    for tool in ("cargo-chef", "crgx"):
+        assert doc["tools"][tool]["catalogue_from_release"] is False
     assert len(doc["platforms"]) == 8
     assert doc["tools"]["dylint-driver"]["driver_identity"] == {
         "dylint_version": "6.0.3",

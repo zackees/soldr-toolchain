@@ -631,3 +631,162 @@ def test_nextest_ingest_does_not_roll_back_newer_stable_channel(tmp_path: Path) 
         "latest-stable": "0.9.141",
         "stable": "0.9.141",
     }
+
+
+def test_forge_rust_tools_cover_chef_and_crgx() -> None:
+    # cargo-chef and crgx moved off the rust-cli Conan recipe (bare
+    # ubuntu-24.04, glibc 2.39) onto forge-rust.yml's manylinux2014 lanes.
+    assert {"cargo-chef", "crgx"} <= set(fc.FORGE_RUST_TOOLS)
+    managed = json.loads(
+        (Path(fc.__file__).resolve().parents[1] / "managed-rust-tools.json").read_text(
+            encoding="utf-8"
+        )
+    )["tools"]
+    for tool in ("cargo-chef", "crgx"):
+        assert managed[tool]["source_ref"]
+        # Upstream releases stay catalogued through build_manifest's own pin
+        # list; a second managed entry would query the same repo twice.
+        assert managed[tool]["catalogue_from_release"] is False
+    # Version directories keep their historical `v` prefix.
+    assert fc._catalog_version("cargo-chef", "0.1.73") == "v0.1.73"
+    assert fc._catalog_version("crgx", "0.1.0") == "v0.1.0"
+    assert (
+        fc._forge_rust_asset_name("cargo-chef", "0.1.73", "linux-x64-gnu")
+        == "cargo-chef-0.1.73-x86_64-unknown-linux-gnu.tar.gz"
+    )
+
+
+def test_packages_forge_rust_chef_artifact(tmp_path: Path) -> None:
+    artifact = tmp_path / "forge-rust-cargo-chef-0.1.73-linux-x64-gnu"
+    artifact.mkdir()
+    binary = b"native-chef"
+    (artifact / "cargo-chef").write_bytes(binary)
+    (artifact / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "tool": "cargo-chef",
+                "version": "0.1.73",
+                "binary": "cargo-chef",
+                "target": "x86_64-unknown-linux-gnu",
+                "platform": "linux-x64-gnu",
+                "payload_sha256": hashlib.sha256(binary).hexdigest(),
+                "source_repo": "LukeMathWalker/cargo-chef",
+                "source_ref": "0e6d0f6777dc5770c6097c3ed67700eea313ac85",
+                "resolution_mode": "source-build",
+                "rust_toolchain": "1.98.1",
+                "smoke": {"command": "cargo-chef --version", "result": "passed"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    output = tmp_path / "bundle.tar.gz"
+    provenance = fc._package_forge_rust_artifact(
+        artifact, output, tool="cargo-chef", version="0.1.73", shape="linux-x64-gnu"
+    )
+    with tarfile.open(output, "r:gz") as archive:
+        assert archive.getnames() == ["manifest.json", "package/cargo-chef"]
+    assert provenance["producer"] == "forge-rust"
+
+
+def test_build_label_places_rebuild_beside_the_original() -> None:
+    plain = fc._forge_rust_asset_name("cargo-nextest", "0.9.140", "linux-x64-gnu")
+    labelled = fc._forge_rust_asset_name(
+        "cargo-nextest", "0.9.140", "linux-x64-gnu", "rust1.98.1"
+    )
+    assert plain == "cargo-nextest-0.9.140-x86_64-unknown-linux-gnu.tar.gz"
+    assert labelled == (
+        "cargo-nextest-0.9.140-rust1.98.1-x86_64-unknown-linux-gnu.tar.gz"
+    )
+    assert plain != labelled
+    assert fc._validate_build_label("rust1.98.1") == "rust1.98.1"
+    assert fc._validate_build_label("") is None
+    assert fc._validate_build_label(None) is None
+    for bad in ("Rust1.98.1", "rust 1.98.1", "rust/1", "-rust1"):
+        with pytest.raises(SystemExit, match="must match"):
+            fc._validate_build_label(bad)
+
+
+def _published_assets_root(tmp_path: Path, filename: str, sha256: str) -> Path:
+    root = tmp_path / "assets"
+    (root / "cargo-nextest").mkdir(parents=True)
+    (root / "cargo-nextest" / "manifest.json").write_text(
+        json.dumps(
+            {
+                "kind": "Catalog",
+                "schema_version": 1,
+                "tool": "cargo-nextest",
+                "releases": [
+                    {
+                        "version": "0.9.140",
+                        "platforms": [
+                            {
+                                "platform": {"os": "linux", "arch": "x86_64"},
+                                "asset": {"filename": filename, "sha256": sha256},
+                            }
+                        ],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return root
+
+
+def test_refuses_to_replace_published_bytes(tmp_path: Path) -> None:
+    filename = "cargo-nextest-0.9.140-x86_64-unknown-linux-gnu.tar.gz"
+    root = _published_assets_root(tmp_path, filename, "a" * 64)
+    # Same bytes: idempotent re-ingest stays allowed.
+    fc._assert_not_replacing_published(
+        root, tool="cargo-nextest", filename=filename, sha256="a" * 64, replace=False
+    )
+    # A new filename (a labelled rebuild) is always allowed.
+    fc._assert_not_replacing_published(
+        root,
+        tool="cargo-nextest",
+        filename="cargo-nextest-0.9.140-rust1.98.1-x86_64-unknown-linux-gnu.tar.gz",
+        sha256="b" * 64,
+        replace=False,
+    )
+    # Different bytes under a published name: refused unless --replace.
+    with pytest.raises(SystemExit, match="already published with sha256"):
+        fc._assert_not_replacing_published(
+            root,
+            tool="cargo-nextest",
+            filename=filename,
+            sha256="b" * 64,
+            replace=False,
+        )
+    fc._assert_not_replacing_published(
+        root, tool="cargo-nextest", filename=filename, sha256="b" * 64, replace=True
+    )
+
+
+def test_published_sha_is_also_read_from_the_flat_catalogue(tmp_path: Path) -> None:
+    root = tmp_path / "assets"
+    root.mkdir()
+    (root / "catalogue.v1.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "entries": [
+                    {
+                        "owner": "zackees",
+                        "repo": "soldr-toolchain",
+                        "tag": "assets",
+                        "asset": "soldr-maturin-1.14.1.post1-x86_64-apple-darwin.tar.gz",
+                        "url": "https://example.test/a.tar.gz",
+                        "sha256": "c" * 64,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert (
+        fc._published_sha256_for_filename(
+            root, "soldr-maturin", "soldr-maturin-1.14.1.post1-x86_64-apple-darwin.tar.gz"
+        )
+        == "c" * 64
+    )
