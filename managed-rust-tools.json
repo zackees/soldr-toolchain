@@ -1,6 +1,22 @@
 {
   "schema_version": 1,
   "tools": {
+    "cargo-chef": {
+      "version": "0.1.73",
+      "source": "LukeMathWalker/cargo-chef",
+      "source_ref": "0e6d0f6777dc5770c6097c3ed67700eea313ac85",
+      "binary": "cargo-chef",
+      "release_tag_prefix": "v",
+      "catalogue_from_release": false
+    },
+    "crgx": {
+      "version": "0.1.0",
+      "source": "yfedoseev/crgx",
+      "source_ref": "fbf0a69625d461594e66cac412e7716f6c790059",
+      "binary": "crgx",
+      "release_tag_prefix": "v",
+      "catalogue_from_release": false
+    },
     "cargo-binstall": {
       "version": "1.20.1",
       "source": "cargo-bins/cargo-binstall",

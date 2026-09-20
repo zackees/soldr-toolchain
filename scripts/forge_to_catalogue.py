@@ -230,8 +230,100 @@ RUST_TARGET_BY_SHAPE = {
 }
 
 
-def _forge_rust_asset_name(tool: str, version: str, shape: str) -> str:
-    return f"{tool}-{version}-{RUST_TARGET_BY_SHAPE[shape]}.tar.gz"
+# Tools produced by zackees/forge's forge-rust.yml (a native cargo build per
+# host, with Linux -gnu inside manylinux2014). cargo-chef and crgx moved here
+# from the rust-cli Conan recipe, whose -gnu lanes inherit the runner's glibc
+# 2.39 and so cannot meet the 2.17 floor.
+FORGE_RUST_TOOLS = (
+    "cargo-binstall",
+    "cargo-chef",
+    "cargo-dylint",
+    "cargo-nextest",
+    "crgx",
+    "dylint-driver",
+    "dylint-link",
+    "soldr-maturin",
+)
+
+
+def _forge_rust_asset_name(
+    tool: str, version: str, shape: str, build_label: str | None = None
+) -> str:
+    """Filename for one Forge Rust bundle.
+
+    ``build_label`` exists for a *rebuild of an already-published version*
+    (for example the same tool + version recompiled with a newer rustc).
+    Published bytes are immutable: consumers pin `(filename, sha256)`, and a
+    previously published catalogue keeps resolving the old filename. So a
+    rebuild is published beside the original under
+    ``<tool>-<version>-<label>-<triple>.tar.gz`` and the per-tool manifest's
+    release is repointed at it; the original file and its rows stay valid.
+    """
+    label = f"-{build_label}" if build_label else ""
+    return f"{tool}-{version}{label}-{RUST_TARGET_BY_SHAPE[shape]}.tar.gz"
+
+
+BUILD_LABEL_PATTERN = re.compile(r"^[a-z0-9][a-z0-9.]*$")
+
+
+def _validate_build_label(build_label: str | None) -> str | None:
+    if build_label is None or build_label == "":
+        return None
+    if not BUILD_LABEL_PATTERN.fullmatch(build_label):
+        raise SystemExit(
+            f"forge_to_catalogue.py: build label {build_label!r} must match "
+            f"{BUILD_LABEL_PATTERN.pattern} (e.g. rust1.98.1)"
+        )
+    return build_label
+
+
+def _published_sha256_for_filename(
+    assets_root: Path, tool: str, filename: str
+) -> str | None:
+    """Return the sha256 a published document already pins for ``filename``."""
+    catalog_path = assets_root / tool / "manifest.json"
+    if catalog_path.is_file():
+        try:
+            catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            catalog = {}
+        for release in catalog.get("releases", []) or []:
+            for platform in release.get("platforms", []) or []:
+                asset = platform.get("asset") or {}
+                if asset.get("filename") == filename and asset.get("sha256"):
+                    return str(asset["sha256"])
+    catalogue_path = assets_root / "catalogue.v1.json"
+    if catalogue_path.is_file():
+        try:
+            catalogue = json.loads(catalogue_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return None
+        for entry in catalogue.get("entries", []) or []:
+            if entry.get("asset") == filename and entry.get("sha256"):
+                return str(entry["sha256"])
+    return None
+
+
+def _assert_not_replacing_published(
+    assets_root: Path, *, tool: str, filename: str, sha256: str, replace: bool
+) -> None:
+    """Refuse to change the bytes behind an already-published filename.
+
+    Consumers pin `(filename, sha256)` from a catalogue they may have fetched
+    at any earlier point, so replacing the bytes under a published name breaks
+    every one of those pins until (and for older catalogues, after) a
+    republish. Use a build label, or `--replace` for a deliberate,
+    owner-approved correction.
+    """
+    published = _published_sha256_for_filename(assets_root, tool, filename)
+    if published is None or published == sha256 or replace:
+        return
+    raise SystemExit(
+        f"forge_to_catalogue.py: {filename} is already published with sha256 "
+        f"{published}; this ingest would replace it with {sha256}. Publish the "
+        "rebuild under a build label (--build-label rust1.98.1) instead, or "
+        "pass --replace for a deliberate correction."
+    )
 
 
 MANAGED_RUST_TOOLS = (
@@ -355,6 +447,17 @@ def main(argv: list[str] | None = None) -> int:
         "--asset-name", help="Filename for the placed asset (default: per-tool)."
     )
     parser.add_argument(
+        "--build-label",
+        help="Distinguishing label for a rebuild of an already-published "
+        "version (e.g. rust1.98.1). Placed beside the original file.",
+    )
+    parser.add_argument(
+        "--replace",
+        action="store_true",
+        help="Allow replacing the bytes behind an already-published filename. "
+        "Off by default: published (filename, sha256) pins are immutable.",
+    )
+    parser.add_argument(
         "--blob-public-origin",
         help="HTTPS immutable blob origin; requires --upload-helper.",
     )
@@ -392,14 +495,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     rust_artifact = None
-    if args.tool in {
-        "cargo-binstall",
-        "cargo-nextest",
-        "cargo-dylint",
-        "dylint-link",
-        "dylint-driver",
-        "soldr-maturin",
-    }:
+    if args.tool in FORGE_RUST_TOOLS:
         rust_artifact = _find_forge_rust_artifact(
             args.forge_dir, args.tool, args.version, args.shape
         )
@@ -416,8 +512,14 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"forge artifact: {forge_artifact}")
 
+    build_label = _validate_build_label(args.build_label)
+    if build_label and rust_artifact is None:
+        raise SystemExit(
+            "forge_to_catalogue.py: --build-label applies to forge-rust "
+            "artifacts only"
+        )
     asset_name = args.asset_name or (
-        _forge_rust_asset_name(args.tool, args.version, args.shape)
+        _forge_rust_asset_name(args.tool, args.version, args.shape, build_label)
         if rust_artifact is not None
         else DEFAULT_ASSET_NAME.get(args.tool, "bundle.tar.zst")
     )
@@ -452,6 +554,13 @@ def main(argv: list[str] | None = None) -> int:
 
     sha256 = _sha256_of(asset_path)
     print(f"sha256: {sha256}")
+    _assert_not_replacing_published(
+        args.assets_root,
+        tool=args.tool,
+        filename=asset_name,
+        sha256=sha256,
+        replace=args.replace,
+    )
     delivery_urls = _asset_urls(asset_rel)
     if bool(args.blob_public_origin) != bool(args.upload_helper):
         raise SystemExit(
