@@ -77,6 +77,15 @@ ASSET_INDEX_SCHEMA_VERSION = 5
 SHA256SUMS_ASSET_NAME = "SHA256SUMS"
 SHA256SUMS_SKIP_LINES = {"SHA256SUMS", "install.sh", "install.ps1"}
 _LFS_POINTER_SHA_RE = re.compile(r"^oid sha256:([0-9a-f]{64})$", re.MULTILINE)
+_LOCAL_BLOB_RESERVED_DIRS = {"sha256"}
+
+
+def _is_local_blob_tool_dir(path: Path) -> bool:
+    return (
+        path.is_dir()
+        and not path.name.startswith(".")
+        and path.name not in _LOCAL_BLOB_RESERVED_DIRS
+    )
 
 
 def sha256_of_file(path: Path) -> str:
@@ -163,9 +172,9 @@ def iter_local_blobs(manifest_root: Path) -> Iterable[Path]:
     NOT a blob, so it is skipped. Anything else inside
     ``<tool>/<anything>/...`` is treated as a blob and yielded.
     """
-    for tool_dir in sorted(p for p in manifest_root.iterdir() if p.is_dir()):
-        if tool_dir.name.startswith("."):
-            continue
+    for tool_dir in sorted(
+        p for p in manifest_root.iterdir() if _is_local_blob_tool_dir(p)
+    ):
         for version_dir in sorted(p for p in tool_dir.iterdir() if p.is_dir()):
             for path in sorted(version_dir.rglob("*")):
                 if path.is_file():
@@ -255,10 +264,10 @@ def collect_local_blob_entries(
     file each.
     """
     entries: list[dict[str, Any]] = []
-    for tool_dir in sorted(p for p in manifest_root.iterdir() if p.is_dir()):
+    for tool_dir in sorted(
+        p for p in manifest_root.iterdir() if _is_local_blob_tool_dir(p)
+    ):
         tool_name = tool_dir.name
-        if tool_name.startswith("."):
-            continue
         per_tool_path = tool_dir / "manifest.json"
         releases_by_tag = _load_per_tool_releases(per_tool_path)
         version_dirs = sorted(p for p in tool_dir.iterdir() if p.is_dir())
