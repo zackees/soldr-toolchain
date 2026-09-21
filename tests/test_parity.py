@@ -75,6 +75,23 @@ _SKIP_REASON = (
 )
 
 
+@unittest.skipIf(ASSETS_DIR is None, _SKIP_REASON)
+class MultipartPublicationPolicyTest(unittest.TestCase):
+    def test_expected_source_count_matches_current_inventory(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        policy = json.loads(
+            (repo_root / "multipart-external-entries.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        inventory = json.loads(
+            (ASSETS_DIR / "source-inventory.v1.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            policy["expected_source_entries"], len(inventory["entries"])
+        )
+
+
 def _discover_public_dir() -> Path | None:
     env = os.environ.get("SOLDR_TOOLCHAIN_PUBLIC_DIR")
     candidates = [Path(env).resolve()] if env else []
