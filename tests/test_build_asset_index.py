@@ -249,6 +249,24 @@ class BuildAssetIndexTest(unittest.TestCase):
             assets = {e["asset"] for e in self_attributed}
             self.assertIn("sdk.tar.zstd", assets)
 
+    def test_content_addressed_metadata_is_not_a_bulk_asset(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            digest = "a" * 64
+            metadata = root / "sha256" / digest / "rust-nightly-versions.v1.json"
+            metadata.parent.mkdir(parents=True)
+            metadata.write_text('{"schema_version": 1}\n', encoding="utf-8")
+
+            index = bai.build_asset_index(
+                root,
+                repo_owner="zackees",
+                repo_name="soldr-toolchain",
+                branch="assets",
+                offline=True,
+            )
+
+            self.assertEqual(index["entries"], [])
+
     def test_v1_catalog_attributes_forge_blob_to_source_repo(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
