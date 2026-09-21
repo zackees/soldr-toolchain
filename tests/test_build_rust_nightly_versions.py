@@ -248,3 +248,70 @@ def test_catalogue_entry_is_replaced_and_sha_verified() -> None:
     ]
     assert rows == [entry]
     assert entry["sha256"] == hashlib.sha256(map_bytes).hexdigest()
+
+
+def test_map_publication_uses_an_immutable_digest_url_and_keeps_old_bytes(
+    tmp_path: Path,
+) -> None:
+    output = tmp_path / brnv.ASSET_NAME
+    old_bytes = b'{"generation":"old"}\n'
+    new_bytes = b'{"generation":"new"}\n'
+
+    old_path = brnv.publish_map(output, old_bytes)
+    new_path = brnv.publish_map(output, new_bytes)
+    entry = brnv.catalogue_entry(new_bytes)
+
+    assert old_path.read_bytes() == old_bytes
+    assert new_path.read_bytes() == new_bytes
+    assert output.read_bytes() == new_bytes
+    assert old_path != new_path
+    assert entry["url"] == (
+        "https://zackees.github.io/soldr-toolchain/sha256/"
+        f"{hashlib.sha256(new_bytes).hexdigest()}/{brnv.ASSET_NAME}"
+    )
+    assert hashlib.sha256(new_path.read_bytes()).hexdigest() == entry["sha256"]
+
+
+def test_main_publishes_immutable_map_before_catalogue_and_stops_on_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output = tmp_path / brnv.ASSET_NAME
+    catalogue = tmp_path / "catalogue.v1.json"
+    catalogue.write_text('{"entries": []}\n', encoding="utf-8")
+    monkeypatch.setattr(
+        brnv, "fetch_verified_manifest", lambda _url: (MANIFEST, "a" * 64)
+    )
+    monkeypatch.setattr(
+        brnv,
+        "ensure_nightly",
+        lambda payload, date: payload["nightlies"].setdefault(
+            f"nightly-{date}", _identity(date)
+        ),
+    )
+
+    writes: list[str] = []
+    monkeypatch.setattr(
+        brnv,
+        "publish_map",
+        lambda _output, _bytes: writes.append("immutable")
+        or tmp_path / "immutable.json",
+    )
+    monkeypatch.setattr(
+        brnv,
+        "write_catalogue",
+        lambda _path, _catalogue: writes.append("catalogue"),
+    )
+    argv = ["--output", str(output), "--catalogue", str(catalogue)]
+
+    assert brnv.main(argv) == 0
+    assert writes == ["immutable", "catalogue"]
+
+    writes.clear()
+
+    def fail_publish(_output: Path, _bytes: bytes) -> Path:
+        writes.append("immutable-failed")
+        raise OSError("simulated immutable publication failure")
+
+    monkeypatch.setattr(brnv, "publish_map", fail_publish)
+    assert brnv.main(argv) == 1
+    assert writes == ["immutable-failed"]

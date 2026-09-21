@@ -86,8 +86,11 @@ release set last change."
 The same daily refresh publishes `rust-nightly-versions.v1.json`, a
 metadata-only map from `nightly-YYYY-MM-DD` to the corresponding rustc
 release and full commit identity. The map is a SHA-bearing asset in
-`catalogue.v1.json`; it contains no toolchain archives and is stored as
-ordinary Git JSON rather than LFS. Only a newly observed nightly is
+`catalogue.v1.json`; its catalogue URL names an immutable
+`sha256/<digest>/rust-nightly-versions.v1.json` copy so a CDN cannot pair a
+cached catalogue with newer bytes at the mutable map URL. The mutable copy is
+retained as the next refresh's incremental input. Both are stored as ordinary
+Git JSON rather than LFS. Only a newly observed nightly is
 downloaded with the minimal profile and queried for its verbose version;
 known nightlies are never downloaded or probed again. The reverse
 `versions` index lists nightlies newest-first and selects index zero.

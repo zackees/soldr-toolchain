@@ -26,9 +26,7 @@ from typing import Any
 
 SCHEMA_VERSION = 1
 CURRENT_MANIFEST_URL = "https://static.rust-lang.org/dist/channel-rust-nightly.toml"
-PAGES_URL = (
-    "https://zackees.github.io/soldr-toolchain/rust-nightly-versions.v1.json"
-)
+PAGES_ORIGIN = "https://zackees.github.io/soldr-toolchain"
 ASSET_NAME = "rust-nightly-versions.v1.json"
 USER_AGENT = "soldr-toolchain-nightly-version-map"
 _SHA256_RE = re.compile(r"\b([0-9a-fA-F]{64})\b")
@@ -280,14 +278,33 @@ def encode_map(payload: dict[str, Any]) -> bytes:
 
 
 def catalogue_entry(map_bytes: bytes) -> dict[str, str]:
+    digest = hashlib.sha256(map_bytes).hexdigest()
     return {
         "owner": "zackees",
         "repo": "soldr-toolchain",
         "tag": "assets",
         "asset": ASSET_NAME,
-        "url": PAGES_URL,
-        "sha256": hashlib.sha256(map_bytes).hexdigest(),
+        "url": f"{PAGES_ORIGIN}/sha256/{digest}/{ASSET_NAME}",
+        "sha256": digest,
     }
+
+
+def publish_map(output: Path, map_bytes: bytes) -> Path:
+    """Write the mutable map and an immutable content-addressed copy."""
+
+    digest = hashlib.sha256(map_bytes).hexdigest()
+    immutable = output.parent / "sha256" / digest / ASSET_NAME
+    immutable.parent.mkdir(parents=True, exist_ok=True)
+    if immutable.exists() and immutable.read_bytes() != map_bytes:
+        raise ValueError(f"immutable nightly map path has different bytes: {immutable}")
+    immutable.write_bytes(map_bytes)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_bytes(map_bytes)
+    return immutable
+
+
+def write_catalogue(path: Path, catalogue: dict[str, Any]) -> None:
+    path.write_text(json.dumps(catalogue, indent=2) + "\n", encoding="utf-8")
 
 
 def update_catalogue(catalogue: dict[str, Any], entry: dict[str, str]) -> None:
@@ -366,6 +383,8 @@ def main(argv: list[str] | None = None) -> int:
         map_bytes = encode_map(payload)
         catalogue = json.loads(args.catalogue.read_text(encoding="utf-8"))
         update_catalogue(catalogue, catalogue_entry(map_bytes))
+        immutable = publish_map(args.output, map_bytes)
+        write_catalogue(args.catalogue, catalogue)
     except (
         OSError,
         UnicodeError,
@@ -376,14 +395,9 @@ def main(argv: list[str] | None = None) -> int:
         sys.stderr.write(f"build_rust_nightly_versions.py: {exc}\n")
         return 1
 
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_bytes(map_bytes)
-    args.catalogue.write_text(
-        json.dumps(catalogue, indent=2) + "\n", encoding="utf-8"
-    )
     sys.stderr.write(
         f"nightly-version-map: wrote {args.output} "
-        f"({len(payload['nightlies'])} nightlies)\n"
+        f"and {immutable} ({len(payload['nightlies'])} nightlies)\n"
     )
     return 0
 
