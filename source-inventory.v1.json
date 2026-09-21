@@ -1357,14 +1357,6 @@
       "owner": "zackees",
       "repo": "soldr-toolchain",
       "tag": "assets",
-      "asset": "rust-nightly-versions.v1.json",
-      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/sha256/8bf98d2c5a2e0d95fde4d9badb93b8b0c7d575ff03c3c274da6f17f993e4e28f/rust-nightly-versions.v1.json",
-      "sha256": "8bf98d2c5a2e0d95fde4d9badb93b8b0c7d575ff03c3c274da6f17f993e4e28f"
-    },
-    {
-      "owner": "zackees",
-      "repo": "soldr-toolchain",
-      "tag": "assets",
       "asset": "sdk.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/14.5/darwin-aarch64/sdk.tar.zst",
       "sha256": "0163c4bac3f38283bddbe4c86d9cb404b078f8a1dada4ea8ab8848e567b88967"
