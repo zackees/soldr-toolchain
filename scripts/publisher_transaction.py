@@ -1081,9 +1081,22 @@ def publish_www_snapshot(
             for row in api.tree_entries(api.commit_tree(retained))
             if row.get("type") == "blob"
         }
-        if observed != expected:
-            raise PublishError("immutable www generation does not match rebuilt metadata")
-        commit = retained
+        if observed == expected:
+            commit = retained
+        else:
+            # An attempt interrupted after creating this ref (for example by a
+            # lost www lease) moved the data slots, so the retry rebuilds
+            # different state. Only a generation that never went live and has
+            # no post-deploy proof may be replaced, and only through a lease
+            # on the exact commit that was observed here.
+            public_ref = "refs/heads/generations/" + generation + "-public"
+            if www_before == retained or api.optional_ref(public_ref) is not None:
+                raise PublishError("immutable www generation does not match rebuilt metadata")
+            entries = upload_directory(api, www_dir)
+            commit = api.commit(api.tree(structural_tree(entries)), "publish metadata " + generation)
+            staging_ref = immutable_ref + "-retry-" + commit[:12]
+            _create_immutable_ref(api, staging_ref, commit)
+            api.update_ref(immutable_ref, commit, expected=retained, source_ref=staging_ref)
     if raw_verify_www is not None and not raw_verify_www(commit):
         raise PublishError("immutable www generation raw verification failed")
     if api.dry_run:
