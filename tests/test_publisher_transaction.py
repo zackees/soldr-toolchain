@@ -448,6 +448,64 @@ def test_metadata_recovery_reuses_exact_immutable_www_commit(tmp_path: Path) -> 
     assert leases == [{"sha": immutable, "expected": immutable, "source_ref": "refs/heads/generations/g-www"}]
 
 
+def _retry_fixture(tmp_path: Path) -> tuple[Path, Fake]:
+    www = tmp_path / "www"
+    generation_dir = www / "generations" / "g"
+    generation_dir.mkdir(parents=True)
+    state = {
+        "generation": "g",
+        "active": {"slot": "public-a", "commit": "a" * 40, "tree": "f" * 40},
+        "previous": {"slot": "public-b", "commit": "b" * 40, "tree": "f" * 40},
+    }
+    for path in (www / "publish-state.v1.json", generation_dir / "publish-state.v1.json"):
+        path.write_bytes(canonical_json_bytes(state))
+    (www / "catalogue.v2.json").write_text("{}", encoding="utf-8")
+    fake = Fake()
+    fake.refs["refs/heads/generations/g-www"] = "c" * 40
+    fake.tree_rows = [{"type": "blob", "path": "stale.json", "sha": "d" * 40, "size": 1}]
+    return www, fake
+
+
+def _publish_retry(www: Path, api: GitDataApi) -> str:
+    return publish_www_snapshot(
+        api,
+        www_dir=www,
+        generation="g",
+        active_commit="a" * 40,
+        active_tree="f" * 40,
+        previous_commit="b" * 40,
+        previous_tree="f" * 40,
+        active_slot="public-a",
+        previous_slot="public-b",
+    )
+
+
+def test_retry_replaces_unpublished_www_generation_through_a_lease(tmp_path: Path) -> None:
+    www, fake = _retry_fixture(tmp_path)
+    fake.refs["refs/heads/www"] = "e" * 40
+    api = GitDataApi("o", "r", fake)
+    commit = _publish_retry(www, api)
+    assert commit != "c" * 40
+    leases = [body for method, _, body in fake.calls if method == "LEASE"]
+    assert leases[0] == {
+        "sha": commit,
+        "expected": "c" * 40,
+        "source_ref": "refs/heads/generations/g-www-retry-" + commit[:12],
+    }
+    assert leases[1]["sha"] == commit and leases[1]["expected"] == "e" * 40
+
+
+@pytest.mark.parametrize("live", ["www", "public"])
+def test_retry_never_replaces_a_live_or_proven_www_generation(tmp_path: Path, live: str) -> None:
+    www, fake = _retry_fixture(tmp_path)
+    fake.refs["refs/heads/www"] = "c" * 40 if live == "www" else "e" * 40
+    if live == "public":
+        fake.refs["refs/heads/generations/g-public"] = "c" * 40
+    with pytest.raises(PublishError, match="does not match rebuilt metadata"):
+        _publish_retry(www, GitDataApi("o", "r", fake))
+    assert not any(method == "LEASE" for method, _, _ in fake.calls)
+
+
 def test_reused_parts_are_validated_by_tree_metadata_without_payload_reads() -> None:
     full, part = "a" * 64, "b" * 64
     catalogue = {"schema_version": 2, "entries": []}
