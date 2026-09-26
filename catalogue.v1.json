@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-25T12:03:58Z",
+  "generated_at": "2026-09-26T11:39:27Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -8,8 +8,8 @@
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "rust-nightly-versions.v1.json",
-      "url": "https://zackees.github.io/soldr-toolchain/sha256/a55abdcec53990d7e092ce798c757ae3db526067b876eb1bc3807113a8aec13c/rust-nightly-versions.v1.json",
-      "sha256": "a55abdcec53990d7e092ce798c757ae3db526067b876eb1bc3807113a8aec13c"
+      "url": "https://zackees.github.io/soldr-toolchain/sha256/5d4251fb4f31cee2b71c5c23b99a2c5428c1790521035db9ed36972d0f691b24/rust-nightly-versions.v1.json",
+      "sha256": "5d4251fb4f31cee2b71c5c23b99a2c5428c1790521035db9ed36972d0f691b24"
     },
     {
       "owner": "zackees",
