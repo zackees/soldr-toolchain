@@ -353,6 +353,7 @@ def test_main_publishes_immutable_map_before_catalogue_and_stops_on_failure(
         "write_catalogue",
         lambda _path, _catalogue: writes.append("catalogue"),
     )
+    monkeypatch.setattr(brnv, "url_serves", lambda *_args: True)
     drivers = tmp_path / "dylint-driver"
     (drivers / "v6.0.3-nightly-2026-05-26" / "linux-x86_64-glibc").mkdir(parents=True)
     argv = [
@@ -373,3 +374,80 @@ def test_main_publishes_immutable_map_before_catalogue_and_stops_on_failure(
     monkeypatch.setattr(brnv, "publish_map", fail_publish)
     assert brnv.main(argv) == 1
     assert writes == ["immutable-failed"]
+
+
+def _live(urls: dict[str, bytes]):
+    def fetch(url: str) -> bytes:
+        if url not in urls:
+            raise OSError(f"HTTP Error 404: {url}")
+        return urls[url]
+
+    return fetch
+
+
+def test_catalogue_keeps_live_entry_when_new_digest_url_is_not_deployed() -> None:
+    """zackees/soldr-toolchain#198: never point the catalogue at a 404."""
+    old_bytes = b'{"generation":"old"}\n'
+    new_bytes = b'{"generation":"new"}\n'
+    old_entry = brnv.catalogue_entry(old_bytes)
+    new_entry = brnv.catalogue_entry(new_bytes)
+    catalogue = {"entries": [dict(old_entry)]}
+
+    chosen = brnv.select_live_entry(
+        catalogue, new_entry, fetch=_live({old_entry["url"]: old_bytes})
+    )
+    assert chosen == old_entry
+
+    chosen = brnv.select_live_entry(
+        catalogue,
+        new_entry,
+        fetch=_live({old_entry["url"]: old_bytes, new_entry["url"]: new_bytes}),
+    )
+    assert chosen == new_entry
+
+
+def test_catalogue_rejects_digest_mismatch_and_refuses_when_nothing_is_live() -> None:
+    new_bytes = b'{"generation":"new"}\n'
+    new_entry = brnv.catalogue_entry(new_bytes)
+    with pytest.raises(ValueError, match="not live"):
+        brnv.select_live_entry(
+            {"entries": []},
+            new_entry,
+            fetch=_live({new_entry["url"]: b"tampered"}),
+        )
+
+
+def test_main_never_writes_a_catalogue_row_for_an_undeployed_url(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output = tmp_path / brnv.ASSET_NAME
+    old_bytes = b'{"generation":"old"}\n'
+    old_entry = brnv.catalogue_entry(old_bytes)
+    catalogue = tmp_path / "catalogue.v1.json"
+    catalogue.write_text(
+        __import__("json").dumps({"entries": [old_entry]}), encoding="utf-8"
+    )
+    monkeypatch.setattr(
+        brnv, "fetch_verified_manifest", lambda _url: (MANIFEST, "a" * 64)
+    )
+    monkeypatch.setattr(
+        brnv,
+        "ensure_nightly",
+        lambda payload, date: payload["nightlies"].setdefault(
+            f"nightly-{date}", _identity(date)
+        ),
+    )
+    monkeypatch.setattr(brnv, "fetch_bytes", _live({old_entry["url"]: old_bytes}))
+
+    drivers = tmp_path / "dylint-driver"
+    (drivers / "v6.0.3-nightly-2026-05-26" / "linux-x86_64-glibc").mkdir(parents=True)
+    argv = [
+        "--output", str(output),
+        "--catalogue", str(catalogue),
+        "--dylint-driver-dir", str(drivers),
+    ]
+    assert brnv.main(argv) == 0
+    rows = __import__("json").loads(catalogue.read_text(encoding="utf-8"))["entries"]
+    assert rows == [old_entry]
+    # The new immutable copy is still staged so the next Pages deploy serves it.
+    assert len(list((tmp_path / "sha256").iterdir())) == 1

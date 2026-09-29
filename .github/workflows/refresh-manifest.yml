@@ -23,6 +23,9 @@ on:
 
 permissions:
   contents: write
+  # Dispatch publish-multipart.yml so Pages serves newly committed immutable
+  # blobs promptly (soldr-toolchain#198).
+  actions: write
 
 concurrency:
   group: refresh-manifest
@@ -170,6 +173,7 @@ jobs:
               --output assets/index.html
 
       - name: Commit + push if anything changed
+        id: commit
         shell: bash
         working-directory: assets
         run: |
@@ -184,3 +188,14 @@ jobs:
           git status --short
           git commit -m "manifest: nightly refresh ($(date -u +%Y-%m-%d))"
           git push origin assets
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
+      # The catalogue never points at an undeployed Pages URL: the nightly map
+      # step keeps the previous live row until its new content-addressed copy
+      # is live. Deploy Pages now so the next refresh can promote it.
+      - name: Deploy Pages for the refreshed assets
+        if: steps.commit.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: gh workflow run publish-multipart.yml --repo "$GITHUB_REPOSITORY" --ref main
