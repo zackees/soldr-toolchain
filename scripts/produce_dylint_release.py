@@ -29,12 +29,12 @@ DYLINT_REPOSITORY = "trailofbits/dylint"
 DYLINT_TAG = "v6.0.3"
 DYLINT_COMMIT = "9adfa398661273ca7dc99df9bf2c26ae6f61b1c5"
 DYLINT_VERSION = "6.0.3"
-DRIVER_ASSET_VERSION = "6.0.3-nightly-2026-05-28"
+DRIVER_ASSET_VERSION = "6.0.3-nightly-2026-02-28"
 DRIVER_IDENTITY = {
     "dylint_version": DYLINT_VERSION,
-    "toolchain": "nightly-2026-05-28",
-    "rustc_release": "1.98.0-nightly",
-    "rustc_commit": "57d06900fd7d9ee06d3a7f323bb77f17ab3cfaf8",
+    "toolchain": "nightly-2026-02-28",
+    "rustc_release": "1.95.0-nightly",
+    "rustc_commit": "3a70d0349fa378a10c3748f1a48742e61505020f",
 }
 # Stable toolchain that compiles the relocatable cargo-dylint / dylint-link
 # pair. Tracks zackees/soldr's rust-toolchain.toml. The driver is built by
