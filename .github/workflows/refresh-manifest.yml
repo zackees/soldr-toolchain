@@ -154,6 +154,7 @@ jobs:
           python3 main/scripts/build_rust_nightly_versions.py \
               --output assets/rust-nightly-versions.v1.json \
               --catalogue assets/catalogue.v1.json \
+              --dylint-driver-dir assets/dylint-driver \
               --seed 2026-01-18 \
               --seed 2026-03-26 \
               --seed 2026-05-26 \
