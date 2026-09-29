@@ -271,8 +271,8 @@ binaries and drivers use digest-pinned Alpine containers on matching CPU
 architectures.
 
 The driver identity is immutable and includes Dylint `6.0.3`,
-`nightly-2026-02-28`, rustc release `1.95.0-nightly`, full rustc commit
-`3a70d0349fa378a10c3748f1a48742e61505020f`, and the host triple. Every lane
+`nightly-2026-05-28`, rustc release `1.98.0-nightly`, full rustc commit
+`57d06900fd7d9ee06d3a7f323bb77f17ab3cfaf8`, and the host triple. Every lane
 relocates all three binaries, runs a clean custom-lint case, observes the known
 `release_fixture_forbidden_io` violation, and repeats the violation with Cargo
 offline. The warm run must leave the driver hash and timestamp unchanged.
@@ -280,7 +280,7 @@ offline. The warm run must leave the driver hash and timestamp unchanged.
 The driver bundle intentionally contains only `dylint-driver`; rustc-private
 libraries remain owned by the exact installed nightly. Consumers must place the
 driver at
-`$DYLINT_DRIVER_PATH/nightly-2026-02-28-<host>/dylint-driver` and expose that
+`$DYLINT_DRIVER_PATH/nightly-2026-05-28-<host>/dylint-driver` and expose that
 nightly's private libraries while invoking Dylint: prepend the toolchain's
 `bin` directory to `PATH` on Windows, its `lib` directory to `LD_LIBRARY_PATH`
 on Linux, or its `lib` directory to `DYLD_LIBRARY_PATH` on macOS. Soldr owns
