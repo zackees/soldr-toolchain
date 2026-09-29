@@ -359,6 +359,53 @@ def publish_map(output: Path, map_bytes: bytes) -> Path:
     return immutable
 
 
+def url_serves(
+    url: str, sha256: str, fetch: Callable[[str], bytes] | None = None
+) -> bool:
+    """True only when ``url`` is live and serves bytes with ``sha256``."""
+
+    try:
+        body = (fetch or fetch_bytes)(url)
+    except (OSError, ValueError):
+        return False
+    return hashlib.sha256(body).hexdigest() == sha256
+
+
+def select_live_entry(
+    catalogue: dict[str, Any],
+    entry: dict[str, str],
+    fetch: Callable[[str], bytes] | None = None,
+) -> dict[str, str]:
+    """Pick the catalogue row to publish, never one whose URL is not live.
+
+    The content-addressed Pages copy of a new map only exists after the next
+    Pages deploy (publish-multipart.yml). Until then consumers must keep the
+    previous row, whose immutable URL stays deployed (soldr-toolchain#198).
+    """
+
+    if url_serves(entry["url"], entry["sha256"], fetch):
+        return entry
+    for item in catalogue.get("entries") or []:
+        if (
+            isinstance(item, dict)
+            and item.get("owner") == entry["owner"]
+            and item.get("repo") == entry["repo"]
+            and item.get("tag") == entry["tag"]
+            and item.get("asset") == entry["asset"]
+            and isinstance(item.get("url"), str)
+            and isinstance(item.get("sha256"), str)
+            and url_serves(item["url"], item["sha256"], fetch)
+        ):
+            sys.stderr.write(
+                f"nightly-version-map: {entry['url']} is not live yet; "
+                f"keeping the live catalogue row {item['url']} until Pages deploys\n"
+            )
+            return {key: str(value) for key, value in item.items()}
+    raise ValueError(
+        f"{entry['url']} is not live and the catalogue has no live previous row"
+    )
+
+
 def write_catalogue(path: Path, catalogue: dict[str, Any]) -> None:
     path.write_text(json.dumps(catalogue, indent=2) + "\n", encoding="utf-8")
 
@@ -446,8 +493,10 @@ def main(argv: list[str] | None = None) -> int:
         driver_nightlies = discover_dylint_driver_nightlies(args.dylint_driver_dir)
         map_bytes = encode_map(payload, driver_nightlies)
         catalogue = json.loads(args.catalogue.read_text(encoding="utf-8"))
-        update_catalogue(catalogue, catalogue_entry(map_bytes))
         immutable = publish_map(args.output, map_bytes)
+        update_catalogue(
+            catalogue, select_live_entry(catalogue, catalogue_entry(map_bytes))
+        )
         write_catalogue(args.catalogue, catalogue)
     except (
         OSError,
