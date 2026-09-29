@@ -140,7 +140,8 @@ def test_versions_are_descending_and_select_first() -> None:
             "nightly-2026-04-15": _identity("2026-04-15"),
         }
     }
-    brnv.rebuild_versions(payload)
+    drivers = {c: "6.0.3" for c in payload["nightlies"]}
+    brnv.rebuild_versions(payload, drivers)
     bucket = payload["versions"]["1.98"]
     assert bucket["nightlies"] == [
         "nightly-2026-05-26",
@@ -150,6 +151,56 @@ def test_versions_are_descending_and_select_first() -> None:
     assert bucket["selected"] == bucket["nightlies"][0]
     assert "nightly-2026-04-01" not in bucket["nightlies"]
     assert payload["versions"]["1.97"]["nightlies"] == ["nightly-2026-04-01"]
+
+
+def test_selected_nightly_always_has_a_published_dylint_driver() -> None:
+    # soldr-toolchain#191: the newest nightly of a bucket had no driver.
+    payload = {
+        "nightlies": {
+            "nightly-2026-05-26": _identity("2026-05-26"),
+            "nightly-2026-05-01": _identity("2026-05-01"),
+            "nightly-2026-04-15": _identity("2026-04-15"),
+        }
+    }
+    brnv.rebuild_versions(payload, {"nightly-2026-05-01": "6.0.3"})
+    bucket = payload["versions"]["1.98"]
+    assert bucket["selected"] == "nightly-2026-05-01"
+    # Soldr's select_from_map contract: first == selected, strictly descending.
+    assert bucket["nightlies"] == ["nightly-2026-05-01", "nightly-2026-04-15"]
+    assert bucket["skipped_without_dylint_driver"] == ["nightly-2026-05-26"]
+    assert bucket["dylint_driver"] == "6.0.3"
+    assert payload["dylint_unavailable"] == {}
+
+
+def test_bucket_without_any_dylint_driver_is_absent_and_marked() -> None:
+    old = _identity("2026-02-28")
+    old["rust_version"] = "1.95"
+    old["rustc_release"] = "1.95.0-nightly"
+    payload = {
+        "nightlies": {
+            "nightly-2026-02-28": old,
+            "nightly-2026-05-28": _identity("2026-05-28"),
+        }
+    }
+    map_bytes = brnv.encode_map(payload, {"nightly-2026-05-28": "6.0.3"})
+    decoded = __import__("json").loads(map_bytes)
+    assert "1.95" not in decoded["versions"]
+    assert decoded["dylint_unavailable"]["1.95"]["nightlies"] == ["nightly-2026-02-28"]
+    assert "dylint" in decoded["dylint_unavailable"]["1.95"]["reason"]
+    # The identity row stays, so an explicit pin still resolves via the map.
+    assert "nightly-2026-02-28" in decoded["nightlies"]
+    assert decoded["versions"]["1.98"]["selected"] == "nightly-2026-05-28"
+
+
+def test_discover_dylint_driver_nightlies_reads_assets_layout(tmp_path: Path) -> None:
+    (tmp_path / "v6.0.3-nightly-2026-05-28" / "linux-x86_64-glibc").mkdir(parents=True)
+    (tmp_path / "v6.0.3-nightly-2026-02-28").mkdir()  # no platforms: not published
+    (tmp_path / "manifest.json").write_text("{}", encoding="utf-8")
+    assert brnv.discover_dylint_driver_nightlies(tmp_path) == {
+        "nightly-2026-05-28": "6.0.3"
+    }
+    with pytest.raises(ValueError):
+        brnv.discover_dylint_driver_nightlies(tmp_path / "missing")
 
 
 def test_backfill_catches_oldest_missed_days_without_rechecking() -> None:
@@ -224,7 +275,8 @@ def test_backfill_retries_transient_failure_and_keeps_other_progress() -> None:
 
 def test_catalogue_entry_is_replaced_and_sha_verified() -> None:
     map_bytes = brnv.encode_map(
-        {"nightlies": {"nightly-2026-05-26": _identity("2026-05-26")}}
+        {"nightlies": {"nightly-2026-05-26": _identity("2026-05-26")}},
+        {"nightly-2026-05-26": "6.0.3"},
     )
     entry = brnv.catalogue_entry(map_bytes)
     catalogue = {
@@ -301,7 +353,13 @@ def test_main_publishes_immutable_map_before_catalogue_and_stops_on_failure(
         "write_catalogue",
         lambda _path, _catalogue: writes.append("catalogue"),
     )
-    argv = ["--output", str(output), "--catalogue", str(catalogue)]
+    drivers = tmp_path / "dylint-driver"
+    (drivers / "v6.0.3-nightly-2026-05-26" / "linux-x86_64-glibc").mkdir(parents=True)
+    argv = [
+        "--output", str(output),
+        "--catalogue", str(catalogue),
+        "--dylint-driver-dir", str(drivers),
+    ]
 
     assert brnv.main(argv) == 0
     assert writes == ["immutable", "catalogue"]

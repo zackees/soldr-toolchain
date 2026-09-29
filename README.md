@@ -93,7 +93,9 @@ retained as the next refresh's incremental input. Both are stored as ordinary
 Git JSON rather than LFS. Only a newly observed nightly is
 downloaded with the minimal profile and queried for its verbose version;
 known nightlies are never downloaded or probed again. The reverse
-`versions` index lists nightlies newest-first and selects index zero.
+`versions` index selects, per Rust version, the newest nightly that has a
+published `dylint-driver` under `assets/dylint-driver/` (see "Dylint toolchain
+buckets" below).
 If a scheduled run is missed, each later refresh checks up to eight
 oldest unprocessed dates, records dates on which no nightly was
 published, and eventually closes the gap without repeating prior work.
@@ -304,6 +306,44 @@ or driver identity is missing or inconsistent. Review the resulting assets diff,
 run `scripts.lint_assets`, and publish it as one PR against `assets`; never merge
 a partial target set. Unsupported nightlies are remediated by adding and proving
 a new exact driver identity in this producer before a Soldr consumer pin changes.
+
+### Dylint toolchain buckets
+
+Soldr's `select_from_map` picks `versions.<X.Y>.selected` for a repository whose
+Rust version is `X.Y` and which does not pin a Dylint toolchain. It requires the
+selected nightly to report Rust `X.Y` and to be `nightlies[0]`, so the producer
+cannot fall back to a nightly from another bucket. Instead it:
+
+- selects the newest nightly *in the bucket* that has a published
+  `dylint-driver`, trims newer driverless nightlies out of `nightlies`, and
+  lists them under `skipped_without_dylint_driver`; `dylint_driver` names the
+  driver version;
+- omits a bucket with no driver-backed nightly from `versions` and records it
+  under the top-level `dylint_unavailable` object with the reason. Soldr then
+  fails with "has no nightly mapping for Rust X.Y" rather than selecting a
+  nightly whose driver asset does not exist (soldr-toolchain#191). The
+  `nightlies` identity rows are unchanged, so explicit pins still resolve.
+
+Only one driver identity exists today: Dylint 6.0.3 on `nightly-2026-05-28`
+(Rust 1.98 nightly). Dylint 6.0.3's source does not compile on older nightlies
+such as `nightly-2026-02-28` (`rustc_errors::DiagDecorator` is missing), so the
+Rust 1.95 bucket cannot get a driver from this Dylint release.
+
+**Supported workaround for Rust 1.95 (and any other `dylint_unavailable`
+version):** pin the Dylint toolchain explicitly to the published driver's
+nightly. With `zackees/setup-soldr`:
+
+```yaml
+with:
+  dylint: true
+  dylint-toolchain: nightly-2026-05-28
+```
+
+or set `SOLDR_DYLINT_TOOLCHAIN=nightly-2026-05-28` (or pin the lint libraries'
+`rust-toolchain.toml` to that nightly). The pin goes through soldr's explicit
+map lookup, which uses the `nightlies` identity rows, not the `versions`
+buckets. Keep the pin until a newer Dylint release is produced and ingested
+here with a driver for your bucket.
 
 ### Rebuilding the catalogue locally
 

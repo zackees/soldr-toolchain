@@ -198,7 +198,48 @@ def ensure_nightly(
     return True
 
 
-def rebuild_versions(payload: dict[str, Any]) -> None:
+_DRIVER_DIR_RE = re.compile(r"^v(?P<version>[0-9][^-]*)-(?P<channel>nightly-\d{4}-\d{2}-\d{2})$")
+DYLINT_UNAVAILABLE_REASON = (
+    "no nightly in this bucket has a published dylint-driver; pin an explicit "
+    "dylint toolchain that has one (see README, 'Dylint toolchain buckets')"
+)
+
+
+def discover_dylint_driver_nightlies(driver_dir: Path) -> dict[str, str]:
+    """Map each nightly with a published dylint-driver to its driver version.
+
+    The assets tree stores drivers as ``dylint-driver/v<driver>-<nightly>/<platform>/``.
+    A release directory with no platform subdirectory is not a publication.
+    When several driver versions exist for one nightly, the highest string wins.
+    """
+
+    found: dict[str, str] = {}
+    if not driver_dir.is_dir():
+        raise ValueError(f"dylint driver directory not found: {driver_dir}")
+    for release in sorted(driver_dir.iterdir()):
+        match = _DRIVER_DIR_RE.match(release.name)
+        if not release.is_dir() or match is None:
+            continue
+        if not any(child.is_dir() for child in release.iterdir()):
+            continue
+        channel = match.group("channel")
+        found[channel] = max(found.get(channel, ""), match.group("version"))
+    return found
+
+
+def rebuild_versions(payload: dict[str, Any], driver_nightlies: dict[str, str]) -> None:
+    """Group nightlies by Rust version and pick each bucket's Dylint nightly.
+
+    ``selected`` is the newest nightly in the bucket that has a published
+    dylint-driver (soldr-toolchain#191): selecting a driverless nightly makes
+    ``soldr dylint`` fail closed on a missing asset. Soldr requires
+    ``nightlies[0] == selected`` and every nightly to report the bucket's Rust
+    version, so newer driverless nightlies move to ``skipped_without_dylint_driver``.
+    A bucket with no driver-backed nightly is left out of ``versions`` and
+    recorded under ``dylint_unavailable`` so soldr reports "no nightly mapping"
+    instead of selecting a nightly it cannot run.
+    """
+
     grouped: dict[str, list[str]] = {}
     for channel, identity in payload["nightlies"].items():
         version = identity.get("rust_version")
@@ -207,11 +248,25 @@ def rebuild_versions(payload: dict[str, Any]) -> None:
         grouped.setdefault(version, []).append(channel)
 
     payload["versions"] = {}
+    payload["dylint_unavailable"] = {}
     for version in sorted(grouped):
         nightlies = sorted(grouped[version], reverse=True)
+        index = next(
+            (i for i, channel in enumerate(nightlies) if channel in driver_nightlies),
+            None,
+        )
+        if index is None:
+            payload["dylint_unavailable"][version] = {
+                "nightlies": nightlies,
+                "reason": DYLINT_UNAVAILABLE_REASON,
+            }
+            continue
+        selected = nightlies[index]
         payload["versions"][version] = {
-            "nightlies": nightlies,
-            "selected": nightlies[0],
+            "nightlies": nightlies[index:],
+            "selected": selected,
+            "dylint_driver": driver_nightlies[selected],
+            "skipped_without_dylint_driver": nightlies[:index],
         }
 
 
@@ -262,8 +317,8 @@ def backfill_nightlies(
     return checks
 
 
-def encode_map(payload: dict[str, Any]) -> bytes:
-    rebuild_versions(payload)
+def encode_map(payload: dict[str, Any], driver_nightlies: dict[str, str]) -> bytes:
+    rebuild_versions(payload, driver_nightlies)
     ordered = {
         "schema_version": SCHEMA_VERSION,
         "source": CURRENT_MANIFEST_URL,
@@ -273,6 +328,7 @@ def encode_map(payload: dict[str, Any]) -> bytes:
         },
         "unavailable_dates": sorted(payload.get("unavailable_dates", [])),
         "versions": payload["versions"],
+        "dylint_unavailable": payload["dylint_unavailable"],
     }
     return (json.dumps(ordered, indent=2) + "\n").encode("utf-8")
 
@@ -351,6 +407,13 @@ def main(argv: list[str] | None = None) -> int:
         help="Oldest nightly date to cover incrementally.",
     )
     parser.add_argument(
+        "--dylint-driver-dir",
+        required=True,
+        type=Path,
+        help="assets-branch dylint-driver/ directory; only nightlies with a "
+        "published driver are selected (soldr-toolchain#191).",
+    )
+    parser.add_argument(
         "--max-backfill-checks",
         type=int,
         default=8,
@@ -380,7 +443,8 @@ def main(argv: list[str] | None = None) -> int:
                 max_checks=args.max_backfill_checks,
             )
 
-        map_bytes = encode_map(payload)
+        driver_nightlies = discover_dylint_driver_nightlies(args.dylint_driver_dir)
+        map_bytes = encode_map(payload, driver_nightlies)
         catalogue = json.loads(args.catalogue.read_text(encoding="utf-8"))
         update_catalogue(catalogue, catalogue_entry(map_bytes))
         immutable = publish_map(args.output, map_bytes)
