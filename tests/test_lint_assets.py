@@ -94,6 +94,34 @@ def test_generated_nightly_catalogue_is_a_reserved_top_level_file(tmp_path: Path
     assert not [issue for issue in issues if issue.rule == "R9"], [str(issue) for issue in issues]
 
 
+def test_multipart_source_inventory_reference_allows_unindexed_tool_directory(tmp_path: Path) -> None:
+    # Post-v2-cutover, raw/media rows live only in source-inventory.v1.json
+    # (soldr-toolchain#193).
+    _write_json(tmp_path / "manifest.json", _index({}))
+    rel = "bzip2/1.0.8/linux-x64-musl/bundle.tar.zst"
+    (tmp_path / rel).parent.mkdir(parents=True)
+    (tmp_path / rel).write_bytes(b"bundle")
+    _write_json(
+        tmp_path / "source-inventory.v1.json",
+        {"schema_version": 5, "entries": [_catalogue_entry(rel)]},
+    )
+    _write_json(tmp_path / "multipart-external-entries.v1.json", {"schema_version": 1, "entries": []})
+
+    issues = lint_assets.lint(tmp_path)
+    assert not issues, [str(i) for i in issues]
+
+
+def test_multipart_source_inventory_url_missing_on_disk_is_r8_error(tmp_path: Path) -> None:
+    _write_json(tmp_path / "manifest.json", _index({}))
+    _write_json(
+        tmp_path / "source-inventory.v1.json",
+        {"schema_version": 5, "entries": [_catalogue_entry("zstd/1.5.7/linux-x64-musl/bundle.tar.zst")]},
+    )
+
+    issues = lint_assets.lint(tmp_path)
+    assert any(i.rule == "R8" and i.severity == "ERROR" for i in issues), [str(i) for i in issues]
+
+
 def test_unrelated_top_level_file_is_still_an_r9_warning(tmp_path: Path) -> None:
     _write_json(tmp_path / "manifest.json", _index({}))
     (tmp_path / "unexpected.json").write_text("{}\n", encoding="utf-8")
@@ -123,3 +151,28 @@ def test_index_descriptor_sha256_must_match_catalog_bytes(tmp_path: Path) -> Non
     messages = [str(i) for i in issues]
     assert any("R11" in msg and "descriptor.sha256" in msg for msg in messages), messages
     assert any("R11" in msg and "descriptor.size_bytes" in msg for msg in messages), messages
+
+
+def test_content_addressed_store_accepts_matching_digest(tmp_path: Path) -> None:
+    import hashlib
+
+    _write_json(tmp_path / "manifest.json", _index({}))
+    body = b'{"schema_version": 1}\n'
+    digest = hashlib.sha256(body).hexdigest()
+    target = tmp_path / "sha256" / digest / "rust-nightly-versions.v1.json"
+    target.parent.mkdir(parents=True)
+    target.write_bytes(body)
+
+    issues = lint_assets.lint(tmp_path)
+    assert not issues, [str(i) for i in issues]
+
+
+def test_content_addressed_store_rejects_mismatched_digest(tmp_path: Path) -> None:
+    _write_json(tmp_path / "manifest.json", _index({}))
+    target = tmp_path / "sha256" / ("0" * 64) / "rust-nightly-versions.v1.json"
+    target.parent.mkdir(parents=True)
+    target.write_bytes(b"tampered\n")
+    (tmp_path / "sha256" / "loose.json").write_bytes(b"{}")
+
+    issues = lint_assets.lint(tmp_path)
+    assert sum(1 for i in issues if i.rule == "R12" and i.severity == "ERROR") == 2, [str(i) for i in issues]
