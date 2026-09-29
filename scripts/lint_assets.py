@@ -42,6 +42,10 @@ Rules checked:
   R10. No backslashes in any path field (forward slashes only).
   R11. Index.tools[].descriptor sha256/size_bytes match the referenced
        catalog file bytes when those fields are present.
+  R12. The content-addressed store `sha256/<digest>/<name>` (immutable
+       rust-nightly-versions.v1.json generations kept so a CDN never pairs
+       a cached catalogue with newer bytes) holds only files whose bytes
+       hash to <digest>.
 
 Exit code 0 = clean. Non-zero = at least one rule violated.
 """
@@ -85,6 +89,9 @@ RESERVED_TOP_LEVEL = {
     "index.html",
     ".git",
 }
+
+
+CONTENT_ADDRESSED_DIR = "sha256"
 
 
 class LintIssue:
@@ -374,6 +381,9 @@ def lint(assets_root: Path) -> list[LintIssue]:
                 "unexpected top-level file (not reserved); convention is dirs only",
             ))
             continue
+        if entry.name == CONTENT_ADDRESSED_DIR and entry.name not in tools_by_name:
+            _lint_content_addressed_store(entry, assets_root, issues)
+            continue
         if entry.name not in tools_by_name:
             if _all_files_referenced(entry, assets_root, referenced_files):
                 continue
@@ -393,6 +403,27 @@ def lint(assets_root: Path) -> list[LintIssue]:
                 ))
 
     return issues
+
+
+def _lint_content_addressed_store(root: Path, assets_root: Path, issues: list[LintIssue]) -> None:
+    for f in sorted(root.rglob("*")):
+        if not f.is_file():
+            continue
+        rel = f.relative_to(assets_root).as_posix()
+        parts = f.relative_to(root).parts
+        digest = parts[0] if len(parts) == 2 else ""
+        if len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
+            issues.append(LintIssue(
+                "R12", "ERROR", rel,
+                "content-addressed file must live at sha256/<64 lowercase hex>/<name>",
+            ))
+            continue
+        actual = _hash_sha256(f)
+        if actual != digest:
+            issues.append(LintIssue(
+                "R12", "ERROR", rel,
+                f"bytes hash to {actual}, not the directory digest {digest}",
+            ))
 
 
 def lint_verified_generation(catalogue_path: Path, publication_state_path: Path) -> list[LintIssue]:

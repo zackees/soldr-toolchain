@@ -151,3 +151,28 @@ def test_index_descriptor_sha256_must_match_catalog_bytes(tmp_path: Path) -> Non
     messages = [str(i) for i in issues]
     assert any("R11" in msg and "descriptor.sha256" in msg for msg in messages), messages
     assert any("R11" in msg and "descriptor.size_bytes" in msg for msg in messages), messages
+
+
+def test_content_addressed_store_accepts_matching_digest(tmp_path: Path) -> None:
+    import hashlib
+
+    _write_json(tmp_path / "manifest.json", _index({}))
+    body = b'{"schema_version": 1}\n'
+    digest = hashlib.sha256(body).hexdigest()
+    target = tmp_path / "sha256" / digest / "rust-nightly-versions.v1.json"
+    target.parent.mkdir(parents=True)
+    target.write_bytes(body)
+
+    issues = lint_assets.lint(tmp_path)
+    assert not issues, [str(i) for i in issues]
+
+
+def test_content_addressed_store_rejects_mismatched_digest(tmp_path: Path) -> None:
+    _write_json(tmp_path / "manifest.json", _index({}))
+    target = tmp_path / "sha256" / ("0" * 64) / "rust-nightly-versions.v1.json"
+    target.parent.mkdir(parents=True)
+    target.write_bytes(b"tampered\n")
+    (tmp_path / "sha256" / "loose.json").write_bytes(b"{}")
+
+    issues = lint_assets.lint(tmp_path)
+    assert sum(1 for i in issues if i.rule == "R12" and i.severity == "ERROR") == 2, [str(i) for i in issues]
