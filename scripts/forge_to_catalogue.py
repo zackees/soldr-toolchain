@@ -113,6 +113,11 @@ TOOL_RECIPE_NAME["libuuid"] = {
     shape: f"libuuid-{shape}" for shape in ("linux-x64-gnu", "linux-arm64-gnu")
 }
 
+# zackees/soldr#3774: libxml2.so.2 + libz.so.1 for the managed LLVM lld.
+TOOL_RECIPE_NAME["llvm-host-libs"] = {
+    shape: f"llvm-host-libs-{shape}" for shape in ("linux-x64-gnu", "linux-arm64-gnu")
+}
+
 # jemalloc is not buildable for Windows in the current upstream.
 TOOL_RECIPE_NAME["jemalloc"] = {
     shape: f"jemalloc-{shape}"
@@ -369,6 +374,7 @@ DEFAULT_ASSET_NAME = {
     "bzip2": "bundle.tar.zst",
     "openssl": "bundle.tar.zst",
     "libuuid": "bundle.tar.zst",
+    "llvm-host-libs": "bundle.tar.zst",
     # soldr#1010 phase 2 — new tools all ship a single bundle.tar.zst
     # per (tool, version, shape) tuple, same shape as the syslibs.
     "python": "bundle.tar.zst",

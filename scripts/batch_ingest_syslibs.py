@@ -164,6 +164,7 @@ def main() -> int:
             "bzip2",
             "openssl",
             "libuuid",
+            "llvm-host-libs",
             # blessed-build tool families (soldr#1010 phase 2-3)
             "python",
             "nodelib",
