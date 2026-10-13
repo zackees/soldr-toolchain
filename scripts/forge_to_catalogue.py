@@ -284,9 +284,15 @@ def _validate_build_label(build_label: str | None) -> str | None:
 
 
 def _published_sha256_for_filename(
-    assets_root: Path, tool: str, filename: str
+    assets_root: Path, tool: str, filename: str, asset_rel: Path | None = None
 ) -> str | None:
-    """Return the sha256 a published document already pins for ``filename``."""
+    """Return the sha256 a published document already pins for ``filename``.
+
+    Flat-catalogue rows are keyed by their URL when ``asset_rel`` is known:
+    generic names such as ``bundle.tar.zst`` are shared by every syslib, so a
+    bare filename match would treat an unrelated tool/version/shape (or a
+    private release asset) as the bytes this ingest replaces.
+    """
     catalog_path = assets_root / tool / "manifest.json"
     if catalog_path.is_file():
         try:
@@ -304,14 +310,25 @@ def _published_sha256_for_filename(
             catalogue = json.loads(catalogue_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             return None
+        suffix = f"/{asset_rel.as_posix()}" if asset_rel is not None else None
         for entry in catalogue.get("entries", []) or []:
-            if entry.get("asset") == filename and entry.get("sha256"):
-                return str(entry["sha256"])
+            if entry.get("asset") != filename or not entry.get("sha256"):
+                continue
+            url = entry.get("url")
+            if suffix is not None and url and not str(url).endswith(suffix):
+                continue
+            return str(entry["sha256"])
     return None
 
 
 def _assert_not_replacing_published(
-    assets_root: Path, *, tool: str, filename: str, sha256: str, replace: bool
+    assets_root: Path,
+    *,
+    tool: str,
+    filename: str,
+    sha256: str,
+    replace: bool,
+    asset_rel: Path | None = None,
 ) -> None:
     """Refuse to change the bytes behind an already-published filename.
 
@@ -321,7 +338,7 @@ def _assert_not_replacing_published(
     republish. Use a build label, or `--replace` for a deliberate,
     owner-approved correction.
     """
-    published = _published_sha256_for_filename(assets_root, tool, filename)
+    published = _published_sha256_for_filename(assets_root, tool, filename, asset_rel)
     if published is None or published == sha256 or replace:
         return
     raise SystemExit(
@@ -567,6 +584,7 @@ def main(argv: list[str] | None = None) -> int:
         filename=asset_name,
         sha256=sha256,
         replace=args.replace,
+        asset_rel=asset_rel,
     )
     delivery_urls = _asset_urls(asset_rel)
     if bool(args.blob_public_origin) != bool(args.upload_helper):
