@@ -163,6 +163,7 @@ def main() -> int:
             "lzma",
             "bzip2",
             "openssl",
+            "libuuid",
             # blessed-build tool families (soldr#1010 phase 2-3)
             "python",
             "nodelib",

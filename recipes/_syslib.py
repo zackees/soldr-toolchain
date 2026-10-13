@@ -203,6 +203,20 @@ LIBRARIES: dict[str, Library] = {
         source_sha256="a8f84a39918ec6415ce765d9b429d313ba97b8143169c172e734b9514464f5b2",
         license_file="LICENSE.txt",
     ),
+    # soldr-toolchain#200 / soldr#3771: libuuid for the managed glibc 2.17
+    # GNU sysroot, which ships none. Built inside manylinux2014 so configure
+    # probes the real 2.17 libc (no getrandom, no newer fortify symbols).
+    "libuuid": Library(
+        tool="libuuid",
+        version="2.41.6",
+        source_url="https://www.kernel.org/pub/linux/utils/util-linux/v2.41/util-linux-2.41.6.tar.gz",
+        license="BSD-3-Clause",
+        description="util-linux libuuid static library and headers built against glibc 2.17",
+        custom="libuuid",
+        source_sha256="0176bfb789d346e17932b47b734dbceb2bb5116916a25ee7a42ffea467e1d667",
+        license_file="libuuid/COPYING",
+        unsupported_shapes=frozenset(SHAPES) - {"linux-x64-gnu", "linux-arm64-gnu"},
+    ),
 }
 
 
@@ -252,6 +266,8 @@ def build(conanfile) -> None:
         _build_jemalloc(conanfile, source_root, package_root, shape)
     elif lib.custom == "openssl":
         _build_openssl(source_root, package_root, shape_name, lib)
+    elif lib.custom == "libuuid":
+        _build_libuuid(build_root, source_root, package_root, shape_name, lib)
     else:
         _build_cmake(conanfile, source_root / lib.cmake_subdir, package_root, shape, lib)
 
@@ -447,6 +463,99 @@ def _build_jemalloc(conanfile, source_root: Path, package_root: Path, shape: Sha
     )
     _run(["make", "-j2"], cwd=source_root, env=env)
     _run(["make", "install"], cwd=source_root, env=env)
+
+
+# ---------------------------------------------------------------------------
+# libuuid (soldr-toolchain#200, soldr#3771)
+#
+# The managed GNU toolchain targets glibc 2.17. A host-built libuuid.a would
+# reference getrandom and fortify symbols newer than that and fail the final
+# link against the managed sysroot, so the build runs inside manylinux2014,
+# whose libc is 2.17. Each forge runner builds its native arch.
+# ---------------------------------------------------------------------------
+
+MANYLINUX2014_IMAGES: dict[str, str] = {
+    "linux-x64-gnu": (
+        "quay.io/pypa/manylinux2014_x86_64:2025.10.10-1@"
+        "sha256:9bc3d6107261c6d6bdd28512778d7b5c2d57f79f5baa5ad4a3533026e4a4237d"
+    ),
+    "linux-arm64-gnu": (
+        "quay.io/pypa/manylinux2014_aarch64:2025.10.10-1@"
+        "sha256:7b2ac44ef495149cd8e91323201e8707faa2d9c430a64e8483488c493fed1b95"
+    ),
+}
+
+LIBUUID_CONFIGURE_FLAGS = (
+    "--prefix=/work/package",
+    "--libdir=/work/package/lib",
+    "--disable-all-programs",
+    "--enable-libuuid",
+    "--disable-shared",
+    "--enable-static",
+    "--disable-nls",
+    "--disable-bash-completion",
+    "--without-python",
+    "--without-systemd",
+    "--without-udev",
+    "--without-tinfo",
+    "--without-ncursesw",
+)
+
+
+def _libuuid_docker_command(
+    shape_name: str, build_root: Path, source_root: Path, *, uid_gid: str
+) -> list[str]:
+    image = MANYLINUX2014_IMAGES.get(shape_name)
+    if image is None:
+        raise ConanInvalidConfiguration(f"libuuid does not support {shape_name}")
+    source_in_container = PurePosixPath("/work") / source_root.relative_to(build_root).as_posix()
+    script = " && ".join(
+        [
+            f"cd {source_in_container}",
+            "./configure " + " ".join(LIBUUID_CONFIGURE_FLAGS) + " CFLAGS='-O2 -fPIC'",
+            "make -j\"$(nproc)\" libuuid.la",
+            "make install-uuidincHEADERS install-usrlib_execLTLIBRARIES",
+        ]
+    )
+    return [
+        "docker", "run", "--rm",
+        "--user", uid_gid,
+        "-v", f"{build_root}:/work",
+        image,
+        "bash", "-ec", script,
+    ]
+
+
+def _write_libuuid_pkg_config(package_root: Path, version: str) -> None:
+    pc_dir = package_root / "lib" / "pkgconfig"
+    pc_dir.mkdir(parents=True, exist_ok=True)
+    (pc_dir / "uuid.pc").write_text(
+        f"""prefix=${{pcfiledir}}/../..
+exec_prefix=${{prefix}}
+libdir=${{prefix}}/lib
+includedir=${{prefix}}/include
+
+Name: uuid
+Description: Universally unique id library (util-linux, static, glibc 2.17)
+Version: {version}
+Libs: -L${{libdir}} -luuid
+Libs.private: -lpthread
+Cflags: -I${{includedir}} -I${{includedir}}/uuid
+""",
+        encoding="utf-8",
+    )
+
+
+def _build_libuuid(
+    build_root: Path, source_root: Path, package_root: Path, shape_name: str, lib: Library
+) -> None:
+    if not shutil.which("docker"):
+        raise RuntimeError("libuuid: Docker is required to build against glibc 2.17")
+    uid_gid = f"{os.getuid()}:{os.getgid()}"
+    _run(_libuuid_docker_command(shape_name, build_root, source_root, uid_gid=uid_gid), cwd=build_root)
+    for leftover in (package_root / "lib").glob("*.la"):
+        leftover.unlink()
+    _write_libuuid_pkg_config(package_root, lib.version)
 
 
 # ---------------------------------------------------------------------------
@@ -1034,3 +1143,13 @@ def _sanity_check_package(package_root: Path, lib: Library, shape_name: str | No
         raise RuntimeError(f"{lib.tool}: package missing static library in lib/")
     if lib.tool == "openssl":
         _sanity_check_openssl(package_root, shape_name)
+    if lib.tool == "libuuid":
+        if not (package_root / "include" / "uuid" / "uuid.h").is_file():
+            raise RuntimeError("libuuid: package missing include/uuid/uuid.h")
+        shared = sorted(
+            path.relative_to(package_root).as_posix()
+            for path in package_root.rglob("*")
+            if path.is_file() and _is_shared_library(path)
+        )
+        if shared:
+            raise RuntimeError(f"libuuid: package must be static-only, found {', '.join(shared)}")

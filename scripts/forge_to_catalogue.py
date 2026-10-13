@@ -107,6 +107,12 @@ _SYSLIB_SHAPES = (
 for _tool in ("zstd", "sqlite", "mimalloc", "zlib-ng", "lzma", "bzip2", "openssl"):
     TOOL_RECIPE_NAME[_tool] = {shape: f"{_tool}-{shape}" for shape in _SYSLIB_SHAPES}
 
+# soldr-toolchain#200: libuuid exists for the managed glibc 2.17 GNU
+# sysroot only.
+TOOL_RECIPE_NAME["libuuid"] = {
+    shape: f"libuuid-{shape}" for shape in ("linux-x64-gnu", "linux-arm64-gnu")
+}
+
 # jemalloc is not buildable for Windows in the current upstream.
 TOOL_RECIPE_NAME["jemalloc"] = {
     shape: f"jemalloc-{shape}"
@@ -345,6 +351,7 @@ DEFAULT_ASSET_NAME = {
     "lzma": "bundle.tar.zst",
     "bzip2": "bundle.tar.zst",
     "openssl": "bundle.tar.zst",
+    "libuuid": "bundle.tar.zst",
     # soldr#1010 phase 2 — new tools all ship a single bundle.tar.zst
     # per (tool, version, shape) tuple, same shape as the syslibs.
     "python": "bundle.tar.zst",

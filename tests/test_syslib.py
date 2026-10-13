@@ -94,7 +94,8 @@ def test_openssl_library_definition_pins_source() -> None:
 
 def test_existing_syslibs_do_not_verify_source_sha256() -> None:
     for name, lib in _syslib.LIBRARIES.items():
-        if name != "openssl":
+        # Source pins arrived with openssl (soldr#3246); later libraries pin too.
+        if name not in {"openssl", "libuuid"}:
             assert lib.source_sha256 is None, name
 
 
