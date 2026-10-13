@@ -69,6 +69,16 @@ class LeaseMover(Protocol):
     def __call__(self, ref: str, sha: str, expected: str, source_ref: str | None) -> None: ...
 
 
+def _error_body(exc: HTTPError) -> str:
+    """GitHub's JSON error body (bounded): it names the rejected entry."""
+    try:
+        raw = exc.read() if exc.fp is not None else b""
+    except Exception:  # noqa: BLE001 - diagnostics must never mask the error
+        return ""
+    text = raw[:2000].decode("utf-8", "replace").strip()
+    return f" -- {text}" if text else ""
+
+
 def github_transport(token: str, *, api_url: str = "https://api.github.com") -> Transport:
     """Return the small stdlib-only GitHub JSON transport used by the CLI.
 
@@ -95,7 +105,9 @@ def github_transport(token: str, *, api_url: str = "https://api.github.com") -> 
                     raise RefNotFound(f"GitHub Git Data API {method} {path} returned 404") from exc
                 transient = exc.code == 429 or 500 <= exc.code < 600
                 if not (retry_safe and transient and attempt < 4):
-                    raise PublishError(f"GitHub Git Data API {method} {path} failed: {exc}") from exc
+                    raise PublishError(
+                        f"GitHub Git Data API {method} {path} failed: {exc}{_error_body(exc)}"
+                    ) from exc
             except (URLError, TimeoutError, json.JSONDecodeError) as exc:
                 if not (retry_safe and attempt < 4):
                     raise PublishError(f"GitHub Git Data API {method} {path} failed: {exc}") from exc
