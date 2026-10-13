@@ -798,3 +798,56 @@ def test_libuuid_maps_only_gnu_linux_shapes() -> None:
         "linux-arm64-gnu": "libuuid-linux-arm64-gnu",
     }
     assert fc.DEFAULT_ASSET_NAME["libuuid"] == "bundle.tar.zst"
+
+
+def test_generic_bundle_name_elsewhere_does_not_block_a_first_publication(tmp_path: Path) -> None:
+    # Every syslib ships `bundle.tar.zst`. A flat-catalogue row for another
+    # tool/version/shape under that generic name must not be mistaken for
+    # the bytes this ingest would replace (libuuid 2.41.6 first ingest was
+    # refused against a private msvc row).
+    root = tmp_path / "assets"
+    root.mkdir()
+    (root / "catalogue.v1.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "entries": [
+                    {
+                        "owner": "zackees",
+                        "repo": "soldr-toolchain-private",
+                        "tag": "msvc-14.44.35207",
+                        "asset": "bundle.tar.zst",
+                        "url": "https://api.github.com/repos/zackees/soldr-toolchain-private/releases/assets/1",
+                        "sha256": "a" * 64,
+                    },
+                    {
+                        "owner": "zackees",
+                        "repo": "soldr-toolchain",
+                        "tag": "assets",
+                        "asset": "bundle.tar.zst",
+                        "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/bzip2/1.0.8/linux-x64-gnu/bundle.tar.zst",
+                        "sha256": "c" * 64,
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    fc._assert_not_replacing_published(
+        root,
+        tool="libuuid",
+        filename="bundle.tar.zst",
+        asset_rel=Path("libuuid/2.41.6/linux-x64-gnu/bundle.tar.zst"),
+        sha256="b" * 64,
+        replace=False,
+    )
+    # The same path with different bytes is still refused.
+    with pytest.raises(SystemExit, match="already published with sha256"):
+        fc._assert_not_replacing_published(
+            root,
+            tool="bzip2",
+            filename="bundle.tar.zst",
+            asset_rel=Path("bzip2/1.0.8/linux-x64-gnu/bundle.tar.zst"),
+            sha256="b" * 64,
+            replace=False,
+        )
