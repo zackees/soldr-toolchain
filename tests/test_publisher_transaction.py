@@ -152,6 +152,23 @@ def test_github_transport_retries_idempotent_object_writes(monkeypatch: pytest.M
     assert delays == [1, 2]
 
 
+def test_github_transport_failure_names_githubs_error_body(monkeypatch: pytest.MonkeyPatch) -> None:
+    # A bare "HTTP Error 422: Unprocessable Entity" hid why a tree write was
+    # refused; GitHub's JSON body says which entry it rejected.
+    import io
+
+    body = b'{"message":"BadObjectState","errors":["tree.sha abc is not a valid blob"]}'
+
+    def opener(*_args, **_kwargs):
+        raise HTTPError("https://api.github.test", 422, "Unprocessable Entity", {}, io.BytesIO(body))
+
+    monkeypatch.setattr("scripts.publisher_transaction.urlopen", opener)
+    with pytest.raises(pt.PublishError, match="tree.sha abc is not a valid blob"):
+        github_transport("token", api_url="https://api.github.test")(
+            "POST", "/repos/o/r/git/trees", {"tree": []},
+        )
+
+
 @pytest.mark.parametrize(
     "url",
     [
