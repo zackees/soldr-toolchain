@@ -790,3 +790,11 @@ def test_published_sha_is_also_read_from_the_flat_catalogue(tmp_path: Path) -> N
         )
         == "c" * 64
     )
+
+
+def test_libuuid_maps_only_gnu_linux_shapes() -> None:
+    assert fc.TOOL_RECIPE_NAME["libuuid"] == {
+        "linux-x64-gnu": "libuuid-linux-x64-gnu",
+        "linux-arm64-gnu": "libuuid-linux-arm64-gnu",
+    }
+    assert fc.DEFAULT_ASSET_NAME["libuuid"] == "bundle.tar.zst"

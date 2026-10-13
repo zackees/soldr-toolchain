@@ -25,6 +25,7 @@ on:
           - lzma
           - bzip2
           - openssl
+          - libuuid
           - cmake
           - ninja
           - uv
@@ -137,6 +138,7 @@ jobs:
               "lzma": syslib_shapes,
               "bzip2": syslib_shapes,
               "openssl": syslib_shapes,
+              "libuuid": gnu_toolchain_shapes,
               "cmake": prebuilt_shapes,
               "ninja": prebuilt_shapes,
               "uv": legacy_syslib_shapes,

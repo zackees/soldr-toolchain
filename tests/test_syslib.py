@@ -94,7 +94,8 @@ def test_openssl_library_definition_pins_source() -> None:
 
 def test_existing_syslibs_do_not_verify_source_sha256() -> None:
     for name, lib in _syslib.LIBRARIES.items():
-        if name != "openssl":
+        # Source pins arrived with openssl (soldr#3246); later libraries pin too.
+        if name not in {"openssl", "libuuid"}:
             assert lib.source_sha256 is None, name
 
 
@@ -504,4 +505,96 @@ def test_generator_emits_all_nine_openssl_recipes(tmp_path: Path, monkeypatch: p
         # The checked-in wrapper matches the generator output.
         checked_in = Path(__file__).resolve().parents[1] / "recipes" / f"openssl-{shape}"
         assert (checked_in / "conanfile.py").read_text(encoding="utf-8") == conanfile
+        assert (checked_in / "README.md").read_text(encoding="utf-8") == readme
+
+
+# ---------------------------------------------------------------------------
+# libuuid (soldr-toolchain#200, soldr#3771)
+# ---------------------------------------------------------------------------
+
+LIBUUID_SHAPES = ("linux-arm64-gnu", "linux-x64-gnu")
+
+
+def test_libuuid_library_definition_pins_source_and_gnu_shapes() -> None:
+    lib = _syslib.LIBRARIES["libuuid"]
+    assert lib.version == "2.41.6"
+    assert lib.source_url == (
+        "https://www.kernel.org/pub/linux/utils/util-linux/v2.41/util-linux-2.41.6.tar.gz"
+    )
+    assert lib.source_sha256 == "0176bfb789d346e17932b47b734dbceb2bb5116916a25ee7a42ffea467e1d667"
+    assert lib.custom == "libuuid"
+    supported = sorted(set(_syslib.SHAPES) - lib.unsupported_shapes)
+    assert supported == sorted(LIBUUID_SHAPES)
+
+
+@pytest.mark.parametrize(("shape", "arch"), [("linux-x64-gnu", "x86_64"), ("linux-arm64-gnu", "aarch64")])
+def test_libuuid_builds_inside_digest_pinned_manylinux2014(shape: str, arch: str) -> None:
+    image = _syslib.MANYLINUX2014_IMAGES[shape]
+    assert f"manylinux2014_{arch}" in image
+    assert "@sha256:" in image
+    argv = _syslib._libuuid_docker_command(shape, Path("/b"), Path("/b/src/util-linux-2.41.6"), uid_gid="1000:1000")
+    assert argv[:3] == ["docker", "run", "--rm"]
+    assert "--user" in argv and argv[argv.index("--user") + 1] == "1000:1000"
+    assert "/b:/work" in argv
+    assert image in argv
+    script = argv[-1]
+    for flag in (
+        "--disable-all-programs",
+        "--enable-libuuid",
+        "--disable-shared",
+        "--enable-static",
+        "--prefix=/work/package",
+        "--libdir=/work/package/lib",
+    ):
+        assert flag in script
+    assert "-fPIC" in script
+    assert "cd /work/src/util-linux-2.41.6" in script
+    assert "make" in script and "libuuid.la" in script
+
+
+def test_libuuid_docker_command_rejects_non_gnu_shapes() -> None:
+    with pytest.raises(_syslib.ConanInvalidConfiguration):
+        _syslib._libuuid_docker_command("linux-x64-musl", Path("/b"), Path("/b/src/x"), uid_gid="0:0")
+
+
+def test_libuuid_pkg_config_is_relocatable_and_links_pthread(tmp_path: Path) -> None:
+    _syslib._write_libuuid_pkg_config(tmp_path, "2.41.6")
+    text = (tmp_path / "lib" / "pkgconfig" / "uuid.pc").read_text(encoding="utf-8")
+    assert "prefix=${pcfiledir}/../..\n" in text
+    assert "Version: 2.41.6\n" in text
+    assert "Libs: -L${libdir} -luuid\n" in text
+    # glibc 2.17 keeps pthread_atfork in libpthread_nonshared.
+    assert "Libs.private: -lpthread\n" in text
+    # Both <uuid/uuid.h> and upstream's <uuid.h> spelling resolve.
+    assert "Cflags: -I${includedir} -I${includedir}/uuid\n" in text
+
+
+def test_libuuid_sanity_check_requires_header_and_archive(tmp_path: Path) -> None:
+    lib = _syslib.LIBRARIES["libuuid"]
+    (tmp_path / "include" / "uuid").mkdir(parents=True)
+    (tmp_path / "lib").mkdir()
+    (tmp_path / "lib" / "libuuid.a").write_bytes(b"!<arch>\n")
+    with pytest.raises(RuntimeError, match="uuid/uuid.h"):
+        _syslib._sanity_check_package(tmp_path, lib, "linux-x64-gnu")
+    (tmp_path / "include" / "uuid" / "uuid.h").write_text("", encoding="utf-8")
+    _syslib._sanity_check_package(tmp_path, lib, "linux-x64-gnu")
+    (tmp_path / "lib" / "libuuid.so").write_bytes(b"")
+    with pytest.raises(RuntimeError, match="static-only"):
+        _syslib._sanity_check_package(tmp_path, lib, "linux-x64-gnu")
+
+
+def test_generator_emits_only_gnu_libuuid_recipes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(generate_syslib_recipes, "REPO", tmp_path)
+    assert generate_syslib_recipes.main() == 0
+    generated = sorted(p.name for p in (tmp_path / "recipes").glob("libuuid-*"))
+    assert generated == sorted(f"libuuid-{shape}" for shape in LIBUUID_SHAPES)
+    for shape in LIBUUID_SHAPES:
+        recipe = tmp_path / "recipes" / f"libuuid-{shape}"
+        readme = (recipe / "README.md").read_text(encoding="utf-8")
+        assert "-f version=2.41.6" in readme
+        assert f"`libuuid/2.41.6/{shape}/bundle.tar.zst`" in readme
+        checked_in = Path(__file__).resolve().parents[1] / "recipes" / f"libuuid-{shape}"
+        assert (checked_in / "conanfile.py").read_text(encoding="utf-8") == (
+            recipe / "conanfile.py"
+        ).read_text(encoding="utf-8")
         assert (checked_in / "README.md").read_text(encoding="utf-8") == readme
