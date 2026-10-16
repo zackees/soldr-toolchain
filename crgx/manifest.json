@@ -5,11 +5,113 @@
   "tool": "crgx",
   "online_url": "https://zackees.github.io/soldr-toolchain/crgx/manifest.json",
   "channels": {
-    "latest-stable": "v0.1.0",
-    "stable": "v0.1.0",
+    "latest-stable": "v0.1.1",
+    "stable": "v0.1.1",
     "pinned": "v0.1.0"
   },
   "releases": [
+    {
+      "schema_version": 1,
+      "version": "v0.1.1",
+      "published_at": "2026-09-30T21:09:29Z",
+      "min_client_version": 1,
+      "platforms": [
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "crgx-macos-aarch64-0.1.1.tar.gz",
+            "size_bytes": 1707071,
+            "urls": [
+              "https://github.com/yfedoseev/crgx/releases/download/v0.1.1/crgx-macos-aarch64-0.1.1.tar.gz"
+            ],
+            "sha256": "b4a1af1d66fe02b4b8f242dc63c122432e04a84d79075122369ba05708d0f9d4"
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "crgx-macos-x86_64-0.1.1.tar.gz",
+            "size_bytes": 1866831,
+            "urls": [
+              "https://github.com/yfedoseev/crgx/releases/download/v0.1.1/crgx-macos-x86_64-0.1.1.tar.gz"
+            ],
+            "sha256": "3aa53c56266986910347422026c467567e7d8bc4523e3fb04b7dfb0465b896ff"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "crgx-linux-aarch64-0.1.1.tar.gz",
+            "size_bytes": 1930505,
+            "urls": [
+              "https://github.com/yfedoseev/crgx/releases/download/v0.1.1/crgx-linux-aarch64-0.1.1.tar.gz"
+            ],
+            "sha256": "d3e8efb568521bdc762279e1bfeb4dda8ff35195fd89afadf9074aebf829ccda"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "glibc"
+          },
+          "asset": {
+            "filename": "crgx-linux-x86_64-0.1.1.tar.gz",
+            "size_bytes": 1994295,
+            "urls": [
+              "https://github.com/yfedoseev/crgx/releases/download/v0.1.1/crgx-linux-x86_64-0.1.1.tar.gz"
+            ],
+            "sha256": "71661856d26181619e8f2790cfe3d6ee3df3f8c82b1070e3a57a9c8987b2ab7a"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "crgx-linux-x86_64-musl-0.1.1.tar.gz",
+            "size_bytes": 2088772,
+            "urls": [
+              "https://github.com/yfedoseev/crgx/releases/download/v0.1.1/crgx-linux-x86_64-musl-0.1.1.tar.gz"
+            ],
+            "sha256": "7664b374ce41c278963e3c75dc9e1511d17e68bf2f2c6011fea84265fe40ce64"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "x86_64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "crgx-windows-x86_64-0.1.1.zip",
+            "size_bytes": 1773789,
+            "urls": [
+              "https://github.com/yfedoseev/crgx/releases/download/v0.1.1/crgx-windows-x86_64-0.1.1.zip"
+            ],
+            "sha256": "862c167d2df59df3f80a68f9d0c6ca8e3f6e95e474d918f9f23882dd3ab70492"
+          }
+        }
+      ],
+      "source": {
+        "vcs": "git",
+        "repo_url": "https://github.com/yfedoseev/crgx",
+        "ref": "v0.1.1",
+        "archive_url": "https://github.com/yfedoseev/crgx/archive/refs/tags/v0.1.1.tar.gz"
+      }
+    },
     {
       "schema_version": 1,
       "version": "v0.1.0",

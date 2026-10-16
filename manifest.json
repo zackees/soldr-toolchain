@@ -18,7 +18,7 @@
         "url": "cargo-binstall/manifest.json",
         "size_bytes": 68770,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "c90e18d80d9c2209d35782eb86473e04c4412c4622e71c14e7f82b972f2844bb"
+        "sha256": "c215950bac9b9024e023f5f4487837e6390fba286c4c49a1f88dda31452b04f4"
       },
       "summary": "cargo-bins/cargo-binstall",
       "kind_hint": "tool"
@@ -46,9 +46,9 @@
     "cargo-nextest": {
       "descriptor": {
         "url": "cargo-nextest/manifest.json",
-        "size_bytes": 195285,
+        "size_bytes": 195430,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "d4faebf4f989549fc6c0f78b5aa178fec19a8b02adca91bf6969dd09fa5e5eaa"
+        "sha256": "174a9f57b5345df3209177d0db09a4ace18599f0772c70e4b3cbd132dbc45eae"
       },
       "summary": "nextest-rs/nextest",
       "kind_hint": "tool"
@@ -76,9 +76,9 @@
     "crgx": {
       "descriptor": {
         "url": "crgx/manifest.json",
-        "size_bytes": 6398,
+        "size_bytes": 9755,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "c32c70fdb204a9d0ada012bf95b76d0248cca16a051091c6d9f50aeed21db417"
+        "sha256": "bc1f78da19b1d778c2c20853ec5850e4290b7a3a4e1014bf37550c8c9c99c52a"
       },
       "summary": "yfedoseev/crgx",
       "kind_hint": "tool"
@@ -116,9 +116,9 @@
     "zccache": {
       "descriptor": {
         "url": "zccache/manifest.json",
-        "size_bytes": 353902,
+        "size_bytes": 354030,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "5346d85e75299e09cd19a649392dbf4613c4d7bb80f8c3c1b651e028341aa4f8"
+        "sha256": "027e53d98b7acdd060acd0c408a6851fe18d6da7aa29584216a45e0ad6556f56"
       },
       "summary": "zackees/zccache",
       "kind_hint": "tool"
@@ -126,9 +126,9 @@
     "zig": {
       "descriptor": {
         "url": "zig/manifest.json",
-        "size_bytes": 14733,
+        "size_bytes": 14734,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "1d92b61fd674425b4d57ce7e42910bf5fae4f26c1c6217606740d5975356e95b"
+        "sha256": "83ffba48402ade87cb777f2c393e9da073b81b85b50126c606dff9d6eff5bfa0"
       },
       "summary": "ziglang/zig (vendored from ziglang.org/download/index.json)",
       "kind_hint": "tool"
