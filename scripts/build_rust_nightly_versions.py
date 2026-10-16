@@ -375,8 +375,14 @@ def select_live_entry(
     catalogue: dict[str, Any],
     entry: dict[str, str],
     fetch: Callable[[str], bytes] | None = None,
+    previous: dict[str, Any] | None = None,
 ) -> dict[str, str]:
     """Pick the catalogue row to publish, never one whose URL is not live.
+
+    ``previous`` is the last committed catalogue. The refresh workflow
+    regenerates ``catalogue`` from the asset index before this step, which
+    drops the prior nightly-map row, so the fallback must also search the
+    committed copy or it can never find a live row.
 
     The content-addressed Pages copy of a new map only exists after the next
     Pages deploy (publish-multipart.yml). Until then consumers must keep the
@@ -385,7 +391,10 @@ def select_live_entry(
 
     if url_serves(entry["url"], entry["sha256"], fetch):
         return entry
-    for item in catalogue.get("entries") or []:
+    candidates = list(catalogue.get("entries") or [])
+    if previous is not None:
+        candidates += list(previous.get("entries") or [])
+    for item in candidates:
         if (
             isinstance(item, dict)
             and item.get("owner") == entry["owner"]
@@ -461,6 +470,12 @@ def main(argv: list[str] | None = None) -> int:
         "published driver are selected (soldr-toolchain#191).",
     )
     parser.add_argument(
+        "--previous-catalogue",
+        type=Path,
+        help="Last committed catalogue.v1.json; searched for a live fallback "
+        "row when the regenerated --catalogue no longer carries one.",
+    )
+    parser.add_argument(
         "--max-backfill-checks",
         type=int,
         default=8,
@@ -494,8 +509,16 @@ def main(argv: list[str] | None = None) -> int:
         map_bytes = encode_map(payload, driver_nightlies)
         catalogue = json.loads(args.catalogue.read_text(encoding="utf-8"))
         immutable = publish_map(args.output, map_bytes)
+        previous = (
+            json.loads(args.previous_catalogue.read_text(encoding="utf-8"))
+            if args.previous_catalogue and args.previous_catalogue.is_file()
+            else None
+        )
         update_catalogue(
-            catalogue, select_live_entry(catalogue, catalogue_entry(map_bytes))
+            catalogue,
+            select_live_entry(
+                catalogue, catalogue_entry(map_bytes), previous=previous
+            ),
         )
         write_catalogue(args.catalogue, catalogue)
     except (
