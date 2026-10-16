@@ -83,6 +83,24 @@ _EXTERNAL_LLVM_POLICY: dict[str, dict[str, str | int]] = {
         "sha256": "8d6dd1cbc2261f8e6fa657b48f10a6e44223441d4b5487f056838cb8c2403a77",
         "size_bytes": 61647904,
     },
+    "https://media.githubusercontent.com/media/zackees/clang-tool-chain-bins/main/assets/clang/linux/x86_64/llvm-21.1.5-r2-linux-x86_64.tar.zst": {
+        "path": "clang/linux/x86_64/llvm-21.1.5-r2-linux-x86_64.tar.zst",
+        "asset": "llvm-21.1.5-r2-linux-x86_64.tar.zst",
+        "sha256": "7cd1c0a6fa94ba716368099b29017343ae3fc55c50b03d9e99ad8983a8d0ba7b",
+        "size_bytes": 99297376,
+    },
+    "https://media.githubusercontent.com/media/zackees/clang-tool-chain-bins/main/assets/clang/linux/arm64/llvm-21.1.5-r2-linux-arm64.tar.zst": {
+        "path": "clang/linux/arm64/llvm-21.1.5-r2-linux-arm64.tar.zst",
+        "asset": "llvm-21.1.5-r2-linux-arm64.tar.zst",
+        "sha256": "63a126496b6fe627481d54257f6841b01319033246abff5a3f8ded0e1c2b318e",
+        "size_bytes": 95776875,
+    },
+    "https://media.githubusercontent.com/media/zackees/clang-tool-chain-bins/main/assets/clang/win/x86_64/llvm-21.1.5-r2-win-x86_64.tar.zst": {
+        "path": "clang/win/x86_64/llvm-21.1.5-r2-win-x86_64.tar.zst",
+        "asset": "llvm-21.1.5-r2-win-x86_64.tar.zst",
+        "sha256": "083a7ef76f18110924f6500f77ea1b2a87616b4b5882f2f99a84d476845f868a",
+        "size_bytes": 61853287,
+    },
 }
 _SOURCE_INVENTORY = "source-inventory.v1.json"
 _EXTERNAL_INVENTORY = "multipart-external-entries.v1.json"
