@@ -406,6 +406,24 @@ def test_catalogue_keeps_live_entry_when_new_digest_url_is_not_deployed() -> Non
     assert chosen == new_entry
 
 
+def test_catalogue_falls_back_to_previous_committed_catalogue() -> None:
+    """The regenerated catalogue lacks the old row; the committed one has it."""
+    old_bytes = b'{"generation":"old"}\n'
+    new_bytes = b'{"generation":"new"}\n'
+    old_entry = brnv.catalogue_entry(old_bytes)
+    new_entry = brnv.catalogue_entry(new_bytes)
+    fetch = _live({old_entry["url"]: old_bytes})
+    with pytest.raises(ValueError, match="not live"):
+        brnv.select_live_entry({"entries": []}, new_entry, fetch=fetch)
+    chosen = brnv.select_live_entry(
+        {"entries": []},
+        new_entry,
+        fetch=fetch,
+        previous={"entries": [dict(old_entry)]},
+    )
+    assert chosen == old_entry
+
+
 def test_catalogue_rejects_digest_mismatch_and_refuses_when_nothing_is_live() -> None:
     new_bytes = b'{"generation":"new"}\n'
     new_entry = brnv.catalogue_entry(new_bytes)
