@@ -80,7 +80,7 @@
         "media_type": "application/vnd.manifest.v1+json",
         "sha256": "04e3c1185755adde910694e8ccdaf2b73b9db86fbd124f2c5a2d969036087ca8"
       },
-      "summary": "Prebuilt Conan dependency bundle for soldr builds",
+      "summary": "Planned Conan dependency bundle; archives not yet published",
       "kind_hint": "sysroot"
     },
     "crgx": {
