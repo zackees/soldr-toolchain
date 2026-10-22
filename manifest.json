@@ -66,9 +66,9 @@
     "cargo-zigbuild": {
       "descriptor": {
         "url": "cargo-zigbuild/manifest.json",
-        "size_bytes": 249556,
+        "size_bytes": 251474,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "781b50ea074a8273bdb1f6e3f18898ab01eef1ad01d63157f2d56445c69a18fb"
+        "sha256": "ef003a640846feb2426e73c0df7b1782e42ef4fdb03a38a6f90917b1a100fd75"
       },
       "summary": "rust-cross/cargo-zigbuild",
       "kind_hint": "tool"
