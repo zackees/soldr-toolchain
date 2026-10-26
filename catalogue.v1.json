@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-25T06:48:46Z",
+  "generated_at": "2026-10-26T06:21:52Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -18,6 +18,198 @@
       "asset": "bundle.tar.zst",
       "url": "https://api.github.com/repos/zackees/soldr-toolchain-private/releases/assets/505002676",
       "sha256": "932d9e36cbad6243b6ca9e50332b258f7efeb086d2f21c80447738064418c714"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-dylint-6.2.0-x86_64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.2.0/windows-x86_64-msvc/cargo-dylint-6.2.0-x86_64-pc-windows-msvc.tar.gz",
+      "sha256": "e67d73c1f4418b423c4cd01833ef72121ba58696885db1092fb186bc6ff5f2cf"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-dylint-6.2.0-aarch64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.2.0/windows-aarch64-msvc/cargo-dylint-6.2.0-aarch64-pc-windows-msvc.tar.gz",
+      "sha256": "cac97cc3bf2313ffd14a3a1afb3cddfc0945c3935ce9c92fa539e41b299ad72d"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-dylint-6.2.0-x86_64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.2.0/darwin-x86_64/cargo-dylint-6.2.0-x86_64-apple-darwin.tar.gz",
+      "sha256": "36e3c84cd39356adbac79aa131871f4dc91a35fb5288cbc5d782e2b8cb852690"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-dylint-6.2.0-aarch64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.2.0/darwin-aarch64/cargo-dylint-6.2.0-aarch64-apple-darwin.tar.gz",
+      "sha256": "9567a45f6c40c49585daeb5b1c75949d3c0e9a12cdad801607a5872858e16d2e"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-dylint-6.2.0-x86_64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.2.0/linux-x86_64-glibc/cargo-dylint-6.2.0-x86_64-unknown-linux-gnu.tar.gz",
+      "sha256": "3a481180983933de68df8b58950cc1098faeb3734010c2d501c8d82282c7bd1e"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-dylint-6.2.0-aarch64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.2.0/linux-aarch64-glibc/cargo-dylint-6.2.0-aarch64-unknown-linux-gnu.tar.gz",
+      "sha256": "7fd9aaf88174501637855f1454397dc94b1b1f1bcaa6fe2dac395bcc60613d8c"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-dylint-6.2.0-x86_64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.2.0/linux-x86_64-musl/cargo-dylint-6.2.0-x86_64-unknown-linux-musl.tar.gz",
+      "sha256": "e04eb5ecab0563da2c38a4b55a396a8191fa2db445c5a85ccd06f9a66386452d"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "cargo-dylint-6.2.0-aarch64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/cargo-dylint/v6.2.0/linux-aarch64-musl/cargo-dylint-6.2.0-aarch64-unknown-linux-musl.tar.gz",
+      "sha256": "70eec66b49ccb0de47bfc0a50cfd660ac056849bff159f45b04c8462333f5dc3"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "dylint-link-6.2.0-x86_64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-link/v6.2.0/windows-x86_64-msvc/dylint-link-6.2.0-x86_64-pc-windows-msvc.tar.gz",
+      "sha256": "ceae70195dc52184c586e914fe465b4729933cb8c6c8f287c8e7a94d7ccb67b9"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "dylint-link-6.2.0-aarch64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-link/v6.2.0/windows-aarch64-msvc/dylint-link-6.2.0-aarch64-pc-windows-msvc.tar.gz",
+      "sha256": "dccad6ba86163fd840a0e917266ae3b1ce447a4243ff972208507b066ec56fc0"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "dylint-link-6.2.0-x86_64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-link/v6.2.0/darwin-x86_64/dylint-link-6.2.0-x86_64-apple-darwin.tar.gz",
+      "sha256": "b3b63ac546adb30bc1942c762765ea98ed375098367857c859c42732287c5ea5"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "dylint-link-6.2.0-aarch64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-link/v6.2.0/darwin-aarch64/dylint-link-6.2.0-aarch64-apple-darwin.tar.gz",
+      "sha256": "08fe3d402aa2615bd425035eb7df7c2e055fbbd3f332f3ffeda608b5d1b25913"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "dylint-link-6.2.0-x86_64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-link/v6.2.0/linux-x86_64-glibc/dylint-link-6.2.0-x86_64-unknown-linux-gnu.tar.gz",
+      "sha256": "705388c797becf6610f054fd01dc85b34242119d711e489815903ea18a737f65"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "dylint-link-6.2.0-aarch64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-link/v6.2.0/linux-aarch64-glibc/dylint-link-6.2.0-aarch64-unknown-linux-gnu.tar.gz",
+      "sha256": "ed0a5c8f8b2dafbb323c95a71154cddb4d9ff21901ca749a888af55f1abeb1ff"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "dylint-link-6.2.0-x86_64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-link/v6.2.0/linux-x86_64-musl/dylint-link-6.2.0-x86_64-unknown-linux-musl.tar.gz",
+      "sha256": "1dce472faadbe0fb66b05554611e0ccf77e7d5614910691e0c90943fb93a2d70"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "dylint-link-6.2.0-aarch64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-link/v6.2.0/linux-aarch64-musl/dylint-link-6.2.0-aarch64-unknown-linux-musl.tar.gz",
+      "sha256": "3286e86c1307d594d6fcd1bcca3a404bf0f872632abb4e8f530c7e03c3e1e3c8"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "dylint-driver-6.2.0-nightly-2026-08-15-x86_64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-driver/v6.2.0-nightly-2026-08-15/windows-x86_64-msvc/dylint-driver-6.2.0-nightly-2026-08-15-x86_64-pc-windows-msvc.tar.gz",
+      "sha256": "09a8274d25cd02f09a26a0b44840980467cb750c94e8e1992d734cbcd5ab7aa4"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "dylint-driver-6.2.0-nightly-2026-08-15-aarch64-pc-windows-msvc.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-driver/v6.2.0-nightly-2026-08-15/windows-aarch64-msvc/dylint-driver-6.2.0-nightly-2026-08-15-aarch64-pc-windows-msvc.tar.gz",
+      "sha256": "7493dac6475634296659de853f399b02736511d0928fbe2a920d002122f3d91b"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "dylint-driver-6.2.0-nightly-2026-08-15-x86_64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-driver/v6.2.0-nightly-2026-08-15/darwin-x86_64/dylint-driver-6.2.0-nightly-2026-08-15-x86_64-apple-darwin.tar.gz",
+      "sha256": "cecce09d7f5f08668eccc358a234527adc5e11c4138b208371e37e0ee0f7e514"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "dylint-driver-6.2.0-nightly-2026-08-15-aarch64-apple-darwin.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-driver/v6.2.0-nightly-2026-08-15/darwin-aarch64/dylint-driver-6.2.0-nightly-2026-08-15-aarch64-apple-darwin.tar.gz",
+      "sha256": "72895cb1981ee8e89c74722ba937537df71d96cda042d4a7d2b74d8549214548"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "dylint-driver-6.2.0-nightly-2026-08-15-x86_64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-driver/v6.2.0-nightly-2026-08-15/linux-x86_64-glibc/dylint-driver-6.2.0-nightly-2026-08-15-x86_64-unknown-linux-gnu.tar.gz",
+      "sha256": "3036cb6374cbe3b662a5167ac33dd5758962923fbb2ef6e017d49d7fa6417d2e"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "dylint-driver-6.2.0-nightly-2026-08-15-aarch64-unknown-linux-gnu.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-driver/v6.2.0-nightly-2026-08-15/linux-aarch64-glibc/dylint-driver-6.2.0-nightly-2026-08-15-aarch64-unknown-linux-gnu.tar.gz",
+      "sha256": "1d856ca918ce2069a1951bb357b201919aab7fa80792130497261290755a60c2"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "dylint-driver-6.2.0-nightly-2026-08-15-x86_64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-driver/v6.2.0-nightly-2026-08-15/linux-x86_64-musl/dylint-driver-6.2.0-nightly-2026-08-15-x86_64-unknown-linux-musl.tar.gz",
+      "sha256": "efce6f4b15aa854e9c34484d4feee30b3b5d0177d167f78bf71bf225cc5434c6"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "dylint-driver-6.2.0-nightly-2026-08-15-aarch64-unknown-linux-musl.tar.gz",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/dylint-driver/v6.2.0-nightly-2026-08-15/linux-aarch64-musl/dylint-driver-6.2.0-nightly-2026-08-15-aarch64-unknown-linux-musl.tar.gz",
+      "sha256": "9eb92baacf3e0cc972c38bdbc43528fa2a21268d72ee31fd89d4d1a9862c8796"
     }
   ]
 }
