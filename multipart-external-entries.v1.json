@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "policy_revision": 6,
-  "expected_source_entries": 187,
+  "policy_revision": 7,
+  "expected_source_entries": 211,
   "expected_external_entries": 6,
   "entries": [
     {
