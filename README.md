@@ -324,22 +324,26 @@ cannot fall back to a nightly from another bucket. Instead it:
   nightly whose driver asset does not exist (soldr-toolchain#191). The
   `nightlies` identity rows are unchanged, so explicit pins still resolve.
 
-Only one driver identity exists today: Dylint 6.0.3 on `nightly-2026-05-28`
-(Rust 1.98 nightly). Dylint 6.0.3's source does not compile on older nightlies
-such as `nightly-2026-02-28` (`rustc_errors::DiagDecorator` is missing), so the
-Rust 1.95 bucket cannot get a driver from this Dylint release.
+Two driver identities are published: Dylint 6.0.3 on `nightly-2026-05-28`
+(Rust 1.98 nightly) and Dylint 6.2.0 on `nightly-2026-08-15` (the newest Rust
+1.99 nightly, forge-ci/ci.yml#106). Soldr's pinned Dylint version decides which
+one it fetches, so after soldr moves to 6.2.0 only `nightly-2026-08-15` has a
+driver for it. Dylint 6.0.3's source does not compile on older nightlies such as
+`nightly-2026-02-28` (`rustc_errors::DiagDecorator` is missing), so older
+buckets remain `dylint_unavailable`.
 
-**Supported workaround for Rust 1.95 (and any other `dylint_unavailable`
-version):** pin the Dylint toolchain explicitly to the published driver's
-nightly. With `zackees/setup-soldr`:
+**Supported workaround for any `dylint_unavailable` version:** pin the Dylint
+toolchain explicitly to a published driver's nightly that matches soldr's
+pinned Dylint version (`nightly-2026-08-15` for Dylint 6.2.0). With
+`zackees/setup-soldr`:
 
 ```yaml
 with:
   dylint: true
-  dylint-toolchain: nightly-2026-05-28
+  dylint-toolchain: nightly-2026-08-15
 ```
 
-or set `SOLDR_DYLINT_TOOLCHAIN=nightly-2026-05-28` (or pin the lint libraries'
+or set `SOLDR_DYLINT_TOOLCHAIN=nightly-2026-08-15` (or pin the lint libraries'
 `rust-toolchain.toml` to that nightly). The pin goes through soldr's explicit
 map lookup, which uses the `nightlies` identity rows, not the `versions`
 buckets. Keep the pin until a newer Dylint release is produced and ingested
