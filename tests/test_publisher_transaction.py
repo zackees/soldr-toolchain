@@ -769,3 +769,34 @@ def test_pages_recovery_ignores_newer_www_ref_and_binds_generation_tree(monkeypa
     ]
     with pytest.raises(PublishError, match="reused part is absent from active tree"):
         fetch_verified_public_ledger(Api(), pages_base="https://pages.test")
+
+
+def test_large_tree_is_layered_in_bounded_chunks_on_base_tree():
+    calls: list[dict] = []
+
+    def transport(method, path, body):
+        calls.append(body)
+        return {"sha": f"{len(calls):040x}"}
+
+    api = pt.GitDataApi("o", "r", transport)
+    rows = [{"path": f"p{i:04d}", "mode": "100644", "type": "blob", "sha": "a" * 40} for i in range(pt.TREE_CHUNK_ENTRIES * 2 + 1)]
+    result = api.tree(rows)
+
+    assert len(calls) == 3
+    assert "base_tree" not in calls[0]
+    assert calls[1]["base_tree"] == f"{1:040x}" and calls[2]["base_tree"] == f"{2:040x}"
+    assert [row for call in calls for row in call["tree"]] == rows
+    assert all(len(call["tree"]) <= pt.TREE_CHUNK_ENTRIES for call in calls)
+    assert result == f"{3:040x}"
+
+
+def test_small_tree_and_explicit_base_tree_stay_a_single_request():
+    calls: list[dict] = []
+
+    def transport(method, path, body):
+        calls.append(body)
+        return {"sha": "b" * 40}
+
+    api = pt.GitDataApi("o", "r", transport)
+    assert api.tree([{"path": "x", "mode": "100644", "type": "blob", "sha": "a" * 40}], base_tree="c" * 40) == "b" * 40
+    assert calls == [{"tree": [{"path": "x", "mode": "100644", "type": "blob", "sha": "a" * 40}], "base_tree": "c" * 40}]

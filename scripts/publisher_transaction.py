@@ -177,6 +177,9 @@ def git_force_with_lease(repo_dir: Path, owner: str, repo: str, token: str) -> L
     return move
 
 
+TREE_CHUNK_ENTRIES = 64
+
+
 class GitDataApi:
     """Minimal GitHub Git Data API adapter with an injectable transport.
 
@@ -240,10 +243,23 @@ class GitDataApi:
         return _sha(response, "blob")
 
     def tree(self, entries: Iterable[Mapping[str, Any]], base_tree: str | None = None) -> str:
-        body: dict[str, Any] = {"tree": list(entries)}
-        if base_tree:
-            body["base_tree"] = base_tree
-        return _sha(self.request("POST", "/trees", body), "tree")
+        """Create a tree, layering large entry lists in bounded chunks.
+
+        One POST naming hundreds of freshly uploaded multi-megabyte blobs
+        times out server-side (HTTP 422 "your request timed out"). Each chunk
+        is applied on top of the previous chunk's tree via ``base_tree``; a
+        Git tree's ID depends only on its final contents, so the result is
+        identical to a single request.
+        """
+        rows = list(entries)
+        current = base_tree
+        for start in range(0, max(len(rows), 1), TREE_CHUNK_ENTRIES):
+            body: dict[str, Any] = {"tree": rows[start : start + TREE_CHUNK_ENTRIES]}
+            if current:
+                body["base_tree"] = current
+            current = _sha(self.request("POST", "/trees", body), "tree")
+        assert current is not None
+        return current
 
     def commit(self, tree: str, message: str, parents: Iterable[str] = ()) -> str:
         # Deliberately parentless by default: generations are immutable snapshots.
