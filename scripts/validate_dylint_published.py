@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate one native lane of the published Dylint 6.0.3 triplet.
+"""Validate one native lane of the published Dylint 6.2.0 triplet.
 
 The validator consumes the public catalogue and CDN exactly as Soldr will. It
 checks all archive and payload identities before execution, relocates the three

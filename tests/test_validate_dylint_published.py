@@ -188,9 +188,9 @@ def test_expected_assets_include_version_platform_and_filename() -> None:
     assets = [asset for asset in expected_assets() if asset.shape == lane.shape]
 
     assert {asset.filename for asset in assets} == {
-        "cargo-dylint-6.0.3-aarch64-apple-darwin.tar.gz",
-        "dylint-link-6.0.3-aarch64-apple-darwin.tar.gz",
-        "dylint-driver-6.0.3-nightly-2026-05-28-aarch64-apple-darwin.tar.gz",
+        "cargo-dylint-6.2.0-aarch64-apple-darwin.tar.gz",
+        "dylint-link-6.2.0-aarch64-apple-darwin.tar.gz",
+        "dylint-driver-6.2.0-nightly-2026-08-15-aarch64-apple-darwin.tar.gz",
     }
 
 

@@ -6,7 +6,7 @@ on:
       dylint_ref:
         description: Immutable Dylint commit
         required: true
-        default: 9adfa398661273ca7dc99df9bf2c26ae6f61b1c5
+        default: f4e28c951ed53f565e1400f374f4321100de2765
         type: string
 
 # Never cancelled and never coalesced: every publish runs to completion.

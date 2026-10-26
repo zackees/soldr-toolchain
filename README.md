@@ -263,7 +263,7 @@ checkout in this order:
 If none of those resolves to a directory containing `manifest.json`,
 the parity tests skip — the pure-function tests still run.
 
-### Producing the Dylint 6.0.3 triplet
+### Producing the Dylint 6.2.0 triplet
 
 The `build and validate native Dylint release` workflow produces
 `cargo-dylint`, `dylint-link`, and the exact-nightly `dylint-driver` together on
@@ -272,9 +272,9 @@ hosted runners; GNU binaries use digest-pinned manylinux2014 containers; musl
 binaries and drivers use digest-pinned Alpine containers on matching CPU
 architectures.
 
-The driver identity is immutable and includes Dylint `6.0.3`,
-`nightly-2026-05-28`, rustc release `1.98.0-nightly`, full rustc commit
-`57d06900fd7d9ee06d3a7f323bb77f17ab3cfaf8`, and the host triple. Every lane
+The driver identity is immutable and includes Dylint `6.2.0`,
+`nightly-2026-08-15`, rustc release `1.99.0-nightly`, full rustc commit
+`d453bdd8f092d099bc336f0bda4163f809ad18e0`, and the host triple. Every lane
 relocates all three binaries, runs a clean custom-lint case, observes the known
 `release_fixture_forbidden_io` violation, and repeats the violation with Cargo
 offline. The warm run must leave the driver hash and timestamp unchanged.
@@ -282,7 +282,7 @@ offline. The warm run must leave the driver hash and timestamp unchanged.
 The driver bundle intentionally contains only `dylint-driver`; rustc-private
 libraries remain owned by the exact installed nightly. Consumers must place the
 driver at
-`$DYLINT_DRIVER_PATH/nightly-2026-05-28-<host>/dylint-driver` and expose that
+`$DYLINT_DRIVER_PATH/nightly-2026-08-15-<host>/dylint-driver` and expose that
 nightly's private libraries while invoking Dylint: prepend the toolchain's
 `bin` directory to `PATH` on Windows, its `lib` directory to `LD_LIBRARY_PATH`
 on Linux, or its `lib` directory to `DYLD_LIBRARY_PATH` on macOS. Soldr owns

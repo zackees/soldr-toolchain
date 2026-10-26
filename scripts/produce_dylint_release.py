@@ -26,15 +26,15 @@ from scripts import forge_to_catalogue
 from scripts.build_asset_index import build_asset_index
 
 DYLINT_REPOSITORY = "trailofbits/dylint"
-DYLINT_TAG = "v6.0.3"
-DYLINT_COMMIT = "9adfa398661273ca7dc99df9bf2c26ae6f61b1c5"
-DYLINT_VERSION = "6.0.3"
-DRIVER_ASSET_VERSION = "6.0.3-nightly-2026-05-28"
+DYLINT_TAG = "v6.2.0"
+DYLINT_COMMIT = "f4e28c951ed53f565e1400f374f4321100de2765"
+DYLINT_VERSION = "6.2.0"
+DRIVER_ASSET_VERSION = "6.2.0-nightly-2026-08-15"
 DRIVER_IDENTITY = {
     "dylint_version": DYLINT_VERSION,
-    "toolchain": "nightly-2026-05-28",
-    "rustc_release": "1.98.0-nightly",
-    "rustc_commit": "57d06900fd7d9ee06d3a7f323bb77f17ab3cfaf8",
+    "toolchain": "nightly-2026-08-15",
+    "rustc_release": "1.99.0-nightly",
+    "rustc_commit": "d453bdd8f092d099bc336f0bda4163f809ad18e0",
 }
 # Stable toolchain that compiles the relocatable cargo-dylint / dylint-link
 # pair. Tracks zackees/soldr's rust-toolchain.toml. The driver is built by

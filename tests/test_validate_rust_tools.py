@@ -25,10 +25,10 @@ def test_pinned_vertical_slice_has_dylint_triplet_and_eight_platforms():
         assert doc["tools"][tool]["catalogue_from_release"] is False
     assert len(doc["platforms"]) == 8
     assert doc["tools"]["dylint-driver"]["driver_identity"] == {
-        "dylint_version": "6.0.3",
-        "toolchain": "nightly-2026-05-28",
-        "rustc_release": "1.98.0-nightly",
-        "rustc_commit": "57d06900fd7d9ee06d3a7f323bb77f17ab3cfaf8",
+        "dylint_version": "6.2.0",
+        "toolchain": "nightly-2026-08-15",
+        "rustc_release": "1.99.0-nightly",
+        "rustc_commit": "d453bdd8f092d099bc336f0bda4163f809ad18e0",
     }
 
 

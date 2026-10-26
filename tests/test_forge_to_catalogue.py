@@ -159,14 +159,14 @@ def test_find_forge_rust_artifact_supports_grouped_workflow_download(
     artifact = (
         tmp_path
         / "dylint-release-linux-x64-gnu"
-        / "forge-rust-cargo-dylint-6.0.3-linux-x64-gnu"
+        / "forge-rust-cargo-dylint-6.2.0-linux-x64-gnu"
     )
     artifact.mkdir(parents=True)
     (artifact / "manifest.json").write_text("{}", encoding="utf-8")
 
     assert (
         fc._find_forge_rust_artifact(
-            tmp_path, "cargo-dylint", "6.0.3", "linux-x64-gnu"
+            tmp_path, "cargo-dylint", "6.2.0", "linux-x64-gnu"
         )
         == artifact
     )
@@ -175,7 +175,7 @@ def test_find_forge_rust_artifact_supports_grouped_workflow_download(
 def test_find_forge_rust_artifact_rejects_duplicate_exact_matches(
     tmp_path: Path,
 ) -> None:
-    expected = "forge-rust-cargo-dylint-6.0.3-linux-x64-gnu"
+    expected = "forge-rust-cargo-dylint-6.2.0-linux-x64-gnu"
     for parent in ("first", "second"):
         artifact = tmp_path / parent / expected
         artifact.mkdir(parents=True)
@@ -183,7 +183,7 @@ def test_find_forge_rust_artifact_rejects_duplicate_exact_matches(
 
     with pytest.raises(SystemExit, match="multiple Rust artifacts"):
         fc._find_forge_rust_artifact(
-            tmp_path, "cargo-dylint", "6.0.3", "linux-x64-gnu"
+            tmp_path, "cargo-dylint", "6.2.0", "linux-x64-gnu"
         )
 
 
@@ -191,8 +191,8 @@ def _valid_dylint_evidence(shape: str = "linux-x64-gnu") -> dict:
     target = fc.RUST_TARGET_BY_SHAPE[shape]
     return {
         "pair_identity": {
-            "dylint_version": "6.0.3",
-            "source_ref": "9adfa398661273ca7dc99df9bf2c26ae6f61b1c5",
+            "dylint_version": "6.2.0",
+            "source_ref": "f4e28c951ed53f565e1400f374f4321100de2765",
             "target": target,
         },
         "smoke": {
@@ -522,21 +522,21 @@ def test_update_manifest_catalog_publishes_dylint_components(tmp_path: Path) -> 
     )
 
     for tool in ("cargo-dylint", "dylint-link"):
-        asset_name = f"{tool}-6.0.3-x86_64-unknown-linux-gnu.tar.gz"
+        asset_name = f"{tool}-6.2.0-x86_64-unknown-linux-gnu.tar.gz"
         fc._update_manifest_catalog(
             tmp_path,
             tool=tool,
-            package_version="6.0.3",
+            package_version="6.2.0",
             shape="linux-x64-gnu",
-            asset_rel=Path(f"{tool}/v6.0.3/linux-x86_64-glibc/{asset_name}"),
+            asset_rel=Path(f"{tool}/v6.2.0/linux-x86_64-glibc/{asset_name}"),
             asset_name=asset_name,
             asset_size=123,
             sha256="a" * 64,
         )
 
         catalog = json.loads((tmp_path / tool / "manifest.json").read_text())
-        assert catalog["channels"]["pinned"] == "v6.0.3"
-        assert catalog["releases"][0]["version"] == "v6.0.3"
+        assert catalog["channels"]["pinned"] == "v6.2.0"
+        assert catalog["releases"][0]["version"] == "v6.2.0"
 
     index = json.loads((tmp_path / "manifest.json").read_text())
     assert set(index["tools"]) == {"cargo-dylint", "dylint-link"}

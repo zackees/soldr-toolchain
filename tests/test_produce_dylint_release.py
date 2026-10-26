@@ -31,18 +31,18 @@ def test_plan_is_complete_native_and_exactly_identified() -> None:
     assert {lane.shape: (lane.runner, lane.target) for lane in plan} == EXPECTED
     assert all(lane.evidence_level == "fixture-validated-native" for lane in plan)
     assert release.DRIVER_IDENTITY == {
-        "dylint_version": "6.0.3",
-        "toolchain": "nightly-2026-05-28",
-        "rustc_release": "1.98.0-nightly",
-        "rustc_commit": "57d06900fd7d9ee06d3a7f323bb77f17ab3cfaf8",
+        "dylint_version": "6.2.0",
+        "toolchain": "nightly-2026-08-15",
+        "rustc_release": "1.99.0-nightly",
+        "rustc_commit": "d453bdd8f092d099bc336f0bda4163f809ad18e0",
     }
-    assert release.DRIVER_ASSET_VERSION == "6.0.3-nightly-2026-05-28"
+    assert release.DRIVER_ASSET_VERSION == "6.2.0-nightly-2026-08-15"
     matrix = release.catalogue_artifact_matrix()
     assert len(matrix) == 24
     assert {(tool, version) for tool, version, _ in matrix} == {
-        ("cargo-dylint", "6.0.3"),
-        ("dylint-link", "6.0.3"),
-        ("dylint-driver", "6.0.3-nightly-2026-05-28"),
+        ("cargo-dylint", "6.2.0"),
+        ("dylint-link", "6.2.0"),
+        ("dylint-driver", "6.2.0-nightly-2026-08-15"),
     }
     assert {shape for _, _, shape in matrix} == set(EXPECTED)
 
@@ -58,10 +58,10 @@ def test_driver_artifact_binds_payload_to_full_identity(tmp_path: Path) -> None:
         output_dir=tmp_path / "out",
         lane=lane,
         rustc_verbose=(
-            "rustc 1.98.0-nightly (57d06900f 2026-05-27)\n"
-            "commit-hash: 57d06900fd7d9ee06d3a7f323bb77f17ab3cfaf8\n"
+            "rustc 1.99.0-nightly (d453bdd8f 2026-08-14)\n"
+            "commit-hash: d453bdd8f092d099bc336f0bda4163f809ad18e0\n"
             "host: x86_64-pc-windows-msvc\n"
-            "release: 1.98.0-nightly\n"
+            "release: 1.99.0-nightly\n"
         ),
         smoke={
             "result": "passed",
@@ -94,12 +94,12 @@ def test_driver_artifact_binds_payload_to_full_identity(tmp_path: Path) -> None:
     [
         (
             "commit-hash: deadbeef\nhost: x86_64-pc-windows-msvc\n"
-            "release: 1.98.0-nightly\n",
+            "release: 1.99.0-nightly\n",
             "rustc commit",
         ),
         (
-            "commit-hash: 57d06900fd7d9ee06d3a7f323bb77f17ab3cfaf8\n"
-            "host: aarch64-pc-windows-msvc\nrelease: 1.98.0-nightly\n",
+            "commit-hash: d453bdd8f092d099bc336f0bda4163f809ad18e0\n"
+            "host: aarch64-pc-windows-msvc\nrelease: 1.99.0-nightly\n",
             "rustc host",
         ),
     ],
@@ -206,7 +206,7 @@ def test_driver_build_is_native_so_rustc_private_crates_come_from_host_sysroot(
 
     assert command == [
         "cargo",
-        "+nightly-2026-05-28",
+        "+nightly-2026-08-15",
         "build",
         "--locked",
         "--release",
@@ -229,7 +229,7 @@ def test_driver_build_is_native_so_rustc_private_crates_come_from_host_sysroot(
     # lint libraries' exact nightly.
     assert release.PAIR_TOOLCHAIN == "1.98.1"
     assert pair_command[1] == "+1.98.1"
-    assert release.DRIVER_TOOLCHAIN == "nightly-2026-05-28"
+    assert release.DRIVER_TOOLCHAIN == "nightly-2026-08-15"
     target_index = pair_command.index("--target")
     assert pair_command[target_index + 1] == "x86_64-unknown-linux-musl"
 
@@ -333,8 +333,8 @@ def test_packager_rejects_driver_with_wrong_nightly_identity(tmp_path: Path) -> 
         output_dir=tmp_path / "out",
         lane=lane,
         rustc_verbose=(
-            "commit-hash: 57d06900fd7d9ee06d3a7f323bb77f17ab3cfaf8\n"
-            "host: x86_64-pc-windows-msvc\nrelease: 1.98.0-nightly\n"
+            "commit-hash: d453bdd8f092d099bc336f0bda4163f809ad18e0\n"
+            "host: x86_64-pc-windows-msvc\nrelease: 1.99.0-nightly\n"
         ),
         smoke={
             "result": "passed",
