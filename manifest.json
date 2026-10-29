@@ -126,9 +126,9 @@
     "zccache": {
       "descriptor": {
         "url": "zccache/manifest.json",
-        "size_bytes": 354734,
+        "size_bytes": 354760,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "ed4dff6b9fb376d963ae6334c325684f67e308c9b4d7dc6e7106bc06e9c07036"
+        "sha256": "c0505e57c9f30470cfd278afa49cbb6ea3de5037bcd99da1bc0989f4adc8f215"
       },
       "summary": "zackees/zccache",
       "kind_hint": "tool"
