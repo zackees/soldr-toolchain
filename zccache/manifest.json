@@ -5,10 +5,214 @@
   "tool": "zccache",
   "online_url": "https://zackees.github.io/soldr-toolchain/zccache/manifest.json",
   "channels": {
-    "latest-stable": "1.15.12",
-    "stable": "1.15.12"
+    "latest-stable": "1.15.14",
+    "stable": "1.15.14"
   },
   "releases": [
+    {
+      "schema_version": 1,
+      "version": "1.15.14",
+      "published_at": "2026-11-03T10:30:41Z",
+      "min_client_version": 1,
+      "platforms": [
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "zccache-v1.15.14-aarch64-apple-darwin.tar.gz",
+            "size_bytes": 11331283,
+            "urls": [
+              "https://github.com/forge-ci/zccache/releases/download/1.15.14/zccache-v1.15.14-aarch64-apple-darwin.tar.gz"
+            ],
+            "sha256": "28c5f97637c86d5825b69d175930e71b3784b5ac85002ce06c6e6cfa61dc2dcd"
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "zccache-v1.15.14-x86_64-apple-darwin.tar.gz",
+            "size_bytes": 11849116,
+            "urls": [
+              "https://github.com/forge-ci/zccache/releases/download/1.15.14/zccache-v1.15.14-x86_64-apple-darwin.tar.gz"
+            ],
+            "sha256": "5260ed7a1c8e97cff2e73cb4aa6503c78566dd8af8d4cbd6aa50a446f7fd2612"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "zccache-v1.15.14-aarch64-unknown-linux-musl.tar.gz",
+            "size_bytes": 11963204,
+            "urls": [
+              "https://github.com/forge-ci/zccache/releases/download/1.15.14/zccache-v1.15.14-aarch64-unknown-linux-musl.tar.gz"
+            ],
+            "sha256": "eb1bf09bedf2cc764c658dcf0f35931eda8a1c4a1eb17fe47ecaae511d7806c8"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "zccache-v1.15.14-x86_64-unknown-linux-musl.tar.gz",
+            "size_bytes": 12355652,
+            "urls": [
+              "https://github.com/forge-ci/zccache/releases/download/1.15.14/zccache-v1.15.14-x86_64-unknown-linux-musl.tar.gz"
+            ],
+            "sha256": "0c4b85f5216ffa029064bea0c2a7a0472e104509832c7592e65d3ee60e147094"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "aarch64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "zccache-v1.15.14-aarch64-pc-windows-msvc.zip",
+            "size_bytes": 9796487,
+            "urls": [
+              "https://github.com/forge-ci/zccache/releases/download/1.15.14/zccache-v1.15.14-aarch64-pc-windows-msvc.zip"
+            ],
+            "sha256": "df2225e3b7c27b114c97e957af3fcd6aa636fd72aafb271a0af408c0f45e57e1"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "x86_64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "zccache-v1.15.14-x86_64-pc-windows-msvc.zip",
+            "size_bytes": 10477089,
+            "urls": [
+              "https://github.com/forge-ci/zccache/releases/download/1.15.14/zccache-v1.15.14-x86_64-pc-windows-msvc.zip"
+            ],
+            "sha256": "ac147fff461f283d544589b154d4300881cb5bbbe1028f9a94a8336bca129b9e"
+          }
+        }
+      ],
+      "source": {
+        "vcs": "git",
+        "repo_url": "https://github.com/zackees/zccache",
+        "ref": "1.15.14",
+        "archive_url": "https://github.com/zackees/zccache/archive/refs/tags/1.15.14.tar.gz"
+      }
+    },
+    {
+      "schema_version": 1,
+      "version": "1.15.13",
+      "published_at": "2026-11-02T23:20:56Z",
+      "min_client_version": 1,
+      "platforms": [
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "zccache-v1.15.13-aarch64-apple-darwin.tar.gz",
+            "size_bytes": 11330840,
+            "urls": [
+              "https://github.com/forge-ci/zccache/releases/download/1.15.13/zccache-v1.15.13-aarch64-apple-darwin.tar.gz"
+            ],
+            "sha256": "0fc04103d12ccd885c3ccf4e8d203c7de20a58a57513f302429f3f5f6e44e7b7"
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "zccache-v1.15.13-x86_64-apple-darwin.tar.gz",
+            "size_bytes": 11849499,
+            "urls": [
+              "https://github.com/forge-ci/zccache/releases/download/1.15.13/zccache-v1.15.13-x86_64-apple-darwin.tar.gz"
+            ],
+            "sha256": "1c95077ee676f77b70bea547547fef2b6debe9f727609dd026cb17777be430f5"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "zccache-v1.15.13-aarch64-unknown-linux-musl.tar.gz",
+            "size_bytes": 11960751,
+            "urls": [
+              "https://github.com/forge-ci/zccache/releases/download/1.15.13/zccache-v1.15.13-aarch64-unknown-linux-musl.tar.gz"
+            ],
+            "sha256": "7281812f08423a81180ff48305c0194bb11159cf1004ca7cf888e926b687cb98"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64",
+            "libc": "musl"
+          },
+          "asset": {
+            "filename": "zccache-v1.15.13-x86_64-unknown-linux-musl.tar.gz",
+            "size_bytes": 12352177,
+            "urls": [
+              "https://github.com/forge-ci/zccache/releases/download/1.15.13/zccache-v1.15.13-x86_64-unknown-linux-musl.tar.gz"
+            ],
+            "sha256": "6fa25e78318375b454e886ff2b54b324bcad362fd4930e3a2a923d86c1fb5505"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "aarch64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "zccache-v1.15.13-aarch64-pc-windows-msvc.zip",
+            "size_bytes": 9797808,
+            "urls": [
+              "https://github.com/forge-ci/zccache/releases/download/1.15.13/zccache-v1.15.13-aarch64-pc-windows-msvc.zip"
+            ],
+            "sha256": "5662926d554c055122328592b4beef20cce5439f9f280173d029e8b44ab3330c"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "x86_64",
+            "abi": "msvc"
+          },
+          "asset": {
+            "filename": "zccache-v1.15.13-x86_64-pc-windows-msvc.zip",
+            "size_bytes": 10477667,
+            "urls": [
+              "https://github.com/forge-ci/zccache/releases/download/1.15.13/zccache-v1.15.13-x86_64-pc-windows-msvc.zip"
+            ],
+            "sha256": "0ae4f51b75d38f65bbe5c147eb01b2bf8e0926226ac590cc5ba144492420beaf"
+          }
+        }
+      ],
+      "source": {
+        "vcs": "git",
+        "repo_url": "https://github.com/zackees/zccache",
+        "ref": "1.15.13",
+        "archive_url": "https://github.com/zackees/zccache/archive/refs/tags/1.15.13.tar.gz"
+      }
+    },
     {
       "schema_version": 1,
       "version": "1.15.12",
@@ -10003,210 +10207,6 @@
         "repo_url": "https://github.com/zackees/zccache",
         "ref": "1.9.1",
         "archive_url": "https://github.com/zackees/zccache/archive/refs/tags/1.9.1.tar.gz"
-      }
-    },
-    {
-      "schema_version": 1,
-      "version": "1.9.0",
-      "published_at": "2026-05-22T18:45:02Z",
-      "min_client_version": 1,
-      "platforms": [
-        {
-          "platform": {
-            "os": "darwin",
-            "arch": "aarch64"
-          },
-          "asset": {
-            "filename": "zccache-v1.9.0-aarch64-apple-darwin.tar.gz",
-            "size_bytes": 7372695,
-            "urls": [
-              "https://github.com/forge-ci/zccache/releases/download/1.9.0/zccache-v1.9.0-aarch64-apple-darwin.tar.gz"
-            ],
-            "sha256": "7b0ff607c2bb81c6b1c6df573a3bedfa64c7aa547cdddc40b47d3b7b2a79aeed"
-          }
-        },
-        {
-          "platform": {
-            "os": "darwin",
-            "arch": "x86_64"
-          },
-          "asset": {
-            "filename": "zccache-v1.9.0-x86_64-apple-darwin.tar.gz",
-            "size_bytes": 7633595,
-            "urls": [
-              "https://github.com/forge-ci/zccache/releases/download/1.9.0/zccache-v1.9.0-x86_64-apple-darwin.tar.gz"
-            ],
-            "sha256": "9f64f59a3704cbd535c67db8c2084860ea6640f83ec5323b5d8fe028388de2af"
-          }
-        },
-        {
-          "platform": {
-            "os": "linux",
-            "arch": "aarch64",
-            "libc": "musl"
-          },
-          "asset": {
-            "filename": "zccache-v1.9.0-aarch64-unknown-linux-musl.tar.gz",
-            "size_bytes": 9381958,
-            "urls": [
-              "https://github.com/forge-ci/zccache/releases/download/1.9.0/zccache-v1.9.0-aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "8e3542f117294ad2eb8884be686c1f8170cde7b78f47a47f6aabb215eb6d6aca"
-          }
-        },
-        {
-          "platform": {
-            "os": "linux",
-            "arch": "x86_64",
-            "libc": "musl"
-          },
-          "asset": {
-            "filename": "zccache-v1.9.0-x86_64-unknown-linux-musl.tar.gz",
-            "size_bytes": 9736119,
-            "urls": [
-              "https://github.com/forge-ci/zccache/releases/download/1.9.0/zccache-v1.9.0-x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "7bd29c959f60cda2c0cc58770d42308e6d4b307b48cb0725020ed6697d73517c"
-          }
-        },
-        {
-          "platform": {
-            "os": "windows",
-            "arch": "aarch64",
-            "abi": "msvc"
-          },
-          "asset": {
-            "filename": "zccache-v1.9.0-aarch64-pc-windows-msvc.zip",
-            "size_bytes": 7262244,
-            "urls": [
-              "https://github.com/forge-ci/zccache/releases/download/1.9.0/zccache-v1.9.0-aarch64-pc-windows-msvc.zip"
-            ],
-            "sha256": "521a33c32a978c733eed1f23cab62207636fd0a24d0ae160e3aee31669045220"
-          }
-        },
-        {
-          "platform": {
-            "os": "windows",
-            "arch": "x86_64",
-            "abi": "msvc"
-          },
-          "asset": {
-            "filename": "zccache-v1.9.0-x86_64-pc-windows-msvc.zip",
-            "size_bytes": 7798759,
-            "urls": [
-              "https://github.com/forge-ci/zccache/releases/download/1.9.0/zccache-v1.9.0-x86_64-pc-windows-msvc.zip"
-            ],
-            "sha256": "380d1040b2a9fa53677da5137465ba0b3e097ee017662e101f6d24ef4feba5b8"
-          }
-        }
-      ],
-      "source": {
-        "vcs": "git",
-        "repo_url": "https://github.com/zackees/zccache",
-        "ref": "1.9.0",
-        "archive_url": "https://github.com/zackees/zccache/archive/refs/tags/1.9.0.tar.gz"
-      }
-    },
-    {
-      "schema_version": 1,
-      "version": "1.8.2",
-      "published_at": "2026-05-22T14:29:38Z",
-      "min_client_version": 1,
-      "platforms": [
-        {
-          "platform": {
-            "os": "darwin",
-            "arch": "aarch64"
-          },
-          "asset": {
-            "filename": "zccache-v1.8.2-aarch64-apple-darwin.tar.gz",
-            "size_bytes": 7359023,
-            "urls": [
-              "https://github.com/forge-ci/zccache/releases/download/1.8.2/zccache-v1.8.2-aarch64-apple-darwin.tar.gz"
-            ],
-            "sha256": "b4db4997cbcb811438ab98c921580b9f572ca8594df2a2fc7d8b49cc7a584a2c"
-          }
-        },
-        {
-          "platform": {
-            "os": "darwin",
-            "arch": "x86_64"
-          },
-          "asset": {
-            "filename": "zccache-v1.8.2-x86_64-apple-darwin.tar.gz",
-            "size_bytes": 7624759,
-            "urls": [
-              "https://github.com/forge-ci/zccache/releases/download/1.8.2/zccache-v1.8.2-x86_64-apple-darwin.tar.gz"
-            ],
-            "sha256": "921ed778f3824d28e18fd9cd1c35a2e16990cad158281a494cd7f25f54fe4bd9"
-          }
-        },
-        {
-          "platform": {
-            "os": "linux",
-            "arch": "aarch64",
-            "libc": "musl"
-          },
-          "asset": {
-            "filename": "zccache-v1.8.2-aarch64-unknown-linux-musl.tar.gz",
-            "size_bytes": 9367569,
-            "urls": [
-              "https://github.com/forge-ci/zccache/releases/download/1.8.2/zccache-v1.8.2-aarch64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "68769df7607edd1fbf2051ed4c1a7663df05d49806a07bad50b77139404c7b81"
-          }
-        },
-        {
-          "platform": {
-            "os": "linux",
-            "arch": "x86_64",
-            "libc": "musl"
-          },
-          "asset": {
-            "filename": "zccache-v1.8.2-x86_64-unknown-linux-musl.tar.gz",
-            "size_bytes": 9721031,
-            "urls": [
-              "https://github.com/forge-ci/zccache/releases/download/1.8.2/zccache-v1.8.2-x86_64-unknown-linux-musl.tar.gz"
-            ],
-            "sha256": "661d087b018cba8987380645307e74de762da4a079e692b5b967ee45ae3d49b0"
-          }
-        },
-        {
-          "platform": {
-            "os": "windows",
-            "arch": "aarch64",
-            "abi": "msvc"
-          },
-          "asset": {
-            "filename": "zccache-v1.8.2-aarch64-pc-windows-msvc.zip",
-            "size_bytes": 7258578,
-            "urls": [
-              "https://github.com/forge-ci/zccache/releases/download/1.8.2/zccache-v1.8.2-aarch64-pc-windows-msvc.zip"
-            ],
-            "sha256": "beb74d6e368200469aa3b564855a8b12f97dce851345174c622e25ccade51235"
-          }
-        },
-        {
-          "platform": {
-            "os": "windows",
-            "arch": "x86_64",
-            "abi": "msvc"
-          },
-          "asset": {
-            "filename": "zccache-v1.8.2-x86_64-pc-windows-msvc.zip",
-            "size_bytes": 7783557,
-            "urls": [
-              "https://github.com/forge-ci/zccache/releases/download/1.8.2/zccache-v1.8.2-x86_64-pc-windows-msvc.zip"
-            ],
-            "sha256": "aefec575d7da6de5998c3f38758552815f6435fbc1d3dbea65942fcf57a81717"
-          }
-        }
-      ],
-      "source": {
-        "vcs": "git",
-        "repo_url": "https://github.com/zackees/zccache",
-        "ref": "1.8.2",
-        "archive_url": "https://github.com/zackees/zccache/archive/refs/tags/1.8.2.tar.gz"
       }
     }
   ]

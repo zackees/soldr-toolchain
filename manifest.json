@@ -46,9 +46,9 @@
     "cargo-nextest": {
       "descriptor": {
         "url": "cargo-nextest/manifest.json",
-        "size_bytes": 196574,
+        "size_bytes": 197146,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "44a054086049a1c34258fb204ac42e1490c68cc33b27cda7abb2cf6459c72ce8"
+        "sha256": "49130e041952d1fd41ff24ef7eb6668cb131523ec1b11045b64ef0b487488895"
       },
       "summary": "nextest-rs/nextest",
       "kind_hint": "tool"
@@ -126,9 +126,9 @@
     "zccache": {
       "descriptor": {
         "url": "zccache/manifest.json",
-        "size_bytes": 354903,
+        "size_bytes": 354997,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "cd102b298a4255e0764ebb083230dfafbf456d8627ffd41b2d090c9b69904511"
+        "sha256": "b4088ac8299dd994d198b82e7e129089157d807b01e0939897fd21c62673bb85"
       },
       "summary": "zackees/zccache",
       "kind_hint": "tool"
