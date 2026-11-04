@@ -66,9 +66,9 @@
     "cargo-zigbuild": {
       "descriptor": {
         "url": "cargo-zigbuild/manifest.json",
-        "size_bytes": 251474,
+        "size_bytes": 253392,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "ef003a640846feb2426e73c0df7b1782e42ef4fdb03a38a6f90917b1a100fd75"
+        "sha256": "08985b8c448f76a54666ac2b756f7061343914e4f6273f431d9696e0d839b582"
       },
       "summary": "rust-cross/cargo-zigbuild",
       "kind_hint": "tool"
@@ -136,9 +136,9 @@
     "zig": {
       "descriptor": {
         "url": "zig/manifest.json",
-        "size_bytes": 14734,
+        "size_bytes": 14735,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "83ffba48402ade87cb777f2c393e9da073b81b85b50126c606dff9d6eff5bfa0"
+        "sha256": "efdcb7d3b06e8b413ce5ddb317fa17ec35d21f6a43cc899a992928b702bf89e8"
       },
       "summary": "ziglang/zig (vendored from ziglang.org/download/index.json)",
       "kind_hint": "tool"

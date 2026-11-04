@@ -5,10 +5,102 @@
   "tool": "zig",
   "online_url": "https://zackees.github.io/soldr-toolchain/zig/manifest.json",
   "channels": {
-    "latest-stable": "0.17.0",
-    "stable": "0.17.0"
+    "latest-stable": "0.17.1",
+    "stable": "0.17.1"
   },
   "releases": [
+    {
+      "schema_version": 1,
+      "version": "0.17.1",
+      "published_at": "2026-11-02T00:00:00Z",
+      "min_client_version": 1,
+      "platforms": [
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "zig-x86_64-linux-0.17.1.tar.xz",
+            "size_bytes": 57411036,
+            "urls": [
+              "https://ziglang.org/download/0.17.1/zig-x86_64-linux-0.17.1.tar.xz"
+            ],
+            "sha256": "3581863e3cbcfd0fce0efc682ce7e9e93da96668a977791d356a26d2a7e9b17a"
+          }
+        },
+        {
+          "platform": {
+            "os": "linux",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "zig-aarch64-linux-0.17.1.tar.xz",
+            "size_bytes": 52977364,
+            "urls": [
+              "https://ziglang.org/download/0.17.1/zig-aarch64-linux-0.17.1.tar.xz"
+            ],
+            "sha256": "a1546d5646eb184437918d6635ca6b762a0e889eac09cef720ee7a1ed3fe7795"
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "zig-x86_64-macos-0.17.1.tar.xz",
+            "size_bytes": 59496824,
+            "urls": [
+              "https://ziglang.org/download/0.17.1/zig-x86_64-macos-0.17.1.tar.xz"
+            ],
+            "sha256": "9af07b20319fbd0c92ee46ad23e81d6a782b1aaea2cfb8dcbff35f1d2c7ddbb7"
+          }
+        },
+        {
+          "platform": {
+            "os": "darwin",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "zig-aarch64-macos-0.17.1.tar.xz",
+            "size_bytes": 54001240,
+            "urls": [
+              "https://ziglang.org/download/0.17.1/zig-aarch64-macos-0.17.1.tar.xz"
+            ],
+            "sha256": "75f1bc7a1e9852f17ec9a0c1895f767c4ec56d46bc8a834920eece1d0359dd8d"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "x86_64"
+          },
+          "asset": {
+            "filename": "zig-x86_64-windows-0.17.1.zip",
+            "size_bytes": 100343666,
+            "urls": [
+              "https://ziglang.org/download/0.17.1/zig-x86_64-windows-0.17.1.zip"
+            ],
+            "sha256": "b03f477a1943673e02aca0f570e8030dffd536ce1f45cbc4d3326ec31159562e"
+          }
+        },
+        {
+          "platform": {
+            "os": "windows",
+            "arch": "aarch64"
+          },
+          "asset": {
+            "filename": "zig-aarch64-windows-0.17.1.zip",
+            "size_bytes": 96063469,
+            "urls": [
+              "https://ziglang.org/download/0.17.1/zig-aarch64-windows-0.17.1.zip"
+            ],
+            "sha256": "4789895bdb1e312a2ea73b2a7c0a0cc8d2ab62ba6976e834a7c54cf443377c15"
+          }
+        }
+      ]
+    },
     {
       "schema_version": 1,
       "version": "0.17.0",
@@ -373,98 +465,6 @@
               "https://ziglang.org/download/0.15.1/zig-aarch64-windows-0.15.1.zip"
             ],
             "sha256": "1f1bf16228b0ffcc882b713dc5e11a6db4219cb30997e13c72e8e723c2104ec6"
-          }
-        }
-      ]
-    },
-    {
-      "schema_version": 1,
-      "version": "0.14.1",
-      "published_at": "2025-05-21T00:00:00Z",
-      "min_client_version": 1,
-      "platforms": [
-        {
-          "platform": {
-            "os": "linux",
-            "arch": "x86_64"
-          },
-          "asset": {
-            "filename": "zig-x86_64-linux-0.14.1.tar.xz",
-            "size_bytes": 49086504,
-            "urls": [
-              "https://ziglang.org/download/0.14.1/zig-x86_64-linux-0.14.1.tar.xz"
-            ],
-            "sha256": "24aeeec8af16c381934a6cd7d95c807a8cb2cf7df9fa40d359aa884195c4716c"
-          }
-        },
-        {
-          "platform": {
-            "os": "linux",
-            "arch": "aarch64"
-          },
-          "asset": {
-            "filename": "zig-aarch64-linux-0.14.1.tar.xz",
-            "size_bytes": 44954692,
-            "urls": [
-              "https://ziglang.org/download/0.14.1/zig-aarch64-linux-0.14.1.tar.xz"
-            ],
-            "sha256": "f7a654acc967864f7a050ddacfaa778c7504a0eca8d2b678839c21eea47c992b"
-          }
-        },
-        {
-          "platform": {
-            "os": "darwin",
-            "arch": "x86_64"
-          },
-          "asset": {
-            "filename": "zig-x86_64-macos-0.14.1.tar.xz",
-            "size_bytes": 51044512,
-            "urls": [
-              "https://ziglang.org/download/0.14.1/zig-x86_64-macos-0.14.1.tar.xz"
-            ],
-            "sha256": "b0f8bdfb9035783db58dd6c19d7dea89892acc3814421853e5752fe4573e5f43"
-          }
-        },
-        {
-          "platform": {
-            "os": "darwin",
-            "arch": "aarch64"
-          },
-          "asset": {
-            "filename": "zig-aarch64-macos-0.14.1.tar.xz",
-            "size_bytes": 45903552,
-            "urls": [
-              "https://ziglang.org/download/0.14.1/zig-aarch64-macos-0.14.1.tar.xz"
-            ],
-            "sha256": "39f3dc5e79c22088ce878edc821dedb4ca5a1cd9f5ef915e9b3cc3053e8faefa"
-          }
-        },
-        {
-          "platform": {
-            "os": "windows",
-            "arch": "x86_64"
-          },
-          "asset": {
-            "filename": "zig-x86_64-windows-0.14.1.zip",
-            "size_bytes": 82229343,
-            "urls": [
-              "https://ziglang.org/download/0.14.1/zig-x86_64-windows-0.14.1.zip"
-            ],
-            "sha256": "554f5378228923ffd558eac35e21af020c73789d87afeabf4bfd16f2e6feed2c"
-          }
-        },
-        {
-          "platform": {
-            "os": "windows",
-            "arch": "aarch64"
-          },
-          "asset": {
-            "filename": "zig-aarch64-windows-0.14.1.zip",
-            "size_bytes": 78125379,
-            "urls": [
-              "https://ziglang.org/download/0.14.1/zig-aarch64-windows-0.14.1.zip"
-            ],
-            "sha256": "b5aac0ccc40dd91e8311b1f257717d8e3903b5fefb8f659de6d65a840ad1d0e7"
           }
         }
       ]
