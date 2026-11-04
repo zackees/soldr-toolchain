@@ -512,10 +512,12 @@ def test_generator_emits_all_nine_openssl_recipes(tmp_path: Path, monkeypatch: p
 # libuuid (soldr-toolchain#200, soldr#3771)
 # ---------------------------------------------------------------------------
 
-LIBUUID_SHAPES = ("linux-arm64-gnu", "linux-x64-gnu")
+LIBUUID_GNU_SHAPES = ("linux-arm64-gnu", "linux-x64-gnu")
+LIBUUID_DARWIN_SHAPES = ("darwin-arm64", "darwin-x64")
+LIBUUID_SHAPES = tuple(sorted(LIBUUID_GNU_SHAPES + LIBUUID_DARWIN_SHAPES))
 
 
-def test_libuuid_library_definition_pins_source_and_gnu_shapes() -> None:
+def test_libuuid_library_definition_pins_source_and_supported_shapes() -> None:
     lib = _syslib.LIBRARIES["libuuid"]
     assert lib.version == "2.41.6"
     assert lib.source_url == (
@@ -525,6 +527,16 @@ def test_libuuid_library_definition_pins_source_and_gnu_shapes() -> None:
     assert lib.custom == "libuuid"
     supported = sorted(set(_syslib.SHAPES) - lib.unsupported_shapes)
     assert supported == sorted(LIBUUID_SHAPES)
+    # util-linux libuuid is only built here for the managed glibc sysroot and
+    # for macOS; musl and Windows stay out of the catalogue.
+    for unsupported in (
+        "linux-x64-musl",
+        "linux-arm64-musl",
+        "windows-x64",
+        "windows-x64-gnu",
+        "windows-arm64",
+    ):
+        assert unsupported in lib.unsupported_shapes
 
 
 @pytest.mark.parametrize(("shape", "arch"), [("linux-x64-gnu", "x86_64"), ("linux-arm64-gnu", "aarch64")])
@@ -552,9 +564,94 @@ def test_libuuid_builds_inside_digest_pinned_manylinux2014(shape: str, arch: str
     assert "make" in script and "libuuid.la" in script
 
 
+@pytest.mark.parametrize(
+    ("shape", "arch", "deployment_target"),
+    [("darwin-x64", "x86_64", "10.12"), ("darwin-arm64", "arm64", "11.0")],
+)
+def test_libuuid_darwin_shapes_configure_native_clang_autotools(
+    shape: str, arch: str, deployment_target: str, tmp_path: Path
+) -> None:
+    package = tmp_path / "package"
+    argv = _syslib._libuuid_darwin_configure_command(shape, package)
+    assert argv[0] == "./configure"
+    assert f"--prefix={package}" in argv
+    assert f"--libdir={package / 'lib'}" in argv
+    for flag in (
+        "--disable-all-programs",
+        "--enable-libuuid",
+        "--disable-shared",
+        "--enable-static",
+        "--disable-nls",
+    ):
+        assert flag in argv
+    assert "CC=clang" in argv
+    assert f"CFLAGS=-O2 -fPIC -arch {arch}" in argv
+    joined = " ".join(argv)
+    assert "docker" not in joined
+    assert "/work/package" not in joined
+    env = _syslib._libuuid_darwin_env(shape, {})
+    assert env["MACOSX_DEPLOYMENT_TARGET"] == deployment_target
+
+
+@pytest.mark.parametrize("shape", ["linux-x64-gnu", "linux-x64-musl", "windows-x64"])
+def test_libuuid_darwin_configure_rejects_non_darwin_shapes(shape: str, tmp_path: Path) -> None:
+    with pytest.raises(_syslib.ConanInvalidConfiguration, match="does not support"):
+        _syslib._libuuid_darwin_configure_command(shape, tmp_path / "package")
+
+
+@pytest.mark.parametrize("shape", LIBUUID_DARWIN_SHAPES)
+def test_build_libuuid_dispatches_darwin_shapes_to_native_autotools(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, shape: str
+) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(_syslib, "_run", lambda args, cwd, env=None: calls.append(list(args)))
+    monkeypatch.setattr(_syslib.shutil, "which", lambda name: "/usr/bin/make")
+    package = tmp_path / "package"
+    _syslib._build_libuuid(
+        tmp_path, tmp_path / "src", package, shape, _syslib.LIBRARIES["libuuid"]
+    )
+    assert calls[0][0] == "./configure"
+    assert Path(calls[1][0]).name == "make" and "libuuid.la" in calls[1]
+    assert calls[2][1:] == [
+        "install-uuidincHEADERS",
+        "install-usrlib_execLTLIBRARIES",
+    ]
+    assert all("docker" not in args[0] for args in calls)
+    assert (package / "lib" / "pkgconfig" / "uuid.pc").is_file()
+
+
+def test_build_libuuid_dispatches_gnu_shapes_to_manylinux_docker(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(_syslib, "_run", lambda args, cwd, env=None: calls.append(list(args)))
+    monkeypatch.setattr(_syslib.shutil, "which", lambda name: "/usr/bin/docker")
+    _syslib._build_libuuid(
+        tmp_path,
+        tmp_path / "src" / "util-linux-2.41.6",
+        tmp_path / "package",
+        "linux-x64-gnu",
+        _syslib.LIBRARIES["libuuid"],
+    )
+    assert calls[0][:3] == ["docker", "run", "--rm"]
+
+
+@pytest.mark.parametrize("shape", ["linux-x64-musl", "windows-x64"])
+def test_build_libuuid_rejects_unsupported_shapes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, shape: str
+) -> None:
+    monkeypatch.setattr(_syslib, "_run", lambda args, cwd, env=None: None)
+    monkeypatch.setattr(_syslib.shutil, "which", lambda name: "/usr/bin/docker")
+    with pytest.raises(_syslib.ConanInvalidConfiguration, match="does not support"):
+        _syslib._build_libuuid(
+            tmp_path, tmp_path / "src", tmp_path / "package", shape, _syslib.LIBRARIES["libuuid"]
+        )
+
+
 def test_libuuid_docker_command_rejects_non_gnu_shapes() -> None:
-    with pytest.raises(_syslib.ConanInvalidConfiguration):
-        _syslib._libuuid_docker_command("linux-x64-musl", Path("/b"), Path("/b/src/x"), uid_gid="0:0")
+    for shape in ("linux-x64-musl", "windows-x64", "darwin-arm64"):
+        with pytest.raises(_syslib.ConanInvalidConfiguration, match="does not support"):
+            _syslib._libuuid_docker_command(shape, Path("/b"), Path("/b/src/x"), uid_gid="0:0")
 
 
 def test_libuuid_pkg_config_is_relocatable_and_links_pthread(tmp_path: Path) -> None:
@@ -567,6 +664,16 @@ def test_libuuid_pkg_config_is_relocatable_and_links_pthread(tmp_path: Path) -> 
     assert "Libs.private: -lpthread\n" in text
     # Both <uuid/uuid.h> and upstream's <uuid.h> spelling resolve.
     assert "Cflags: -I${includedir} -I${includedir}/uuid\n" in text
+
+
+def test_libuuid_pkg_config_on_darwin_drops_glibc_note_and_pthread(tmp_path: Path) -> None:
+    _syslib._write_libuuid_pkg_config(tmp_path, "2.41.6", shape_name="darwin-arm64")
+    text = (tmp_path / "lib" / "pkgconfig" / "uuid.pc").read_text(encoding="utf-8")
+    assert "Libs: -L${libdir} -luuid\n" in text
+    assert "Cflags: -I${includedir} -I${includedir}/uuid\n" in text
+    # macOS has no glibc 2.17 constraint and keeps pthread in libSystem.
+    assert "glibc" not in text
+    assert "Libs.private" not in text
 
 
 def test_libuuid_sanity_check_requires_header_and_archive(tmp_path: Path) -> None:
@@ -583,7 +690,9 @@ def test_libuuid_sanity_check_requires_header_and_archive(tmp_path: Path) -> Non
         _syslib._sanity_check_package(tmp_path, lib, "linux-x64-gnu")
 
 
-def test_generator_emits_only_gnu_libuuid_recipes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_generator_emits_every_supported_libuuid_recipe(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setattr(generate_syslib_recipes, "REPO", tmp_path)
     assert generate_syslib_recipes.main() == 0
     generated = sorted(p.name for p in (tmp_path / "recipes").glob("libuuid-*"))
@@ -593,6 +702,7 @@ def test_generator_emits_only_gnu_libuuid_recipes(tmp_path: Path, monkeypatch: p
         readme = (recipe / "README.md").read_text(encoding="utf-8")
         assert "-f version=2.41.6" in readme
         assert f"`libuuid/2.41.6/{shape}/bundle.tar.zst`" in readme
+        assert f"-f {_syslib.SHAPES[shape].forge_input}=true" in readme
         checked_in = Path(__file__).resolve().parents[1] / "recipes" / f"libuuid-{shape}"
         assert (checked_in / "conanfile.py").read_text(encoding="utf-8") == (
             recipe / "conanfile.py"

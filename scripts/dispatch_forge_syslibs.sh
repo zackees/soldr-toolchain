@@ -49,6 +49,15 @@ JEMALLOC_SHAPES=(
     linux-arm64-musl
 )
 
+# libuuid: glibc 2.17 manylinux2014 containers for the GNU sysroot shapes,
+# native macOS autotools for the two Apple shapes. No musl/Windows bundle.
+LIBUUID_SHAPES=(
+    darwin-x64
+    darwin-arm64
+    linux-x64-gnu
+    linux-arm64-gnu
+)
+
 declare -A VERSIONS=(
     [zstd]=1.5.7
     [sqlite]=3.46.0
@@ -58,6 +67,7 @@ declare -A VERSIONS=(
     [lzma]=5.6.3
     [bzip2]=1.0.8
     [openssl]=3.5.8
+    [libuuid]=2.41.6
 )
 
 dry_run=0
@@ -78,6 +88,7 @@ done
 shapes_for() {
     case "$1" in
         jemalloc) printf '%s\n' "${JEMALLOC_SHAPES[@]}" ;;
+        libuuid)  printf '%s\n' "${LIBUUID_SHAPES[@]}" ;;
         *)        printf '%s\n' "${ALL_SHAPES[@]}" ;;
     esac
 }

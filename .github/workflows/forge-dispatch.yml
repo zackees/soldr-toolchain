@@ -129,6 +129,9 @@ jobs:
           mingw_shapes = ["windows-x64-gnu"]
           gnu_toolchain_shapes = ["linux-x64-gnu", "linux-arm64-gnu"]
           musl_toolchain_shapes = ["linux-x64-musl", "linux-arm64-musl"]
+          # libuuid: manylinux2014 containers for the glibc 2.17 GNU sysroot,
+          # native macOS runners for the two Apple shapes.
+          libuuid_shapes = ["darwin-x64", "darwin-arm64", "linux-x64-gnu", "linux-arm64-gnu"]
           supported = {
               "apple-sdk": apple_shapes,
               "zstd": syslib_shapes,
@@ -139,7 +142,7 @@ jobs:
               "lzma": syslib_shapes,
               "bzip2": syslib_shapes,
               "openssl": syslib_shapes,
-              "libuuid": gnu_toolchain_shapes,
+              "libuuid": libuuid_shapes,
               "llvm-host-libs": gnu_toolchain_shapes,
               "cmake": prebuilt_shapes,
               "ninja": prebuilt_shapes,

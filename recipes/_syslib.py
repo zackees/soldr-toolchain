@@ -206,6 +206,8 @@ LIBRARIES: dict[str, Library] = {
     # soldr-toolchain#200 / soldr#3771: libuuid for the managed glibc 2.17
     # GNU sysroot, which ships none. Built inside manylinux2014 so configure
     # probes the real 2.17 libc (no getrandom, no newer fortify symbols).
+    # macOS has no glibc constraint, so the darwin shapes build natively with
+    # the host autotools/clang toolchain.
     "libuuid": Library(
         tool="libuuid",
         version="2.41.6",
@@ -215,7 +217,8 @@ LIBRARIES: dict[str, Library] = {
         custom="libuuid",
         source_sha256="0176bfb789d346e17932b47b734dbceb2bb5116916a25ee7a42ffea467e1d667",
         license_file="libuuid/COPYING",
-        unsupported_shapes=frozenset(SHAPES) - {"linux-x64-gnu", "linux-arm64-gnu"},
+        unsupported_shapes=frozenset(SHAPES)
+        - {"linux-x64-gnu", "linux-arm64-gnu", "darwin-x64", "darwin-arm64"},
     ),
 }
 
@@ -485,21 +488,42 @@ MANYLINUX2014_IMAGES: dict[str, str] = {
     ),
 }
 
-LIBUUID_CONFIGURE_FLAGS = (
-    "--prefix=/work/package",
-    "--libdir=/work/package/lib",
-    "--disable-all-programs",
-    "--enable-libuuid",
-    "--disable-shared",
-    "--enable-static",
-    "--disable-nls",
-    "--disable-bash-completion",
-    "--without-python",
-    "--without-systemd",
-    "--without-udev",
-    "--without-tinfo",
-    "--without-ncursesw",
-)
+LIBUUID_DOCKER_SHAPES: frozenset[str] = frozenset(MANYLINUX2014_IMAGES)
+LIBUUID_DARWIN_SHAPES: frozenset[str] = frozenset({"darwin-x64", "darwin-arm64"})
+
+# rustc's default minimums for the two Apple targets; keep the C objects no
+# newer than the deployment target the final link uses.
+LIBUUID_MACOSX_DEPLOYMENT_TARGETS: dict[str, str] = {
+    "darwin-x64": "10.12",
+    "darwin-arm64": "11.0",
+}
+
+LIBUUID_DARWIN_ARCHES: dict[str, str] = {
+    "darwin-x64": "x86_64",
+    "darwin-arm64": "arm64",
+}
+
+
+def _libuuid_configure_flags(prefix: str, libdir: str | None = None) -> tuple[str, ...]:
+    """util-linux configure flags for a libuuid-only static install."""
+    return (
+        f"--prefix={prefix}",
+        f"--libdir={libdir or prefix + '/lib'}",
+        "--disable-all-programs",
+        "--enable-libuuid",
+        "--disable-shared",
+        "--enable-static",
+        "--disable-nls",
+        "--disable-bash-completion",
+        "--without-python",
+        "--without-systemd",
+        "--without-udev",
+        "--without-tinfo",
+        "--without-ncursesw",
+    )
+
+
+LIBUUID_CONFIGURE_FLAGS = _libuuid_configure_flags("/work/package")
 
 
 def _libuuid_docker_command(
@@ -526,7 +550,40 @@ def _libuuid_docker_command(
     ]
 
 
-def _write_libuuid_pkg_config(package_root: Path, version: str) -> None:
+def _libuuid_darwin_configure_command(
+    shape_name: str, package_root: Path, *, cc: str = "clang"
+) -> list[str]:
+    """util-linux configure argv for a native macOS libuuid build."""
+    if shape_name not in LIBUUID_DARWIN_SHAPES:
+        raise ConanInvalidConfiguration(f"libuuid does not support {shape_name}")
+    prefix = str(package_root)
+    arch = LIBUUID_DARWIN_ARCHES[shape_name]
+    return [
+        "./configure",
+        *_libuuid_configure_flags(prefix, f"{prefix}/lib"),
+        f"CC={cc}",
+        f"CFLAGS=-O2 -fPIC -arch {arch}",
+    ]
+
+
+def _libuuid_darwin_env(shape_name: str, base_env: Mapping[str, str]) -> dict[str, str]:
+    if shape_name not in LIBUUID_DARWIN_SHAPES:
+        raise ConanInvalidConfiguration(f"libuuid does not support {shape_name}")
+    env = dict(base_env)
+    env.setdefault("MACOSX_DEPLOYMENT_TARGET", LIBUUID_MACOSX_DEPLOYMENT_TARGETS[shape_name])
+    return env
+
+
+def _write_libuuid_pkg_config(
+    package_root: Path, version: str, *, shape_name: str = "linux-x64-gnu"
+) -> None:
+    darwin = shape_name in LIBUUID_DARWIN_SHAPES
+    description = "Universally unique id library (util-linux, static)" + (
+        "" if darwin else ", glibc 2.17"
+    )
+    # glibc 2.17 keeps pthread_atfork in libpthread_nonshared; macOS links
+    # pthread through libSystem, so no private library is needed there.
+    libs_private = "" if darwin else "Libs.private: -lpthread\n"
     pc_dir = package_root / "lib" / "pkgconfig"
     pc_dir.mkdir(parents=True, exist_ok=True)
     (pc_dir / "uuid.pc").write_text(
@@ -536,26 +593,51 @@ libdir=${{prefix}}/lib
 includedir=${{prefix}}/include
 
 Name: uuid
-Description: Universally unique id library (util-linux, static, glibc 2.17)
+Description: {description}
 Version: {version}
 Libs: -L${{libdir}} -luuid
-Libs.private: -lpthread
-Cflags: -I${{includedir}} -I${{includedir}}/uuid
+{libs_private}Cflags: -I${{includedir}} -I${{includedir}}/uuid
 """,
         encoding="utf-8",
     )
 
 
+def _build_libuuid_darwin(
+    source_root: Path, package_root: Path, shape_name: str, lib: Library
+) -> None:
+    """Native autotools build for macOS; the host runner is the target arch."""
+    make = shutil.which("make")
+    if not make:
+        raise RuntimeError("libuuid: make is required for the macOS autotools build")
+    env = _libuuid_darwin_env(shape_name, os.environ)
+    _run(_libuuid_darwin_configure_command(shape_name, package_root), cwd=source_root, env=env)
+    jobs = max(1, os.cpu_count() or 2)
+    _run([make, f"-j{jobs}", "libuuid.la"], cwd=source_root, env=env)
+    _run(
+        [make, "install-uuidincHEADERS", "install-usrlib_execLTLIBRARIES"],
+        cwd=source_root,
+        env=env,
+    )
+    for leftover in (package_root / "lib").glob("*.la"):
+        leftover.unlink()
+    _write_libuuid_pkg_config(package_root, lib.version, shape_name=shape_name)
+
+
 def _build_libuuid(
     build_root: Path, source_root: Path, package_root: Path, shape_name: str, lib: Library
 ) -> None:
+    if shape_name in LIBUUID_DARWIN_SHAPES:
+        _build_libuuid_darwin(source_root, package_root, shape_name, lib)
+        return
+    if shape_name not in LIBUUID_DOCKER_SHAPES:
+        raise ConanInvalidConfiguration(f"libuuid does not support {shape_name}")
     if not shutil.which("docker"):
         raise RuntimeError("libuuid: Docker is required to build against glibc 2.17")
     uid_gid = f"{os.getuid()}:{os.getgid()}"
     _run(_libuuid_docker_command(shape_name, build_root, source_root, uid_gid=uid_gid), cwd=build_root)
     for leftover in (package_root / "lib").glob("*.la"):
         leftover.unlink()
-    _write_libuuid_pkg_config(package_root, lib.version)
+    _write_libuuid_pkg_config(package_root, lib.version, shape_name=shape_name)
 
 
 # ---------------------------------------------------------------------------
