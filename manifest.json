@@ -16,9 +16,9 @@
     "cargo-binstall": {
       "descriptor": {
         "url": "cargo-binstall/manifest.json",
-        "size_bytes": 74032,
+        "size_bytes": 68770,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "9af7fd9f90e6c6ca786efee09a39681acab8f572701430db2b0cc9cff8616494"
+        "sha256": "d854d8a22d9254c4825dcad2c48bc947b67083762682119d06527c27fdac8249"
       },
       "summary": "cargo-bins/cargo-binstall",
       "kind_hint": "tool"
