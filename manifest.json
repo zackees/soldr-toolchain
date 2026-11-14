@@ -46,9 +46,9 @@
     "cargo-nextest": {
       "descriptor": {
         "url": "cargo-nextest/manifest.json",
-        "size_bytes": 197146,
+        "size_bytes": 202189,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "49130e041952d1fd41ff24ef7eb6668cb131523ec1b11045b64ef0b487488895"
+        "sha256": "a1fbd2f130341b0afa425e7730d0c5a75416c2b8780c140dec3a19c7c677afcc"
       },
       "summary": "nextest-rs/nextest",
       "kind_hint": "tool"
