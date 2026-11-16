@@ -147,7 +147,7 @@ dispatch_one() {
             flags=$(shape_to_flags "$shape")
             ;;
     esac
-    local cmd="gh workflow run forge-conan.yml --repo zackees/forge \
+    local cmd="gh workflow run forge-conan.yml --repo forge-ci/forge \
         -f recipe_repo=zackees/soldr-toolchain \
         -f recipe_ref=main \
         -f recipe_path=$recipe_path \

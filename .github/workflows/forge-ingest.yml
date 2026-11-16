@@ -1,7 +1,7 @@
 name: forge ingest
 
 # soldr-toolchain#14 Phase 3: pull a forge artifact from
-# zackees/forge, transcode to zstd, place under the catalogue path,
+# forge-ci/forge, transcode to zstd, place under the catalogue path,
 # update catalogue.v1.json, open a PR against the assets branch.
 #
 # Triggered manually (or by forge-dispatch.yml) with the forge run id
@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       forge_run_id:
-        description: "zackees/forge workflow run id (numeric)"
+        description: "forge-ci/forge workflow run id (numeric)"
         required: true
         type: string
       tool:
@@ -116,7 +116,7 @@ jobs:
         run: |
           mkdir -p forge-downloads
           gh run download "${{ inputs.forge_run_id }}" \
-            --repo zackees/forge \
+            --repo forge-ci/forge \
             --dir forge-downloads
 
       - name: Run ingest
@@ -194,4 +194,4 @@ jobs:
           git push -u origin "$branch"
           gh pr create --repo zackees/soldr-toolchain --base assets --head "$branch" \
             --title "ingest: ${{ inputs.tool }} ${{ inputs.version }} ${{ inputs.shape }}" \
-            --body "Forge run [${{ inputs.forge_run_id }}](https://github.com/zackees/forge/actions/runs/${{ inputs.forge_run_id }}) -> catalogue entry for \`${{ inputs.tool }}/${{ inputs.version }}/${{ inputs.shape }}\`. See provenance log on the assets branch (\`.forge-ingest.log.jsonl\`)."
+            --body "Forge run [${{ inputs.forge_run_id }}](https://github.com/forge-ci/forge/actions/runs/${{ inputs.forge_run_id }}) -> catalogue entry for \`${{ inputs.tool }}/${{ inputs.version }}/${{ inputs.shape }}\`. See provenance log on the assets branch (\`.forge-ingest.log.jsonl\`)."

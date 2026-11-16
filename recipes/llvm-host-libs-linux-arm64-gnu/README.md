@@ -9,7 +9,7 @@ library's soname, GLIBC floor, and NEEDED closure. Build natively on the
 matching runner.
 
 ```sh
-gh workflow run forge-conan.yml --repo zackees/forge \
+gh workflow run forge-conan.yml --repo forge-ci/forge \
   -f recipe_repo=zackees/soldr-toolchain -f recipe_ref=main \
   -f recipe_path=recipes/llvm-host-libs-linux-arm64-gnu -f name=llvm-host-libs-linux-arm64-gnu \
   -f version=libxml2-2.13.9-zlib-1.3.1 -f linux_arm64=true

@@ -160,7 +160,7 @@ to fragment to track them.
 lower.** This applies to assets this repo builds *and* to prebuilt ones it
 merely fetches and republishes.
 
-This repo is the middle of a chain — `zackees/forge` builds the tools,
+This repo is the middle of a chain — `forge-ci/forge` builds the tools,
 soldr-toolchain catalogues them, and `zackees/soldr` bundles them into its
 release archive. The floor of that archive is the **highest** floor of any
 binary in it, so a single 2.39 asset here caps everything downstream. That is
@@ -169,7 +169,7 @@ exactly what happened: `crgx` and `cargo-chef` are fetched prebuilt at glibc
 itself, and makes it unusable on RHEL 8 / Debian 10 (both 2.28).
 
 **Deps currently above the floor must be recompiled**, not documented around.
-Rebuilding them is upstream work in `zackees/forge`, whose recipes are now
+Rebuilding them is upstream work in `forge-ci/forge`, whose recipes are now
 required to build against glibc 2.17 — see that repo's README.
 
 Rules:

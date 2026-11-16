@@ -14,7 +14,7 @@ https://github.com/jemalloc/jemalloc/releases/download/5.3.0/jemalloc-5.3.0.tar.
 ## Dispatch
 
 ```bash
-gh workflow run forge-conan.yml --repo zackees/forge \
+gh workflow run forge-conan.yml --repo forge-ci/forge \
     -f recipe_repo=zackees/soldr-toolchain \
     -f recipe_ref=main \
     -f recipe_path=recipes/jemalloc-linux-x64-musl \

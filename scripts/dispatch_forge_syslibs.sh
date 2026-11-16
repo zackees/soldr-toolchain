@@ -5,13 +5,13 @@
 # Use this when the `forge-dispatch.yml` orchestrator can't run
 # (e.g. the FORGE_INGEST_TOKEN secret isn't configured on this repo).
 # It fans out one `gh workflow run forge-conan.yml` per (tool, shape)
-# directly against `zackees/forge`, using whatever auth the caller's
+# directly against `forge-ci/forge`, using whatever auth the caller's
 # `gh auth status` reports.
 #
 # After each dispatched forge run completes, ingest the artifact
 # locally with:
 #
-#   gh run download <FORGE_RUN_ID> --repo zackees/forge --dir /tmp/<lib>-<shape>
+#   gh run download <FORGE_RUN_ID> --repo forge-ci/forge --dir /tmp/<lib>-<shape>
 #   python -m scripts.forge_to_catalogue \
 #       --forge-dir /tmp/<lib>-<shape> \
 #       --tool <lib> --version <ver> --shape <shape> \
@@ -125,7 +125,7 @@ dispatch_one() {
     local name="${tool}-${shape}"
     local flags
     flags=$(shape_to_flags "$shape")
-    local cmd="gh workflow run forge-conan.yml --repo zackees/forge \
+    local cmd="gh workflow run forge-conan.yml --repo forge-ci/forge \
         -f recipe_repo=zackees/soldr-toolchain \
         -f recipe_ref=main \
         -f recipe_path=$recipe_path \

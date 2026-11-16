@@ -9,7 +9,7 @@ the `x86_64-w64-mingw32/` sysroot directly under package root.
 Manual dispatch:
 
 ```sh
-gh workflow run forge-conan.yml --repo zackees/forge \
+gh workflow run forge-conan.yml --repo forge-ci/forge \
   -f recipe_repo=zackees/soldr-toolchain \
   -f recipe_ref=main \
   -f recipe_path=recipes/mingw-w64-gcc-windows-x64-gnu \

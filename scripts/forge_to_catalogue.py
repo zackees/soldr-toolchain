@@ -241,7 +241,7 @@ RUST_TARGET_BY_SHAPE = {
 }
 
 
-# Tools produced by zackees/forge's forge-rust.yml (a native cargo build per
+# Tools produced by forge-ci/forge's forge-rust.yml (a native cargo build per
 # host, with Linux -gnu inside manylinux2014). cargo-chef and crgx moved here
 # from the rust-cli Conan recipe, whose -gnu lanes inherit the runner's glibc
 # 2.39 and so cannot meet the 2.17 floor.
@@ -446,7 +446,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--forge-run-id",
         required=True,
-        help="zackees/forge workflow run id, for provenance.",
+        help="forge-ci/forge workflow run id, for provenance.",
     )
     parser.add_argument(
         "--assets-root",

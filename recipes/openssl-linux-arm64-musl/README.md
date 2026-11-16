@@ -14,7 +14,7 @@ https://github.com/openssl/openssl/releases/download/openssl-3.5.8/openssl-3.5.8
 ## Dispatch
 
 ```bash
-gh workflow run forge-conan.yml --repo zackees/forge \
+gh workflow run forge-conan.yml --repo forge-ci/forge \
     -f recipe_repo=zackees/soldr-toolchain \
     -f recipe_ref=main \
     -f recipe_path=recipes/openssl-linux-arm64-musl \

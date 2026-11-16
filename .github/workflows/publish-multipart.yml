@@ -127,6 +127,7 @@ jobs:
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
 
       - name: Verify deployed Pages evidence
+        id: verify
         if: >-
           always() && steps.publish.outcome == 'success' &&
           (steps.publish.outputs.published == 'false' || steps.deployment.outcome == 'success')
@@ -134,14 +135,60 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           for attempt in 1 2 3 4 5 6; do
-            if PYTHONPATH=producer python -m scripts.publish_multipart \
+            if proof=$(PYTHONPATH=producer python -m scripts.publish_multipart \
               --assets-dir assets --public-dir public-snapshot --www-dir www-snapshot \
               --source-commit '${{ steps.plan.outputs.source_commit }}' \
               --source-tree '${{ steps.plan.outputs.source_tree }}' \
               --generation '${{ steps.plan.outputs.generation }}' \
-              --verify-public; then
+              --verify-public); then
+              echo "$proof"
+              # The proven live generation and its immutable www commit feed
+              # the forge-ci mirror step below.
+              tail -n 1 <<<"$proof" | jq -r \
+                '"generation=\(.generation)", "www_commit=\(.generation_www_commit)"' >> "$GITHUB_OUTPUT"
               exit 0
             fi
             if [[ "$attempt" != 6 ]]; then sleep 10; fi
           done
           exit 1
+
+      # Verbatim mirror at https://forge-ci.github.io/soldr-toolchain (served
+      # from forge-ci/forge-ci.github.io:main, directory soldr-toolchain/).
+      # It runs only after the primary deploy is proven live and never writes
+      # to this repository or its Pages site, so it cannot break or roll back
+      # zackees.github.io; a failure still turns the run red.
+      - name: Mirror Pages to forge-ci.github.io
+        if: always() && steps.verify.outcome == 'success'
+        timeout-minutes: 20
+        env:
+          MIRROR_DEPLOY_KEY: ${{ secrets.FORGE_CI_MIRROR_DEPLOY_KEY }}
+          PUBLISHED: ${{ steps.publish.outputs.published }}
+          PLAN_GENERATION: ${{ steps.plan.outputs.generation }}
+          LIVE_GENERATION: ${{ steps.verify.outputs.generation }}
+          LIVE_WWW_COMMIT: ${{ steps.verify.outputs.www_commit }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$MIRROR_DEPLOY_KEY" ]]; then
+            echo "::error::secret FORGE_CI_MIRROR_DEPLOY_KEY is not set"
+            exit 1
+          fi
+          ssh_dir="$RUNNER_TEMP/forge-ci-mirror-ssh"
+          install -d -m 700 "$ssh_dir"
+          trap 'rm -rf "$ssh_dir"' EXIT
+          (umask 077 && printf '%s\n' "$MIRROR_DEPLOY_KEY" > "$ssh_dir/id_ed25519")
+          # GitHub's published ed25519 host key (SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU,
+          # https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints).
+          echo 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' \
+            > "$ssh_dir/known_hosts"
+          export GIT_SSH_COMMAND="ssh -i $ssh_dir/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$ssh_dir/known_hosts -o GlobalKnownHostsFile=/dev/null"
+          if [[ "$PUBLISHED" == 'true' ]]; then
+            # Push the exact tree that was just deployed as the Pages artifact.
+            PYTHONPATH=producer python -m scripts.mirror_pages publish \
+              --source-dir www-snapshot --generation "$PLAN_GENERATION"
+          else
+            # No-op run: re-sync only if the mirror lags the live generation,
+            # sourcing the verifier-proven generations/<gen>-public tree.
+            PYTHONPATH=producer python -m scripts.mirror_pages converge \
+              --generation "$LIVE_GENERATION" --www-commit "$LIVE_WWW_COMMIT"
+          fi

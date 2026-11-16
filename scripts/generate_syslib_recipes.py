@@ -87,7 +87,7 @@ kept as a thin wrapper so forge can dispatch and cache one package per
 ## Dispatch
 
 ```bash
-gh workflow run forge-conan.yml --repo zackees/forge \\
+gh workflow run forge-conan.yml --repo forge-ci/forge \\
     -f recipe_repo=zackees/soldr-toolchain \\
     -f recipe_ref=main \\
     -f recipe_path=recipes/{name} \\
