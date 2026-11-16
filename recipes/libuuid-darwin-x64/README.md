@@ -14,7 +14,7 @@ https://www.kernel.org/pub/linux/utils/util-linux/v2.41/util-linux-2.41.6.tar.gz
 ## Dispatch
 
 ```bash
-gh workflow run forge-conan.yml --repo zackees/forge \
+gh workflow run forge-conan.yml --repo forge-ci/forge \
     -f recipe_repo=zackees/soldr-toolchain \
     -f recipe_ref=main \
     -f recipe_path=recipes/libuuid-darwin-x64 \

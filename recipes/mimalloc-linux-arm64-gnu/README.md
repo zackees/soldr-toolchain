@@ -14,7 +14,7 @@ https://github.com/microsoft/mimalloc/archive/refs/tags/v3.3.2.tar.gz
 ## Dispatch
 
 ```bash
-gh workflow run forge-conan.yml --repo zackees/forge \
+gh workflow run forge-conan.yml --repo forge-ci/forge \
     -f recipe_repo=zackees/soldr-toolchain \
     -f recipe_ref=main \
     -f recipe_path=recipes/mimalloc-linux-arm64-gnu \

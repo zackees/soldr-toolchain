@@ -27,7 +27,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-REPO_FORGE = "zackees/forge"
+REPO_FORGE = "forge-ci/forge"
 WORKFLOW = "forge-conan.yml"
 HERE = Path(__file__).resolve().parent
 

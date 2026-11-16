@@ -14,7 +14,7 @@ sibling.
 ## Dispatch
 
 ```bash
-gh workflow run forge-conan.yml --repo zackees/forge \
+gh workflow run forge-conan.yml --repo forge-ci/forge \
     -f recipe_repo=zackees/soldr-toolchain \
     -f recipe_path=recipes/apple-sdk-thin-x86_64 \
     -f name=apple-sdk-thin-x86_64 \

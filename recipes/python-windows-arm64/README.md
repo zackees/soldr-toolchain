@@ -7,7 +7,7 @@ Closes part of soldr#931 / soldr#997 Phase A.
 ## Dispatch
 
 ```bash
-gh workflow run forge-conan.yml --repo zackees/forge     -f recipe_repo=zackees/soldr-toolchain     -f recipe_ref=main     -f recipe_path=recipes/python-windows-arm64     -f name=python-windows-arm64     -f version=3.13.0     -f linux_x64=true     -f windows_x64=false -f macos_arm64=false
+gh workflow run forge-conan.yml --repo forge-ci/forge     -f recipe_repo=zackees/soldr-toolchain     -f recipe_ref=main     -f recipe_path=recipes/python-windows-arm64     -f name=python-windows-arm64     -f version=3.13.0     -f linux_x64=true     -f windows_x64=false -f macos_arm64=false
 ```
 
 Ingested catalogue path: `python/3.13.0/windows-aarch64-msvc/sysroot.tar.zst`

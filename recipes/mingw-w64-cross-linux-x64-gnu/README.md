@@ -26,7 +26,7 @@ floor.
 Discovery dispatch (needs Docker on the forge Linux worker):
 
 ```sh
-gh workflow run forge-conan.yml --repo zackees/forge \
+gh workflow run forge-conan.yml --repo forge-ci/forge \
   -f recipe_repo=https://github.com/zackees/soldr-toolchain \
   -f recipe_ref=feat/mingw-cross-linux \
   -f recipe_path=recipes/mingw-w64-cross-linux-x64-gnu \

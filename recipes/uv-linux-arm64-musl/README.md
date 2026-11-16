@@ -16,7 +16,7 @@ musl Linux builds upstream.
 ## Dispatch
 
 ```bash
-gh workflow run forge-conan.yml --repo zackees/forge     -f recipe_repo=zackees/soldr-toolchain     -f recipe_ref=main     -f recipe_path=recipes/uv-linux-arm64-musl     -f name=uv-linux-arm64-musl     -f version=0.11.26     -f linux_x64=true     -f windows_x64=false -f macos_arm64=false
+gh workflow run forge-conan.yml --repo forge-ci/forge     -f recipe_repo=zackees/soldr-toolchain     -f recipe_ref=main     -f recipe_path=recipes/uv-linux-arm64-musl     -f name=uv-linux-arm64-musl     -f version=0.11.26     -f linux_x64=true     -f windows_x64=false -f macos_arm64=false
 ```
 
 ## Catalogue path after ingest

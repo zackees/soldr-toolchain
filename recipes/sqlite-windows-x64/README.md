@@ -14,7 +14,7 @@ https://www.sqlite.org/2024/sqlite-amalgamation-3460000.zip
 ## Dispatch
 
 ```bash
-gh workflow run forge-conan.yml --repo zackees/forge \
+gh workflow run forge-conan.yml --repo forge-ci/forge \
     -f recipe_repo=zackees/soldr-toolchain \
     -f recipe_ref=main \
     -f recipe_path=recipes/sqlite-windows-x64 \

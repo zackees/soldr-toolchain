@@ -25,7 +25,7 @@ the matching prebuilt for the runner's host.
 
 Dispatch (Linux x64 runner):
 
-    gh workflow run forge-conan.yml --repo zackees/forge \\
+    gh workflow run forge-conan.yml --repo forge-ci/forge \\
         -f recipe_repo=zackees/soldr-toolchain \\
         -f recipe_ref=main \\
         -f recipe_path=recipes/llvm-tools-linux-x64 \\

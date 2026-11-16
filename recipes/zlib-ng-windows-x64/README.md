@@ -14,7 +14,7 @@ https://github.com/zlib-ng/zlib-ng/archive/refs/tags/2.2.5.tar.gz
 ## Dispatch
 
 ```bash
-gh workflow run forge-conan.yml --repo zackees/forge \
+gh workflow run forge-conan.yml --repo forge-ci/forge \
     -f recipe_repo=zackees/soldr-toolchain \
     -f recipe_ref=main \
     -f recipe_path=recipes/zlib-ng-windows-x64 \

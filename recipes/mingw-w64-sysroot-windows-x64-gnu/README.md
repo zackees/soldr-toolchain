@@ -38,7 +38,7 @@ Manual dispatch (extraction needs no compiler, so it builds on the cheap
 Linux worker):
 
 ```sh
-gh workflow run forge-conan.yml --repo zackees/forge \
+gh workflow run forge-conan.yml --repo forge-ci/forge \
   -f recipe_repo=zackees/soldr-toolchain \
   -f recipe_ref=main \
   -f recipe_path=recipes/mingw-w64-sysroot-windows-x64-gnu \
