@@ -101,9 +101,11 @@ CMake/native exposure are tracked in
 
 ### Reproducing the Linux Swift proof
 
-Set `SWIFT_ROOT` and `LLVM_ROOT` to the extracted units' `package/` directories,
-`SDK_PACKAGE` to the thin SDK unit's `package/`, and `PROOF_DIR` to a fresh
-directory outside this code checkout. Run from this checkout on Linux x64:
+Set `SWIFT_ROOT` to the Swift unit's `package/`, `SDK_PACKAGE` to the thin SDK
+unit's `package/`, and `LLVM_ROOT` to a staged LLVM tree containing the
+compiler-rt overlay from the table above. Keep the input units immutable.
+Set `PROOF_DIR` to a fresh directory outside this code checkout, then run from
+this checkout on Linux x64:
 
 ```sh
 SDKROOT="$SDK_PACKAGE/sdk"
@@ -115,7 +117,7 @@ for name in macosx shims apinotes swiftToCxx; do
 done
 cp -aL "$SWIFT_ROOT/lib/swift/clang" "$RESOURCES/clang"
 
-"$SWIFT_ROOT/bin/swiftc" -swift-version 6 -target arm64-apple-macosx26.0 \
+"$SWIFT_ROOT/bin/swiftc" -swift-version 6 -target arm64-apple-macosx11.0 \
   -sdk "$SDKROOT" -resource-dir "$RESOURCES" \
   -I "$SDKROOT/usr/lib/swift" -I "$RESOURCES/shims" \
   -Xcc -resource-dir -Xcc "$RESOURCES/clang" \
@@ -125,7 +127,7 @@ cp -aL "$SWIFT_ROOT/lib/swift/clang" "$RESOURCES/clang"
   -F "$SDKROOT/System/Library/Frameworks" \
   docs/examples/MetalProbe.swift -o "$PROOF_DIR/MetalProbe.o"
 
-"$SWIFT_ROOT/bin/swiftc" -target arm64-apple-macosx26.0 \
+"$SWIFT_ROOT/bin/swiftc" -target arm64-apple-macosx11.0 \
   -sdk "$SDKROOT" -resource-dir "$RESOURCES" \
   -tools-directory "$LLVM_ROOT/bin" -use-ld=lld -emit-library -g \
   "$PROOF_DIR/MetalProbe.o" -o "$PROOF_DIR/libSoldrMetalProbe.dylib" \
@@ -175,19 +177,22 @@ No Apple bytes are committed to main by these recipes.
 
 ## Local evidence and limits
 
-Linux source validation built LLVM 21.1.5 compiler-rt against the local SDK whose
+The hosted Linux producer built LLVM 21.1.5 compiler-rt against the SDK whose
 SDKSettings.json reports **15.5** (despite its managed cache directory being
 named 14.5). All eight produced dylibs are thin arm64, with independently checked
 ad-hoc SHA256 CodeDirectory pages. The global availability builtin is defined.
-Address+undefined, standalone undefined, and availability-builtin link probes
-all produce signed arm64 executables. Ad-hoc integrity verification does not
+With the real SDK 26.5 and the staged LLVM/runtime units, address+undefined,
+standalone undefined, and availability-builtin link probes all produce signed
+arm64 executables. Ad-hoc integrity verification does not
 establish Developer ID identity, notarization, runtime execution or Gatekeeper
 approval. Swift's real archive package step passes its signature and ELF gates.
 The SDK 26.5 extraction and Swift/Metal/AppKit proof also passed on Linux x64:
 Swift 6.3.2 compiled the example with the published SDK, and managed LLVM 21.1.5
 linked a 54,832-byte arm64 Mach-O dylib. Independent verification checked all
 14 ad-hoc SHA256 code pages, the exported C entrypoint, and an arm64 dSYM with
-`__debug_info` (2,451,728 bytes). The SDK interfaces declare Apple Swift 6.3.2,
+`__debug_info` (2,451,728 bytes). A macOS 11.0 deployment build also passed:
+83,472-byte dylib, 21 verified signature pages, and 2,534,796-byte arm64 dSYM.
+The SDK interfaces declare Apple Swift 6.3.2,
 so no host-version substitution was needed. The consumer provisioning/CMake
 integration in soldr#4165 remains separate from this producer proof.
 
