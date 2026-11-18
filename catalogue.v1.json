@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-18T05:46:31Z",
+  "generated_at": "2026-11-18T05:50:31Z",
   "origin": "https://zackees.github.io/soldr-toolchain/catalogue.v1.json",
   "entries": [
     {
@@ -34,6 +34,14 @@
       "asset": "bundle.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/swift/6.3.2/linux-x64-gnu/bundle.tar.zst",
       "sha256": "338a2872e428dc62024c59a55eb3f615447e0e96dbe9695554e4dfe3738019da"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "sdk.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/26.5/darwin-universal2/sdk.tar.zst",
+      "sha256": "b6f64c9f71844cae9ab90000f7ac343ca44d8ecd24ce5ef17aaadb19cd4ee844"
     }
   ]
 }
