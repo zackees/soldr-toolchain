@@ -42,6 +42,28 @@ def test_llvm_signature_rejects_untrusted_or_failed_verification(tmp_path, monke
         h.verify_llvm_signature(Path('archive'), Path('sig'), Path('keys'), tmp_path/'gnupg')
 
 
+@pytest.mark.parametrize('verified', [True, False])
+def test_unrelated_key_import_errors_still_require_pinned_valid_signature(tmp_path, monkeypatch, verified):
+    h = helper()
+
+    def run(command, **kwargs):
+        if '--import' in command:
+            # CentOS7 GPG2.0 imports the pinned RSA signer, but rejects unrelated
+            # newer keys in LLVM's shared bundle and reports a partial import.
+            if kwargs.get('check'):
+                raise h.subprocess.CalledProcessError(2, command)
+            return SimpleNamespace(returncode=2, stdout='')
+        return SimpleNamespace(returncode=0 if verified else 1,
+                               stdout=f'[GNUPG:] VALIDSIG {h.LLVM_SIGNER} rest\n' if verified else '')
+
+    monkeypatch.setattr(h.subprocess, 'run', run)
+    if verified:
+        h.verify_llvm_signature(Path('archive'), Path('sig'), Path('keys'), tmp_path/'gnupg')
+    else:
+        with pytest.raises(ValueError, match='signature|signer'):
+            h.verify_llvm_signature(Path('archive'), Path('sig'), Path('keys'), tmp_path/'gnupg')
+
+
 def test_windows_provisioning_never_downloads_apple_sdk(tmp_path, monkeypatch):
     from recipes import _provision_darwin as p
     entry = SimpleNamespace(asset=p.LLVM_UNIT, sha256='a'*64, size_bytes=123)
