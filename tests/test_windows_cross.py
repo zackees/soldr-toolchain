@@ -54,6 +54,14 @@ def test_windows_provisioning_never_downloads_apple_sdk(tmp_path, monkeypatch):
     assert units == [p.LLVM_UNIT]
 
 
+def test_llvm_only_cli_has_safe_accurate_dry_run(tmp_path, monkeypatch, capsys):
+    from recipes import _provision_darwin as p
+    monkeypatch.setattr('sys.argv', ['provision', '--llvm-only', '--dry-run', '--output', str(tmp_path/'unused')])
+    p.main()
+    assert __import__('json').loads(capsys.readouterr().out)['units'] == [p.LLVM_UNIT]
+    assert not (tmp_path/'unused').exists()
+
+
 @pytest.mark.parametrize('architectures,symbols,error', [
     ('Format: COFF-x86-64\nArch: x86_64\nFormat: COFF-x86-64\nArch: x86_64', '00000000 T __udivti3\n', None),
     ('Format: COFF-x86-64\nArch: x86_64\nFormat: COFF-ARM64\nArch: aarch64', '00000000 T __udivti3\n', 'architecture'),

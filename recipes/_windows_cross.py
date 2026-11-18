@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import importlib.util
 import json
 import os
 import re
@@ -82,15 +81,11 @@ def llvm_root(work: Path) -> Path:
     else:
         # Exported Conan recipes carry this stdlib catalogue reader next to the
         # helper. Fetch LLVM only: Windows builtins do not depend on an Apple SDK.
-        directory = Path(__file__).resolve().parent
-        sys.path.insert(0, str(directory))
-        try:
-            spec = importlib.util.spec_from_file_location('soldr_windows_provision', directory/'_provision_darwin.py')
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            root = Path(module.provision(work/'inputs', llvm_only=True)['llvm_root'])
-        finally:
-            sys.path.pop(0)
+        command = [sys.executable, str(Path(__file__).with_name('_provision_darwin.py')),
+                   '--output', str(work/'inputs'), '--llvm-only']
+        if os.environ.get('SOLDR_TOOLCHAIN_CATALOGUE_URL'):
+            command += ['--catalogue-url', os.environ['SOLDR_TOOLCHAIN_CATALOGUE_URL']]
+        root = Path(json.loads(subprocess.check_output(command, text=True))['llvm_root'])
     for tool in ('clang', 'llvm-readobj', 'llvm-nm'):
         if not (root/'bin'/tool).is_file():
             raise ValueError(f'managed LLVM lacks {tool}')
