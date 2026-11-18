@@ -4,7 +4,8 @@ Builds clang, lld, LLVM binutils and dsymutil from SHA256-pinned LLVM 21.1.5
 source inside Forge's digest-pinned GLIBC 2.17 container. The upstream Linux
 binary requires GLIBC 2.34 and cannot be republished under the catalogue floor.
 
-Ships X86/AArch64 backends, shared LLVM/Clang libraries, resource headers and
+Ships X86/AArch64 backends, shared LLVM/Clang libraries, full resource headers
+and native Linux compiler-rt runtimes (including ASan/UBSan), plus
 relative tool aliases: clang++, clang-cl, ld.lld, ld64.lld, lld-link, llvm-lib,
 llvm-dlltool, llvm-ranlib, llvm-strip, dsymutil and llvm-dsymutil. Every shipped
 ELF is measured; relative RPATH finds the package libraries. LLVM notices and

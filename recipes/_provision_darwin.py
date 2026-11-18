@@ -68,6 +68,10 @@ def extract_unit(archive: Path, output: Path) -> None:
         except BaseException:
             decoder.terminate()
             raise
+        # tar EOF may precede padding in the decoded stream. Drain it before
+        # waiting, otherwise the decoder can block on a full stdout pipe.
+        for _ in iter(lambda: decoder.stdout.read(1024 * 1024), b''):
+            pass
         if decoder.wait() != 0:
             raise RuntimeError('zstd unit decompression failed')
 

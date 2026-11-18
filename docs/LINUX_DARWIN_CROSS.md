@@ -61,7 +61,8 @@ records its actual version; the existing unit named 14.5 currently contains 15.5
 
 The official Linux LLVM 21.1.5 binary requires GLIBC 2.34. Its producer therefore
 builds clang/lld/binutils from the pinned source inside Forge's GLIBC 2.17 image,
-packages shared libraries with relative RPATH and static C++ runtime, and
+packages shared libraries with relative RPATH, static C++ runtime, and native
+Linux compiler-rt resources, and
 measures every shipped ELF file. No floor exception is taken.
 
 For a reusable caller run already completed, explicit ingest is:

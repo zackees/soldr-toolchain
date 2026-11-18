@@ -49,6 +49,7 @@ def test_linux_llvm_builds_from_pinned_source_at_floor():
     assert '-DLLVM_ENABLE_PROJECTS=clang;lld' in command
     assert '-DLLVM_TARGETS_TO_BUILD=X86;AArch64' in command
     assert '-DLLVM_ENABLE_LIBXML2=OFF' in command
+    assert '-DLLVM_ENABLE_RUNTIMES=compiler-rt' in command
     assert '-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON' in command
 
 
@@ -78,3 +79,25 @@ def test_sdk_discovery_finds_exact_sdk_under_another_xcode(monkeypatch):
     monkeypatch.setattr(sdk.subprocess, 'check_output', query)
     result = sdk.resolve_sdk(SimpleNamespace(sdk_version='auto'),None,'26.5')
     assert result == (str(target),'26.5','26.5')
+
+
+def test_zstd_padding_is_drained_before_wait(tmp_path, monkeypatch):
+    import tarfile
+    provision = importlib.import_module('recipes._provision_darwin')
+    payload = io.BytesIO()
+    with tarfile.open(fileobj=payload,mode='w') as archive:
+        entry = tarfile.TarInfo('payload')
+        entry.size = 2
+        archive.addfile(entry,io.BytesIO(b'ok'))
+    class Decoder:
+        def __init__(self):
+            self.stdout = io.BytesIO(payload.getvalue()+b'\0'*200000)
+        def __enter__(self): return self
+        def __exit__(self,*args): pass
+        def wait(self):
+            assert self.stdout.read() == b''
+            return 0
+        def terminate(self): pytest.fail('valid archive must not be terminated')
+    monkeypatch.setattr(provision.subprocess,'Popen',lambda *a,**kw:Decoder())
+    provision.extract_unit(tmp_path/'archive', tmp_path/'out')
+    assert (tmp_path/'out/payload').read_bytes() == b'ok'

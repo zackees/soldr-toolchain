@@ -304,10 +304,12 @@ def llvm_tools_command(source: Path, build: Path) -> list[str]:
     flags = {
         "CMAKE_BUILD_TYPE":"Release", "LLVM_ENABLE_PROJECTS":"clang;lld",
         "LLVM_TARGETS_TO_BUILD":"X86;AArch64", "LLVM_INCLUDE_TESTS":"OFF",
+        "LLVM_ENABLE_RUNTIMES":"compiler-rt", "LLVM_ENABLE_PER_TARGET_RUNTIME_DIR":"OFF",
+        "COMPILER_RT_DEFAULT_TARGET_ONLY":"ON", "COMPILER_RT_INCLUDE_TESTS":"OFF",
         "LLVM_INCLUDE_BENCHMARKS":"OFF", "LLVM_INCLUDE_EXAMPLES":"OFF",
         "LLVM_BUILD_LLVM_DYLIB":"ON", "LLVM_LINK_LLVM_DYLIB":"ON",
         "CLANG_LINK_CLANG_DYLIB":"ON", "LLVM_ENABLE_LIBXML2":"OFF",
-        "LLVM_ENABLE_ZSTD":"OFF", "LLVM_ENABLE_TERMINFO":"OFF",
+        "LLVM_ENABLE_ZSTD":"OFF", "LLVM_ENABLE_LIBEDIT":"OFF",
         "CMAKE_BUILD_WITH_INSTALL_RPATH":"ON", "CMAKE_INSTALL_RPATH":"$ORIGIN/../lib",
         "CMAKE_EXE_LINKER_FLAGS":"-static-libstdc++ -static-libgcc",
         "CMAKE_SHARED_LINKER_FLAGS":"-static-libstdc++ -static-libgcc",
@@ -324,12 +326,12 @@ def build_llvm_tools(work: Path) -> None:
     source = work / "source" / f"llvm-project-{LLVM_VERSION}.src"
     build = work / "llvm-build"
     subprocess.run(llvm_tools_command(source,build),check=True)
-    tools = ["clang","lld","llvm-ar","llvm-rc","llvm-objcopy","llvm-readobj","dsymutil","clang-resource-headers"]
+    tools = ["clang","lld","llvm-ar","llvm-rc","llvm-objcopy","llvm-readobj","dsymutil","clang-resource-headers","runtimes"]
     subprocess.run(["cmake","--build",str(build),"--target",*tools,"--parallel",str(os.cpu_count() or 2)],check=True)
     package = work / "package"
     (package/"bin").mkdir(parents=True)
     (package/"lib").mkdir()
-    for name in tools[:-1]:
+    for name in tools[:-2]:
         shutil.copy2(build/"bin"/name,package/"bin"/name)
     for path in (build/"lib").iterdir():
         if path.is_file() and path.name.startswith(("libLLVM","libclang-cpp")) and '.so' in path.name:
@@ -344,7 +346,10 @@ def build_llvm_tools(work: Path) -> None:
                "llvm-strip":"llvm-objcopy","llvm-dsymutil":"dsymutil"}
     for alias,target in aliases.items():
         (package/"bin"/alias).symlink_to(target)
-    shutil.copytree(build/"lib/clang/21/include",package/"lib/clang/21/include",symlinks=True)
+    shutil.copytree(build/"lib/clang/21",package/"lib/clang/21")
+    for name in ("libclang_rt.asan-x86_64.a", "libclang_rt.ubsan_standalone-x86_64.a"):
+        if not (package / "lib/clang/21/lib/linux" / name).is_file():
+            raise RuntimeError(f"missing native Linux runtime {name}")
     shutil.copy2(source/"llvm/LICENSE.TXT",package/"LLVM-LICENSE.TXT")
     ensure_darwin_tools(package)
     floors = verify_elf_tree(package)
