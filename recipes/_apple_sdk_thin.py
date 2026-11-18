@@ -93,6 +93,9 @@ def prune_tbd_archs(path: Path, keep_arch: str, log) -> None:
             new_lines.append(f"{indent}archs:           [ {keep_arch} ]")
             continue
         new_lines.append(line)
+    # Xcode 26 SDK stubs can be read-only. This is the copied working tree;
+    # leave the installed SDK untouched while permitting the thinning edit.
+    path.chmod(path.stat().st_mode | 0o200)
     path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
 
 
@@ -187,22 +190,26 @@ def resolve_sdk(options, log, package_version=None) -> tuple[str, str, str]:
     requested = str(options.sdk_version)
     if requested == "auto" and package_version is not None:
         requested = str(package_version)
+    candidates = versioned_sdk_paths(requested) if requested != "auto" else []
+    if candidates:
+        # Several Xcodes may ship the same SDK version. Prefer its matching
+        # Xcode so SDK interfaces and toolchain-owned Swift resources agree.
+        sdk_path = str(candidates[0])
+    else:
+        sdk_path = None
     sdk_arg = "macosx" if requested == "auto" else f"macosx{requested}"
     try:
-        sdk_path = subprocess.check_output(
-            ["xcrun", "--sdk", sdk_arg, "--show-sdk-path"], text=True
-        ).strip()
+        if sdk_path is None:
+            sdk_path = subprocess.check_output(
+                ["xcrun", "--sdk", sdk_arg, "--show-sdk-path"], text=True
+            ).strip()
     except subprocess.CalledProcessError:
         if requested == "auto":
             raise
-        candidates = versioned_sdk_paths(requested)
-        if candidates:
-            sdk_path = str(candidates[0])
-        else:
-            log.warning(f"requested SDK {requested} missing; checking default before rejecting mismatch")
-            sdk_path = subprocess.check_output(
-                ["xcrun", "--sdk", "macosx", "--show-sdk-path"], text=True
-            ).strip()
+        log.warning(f"requested SDK {requested} missing; checking default before rejecting mismatch")
+        sdk_path = subprocess.check_output(
+            ["xcrun", "--sdk", "macosx", "--show-sdk-path"], text=True
+        ).strip()
     captured = subprocess.check_output(
         ["xcrun", "--sdk", sdk_path, "--show-sdk-version"], text=True
     ).strip()
