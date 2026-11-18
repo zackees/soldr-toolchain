@@ -14,6 +14,7 @@ See ``recipes/apple-sdk-thin-x86_64/conanfile.py`` and
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 from typing import Iterable
@@ -182,7 +183,8 @@ def versioned_sdk_paths(version: str) -> list[Path]:
     paths = Path("/Applications").glob(
         f"Xcode*.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{version}.sdk"
     )
-    return sorted(paths, key=lambda path: (f"Xcode_{version}.app" not in str(path), str(path)))
+    return sorted((path for path in paths if path.is_dir()),
+                  key=lambda path: (f"Xcode_{version}.app" not in str(path), str(path)))
 
 
 def resolve_sdk(options, log, package_version=None) -> tuple[str, str, str]:
@@ -210,18 +212,19 @@ def resolve_sdk(options, log, package_version=None) -> tuple[str, str, str]:
         sdk_path = subprocess.check_output(
             ["xcrun", "--sdk", "macosx", "--show-sdk-path"], text=True
         ).strip()
+    developer = next((p for p in Path(sdk_path).resolve().parents if p.name == "Developer" and p.parent.name == "Contents"), None)
+    selected_env = {**os.environ, "DEVELOPER_DIR": str(developer)} if developer else dict(os.environ)
     captured = subprocess.check_output(
-        ["xcrun", "--sdk", sdk_path, "--show-sdk-version"], text=True
+        ["xcrun", "--sdk", sdk_path, "--show-sdk-version"], text=True, env=selected_env
     ).strip()
     if requested != "auto" and captured != requested:
         raise ValueError(
             f"requested SDK version {requested} but runner returned {captured}; refuse to mislabel"
         )
     try:
-        developer = next((p for p in Path(sdk_path).resolve().parents if p.name == "Developer" and p.parent.name == "Contents"), None)
         xcodebuild = str(developer / "usr/bin/xcodebuild") if developer else "xcodebuild"
         xcode_version = (
-            subprocess.check_output([xcodebuild, "-version"], text=True)
+            subprocess.check_output([xcodebuild, "-version"], text=True, env=selected_env)
             .splitlines()[0]
             .split(" ", 1)[-1]
             .strip()
