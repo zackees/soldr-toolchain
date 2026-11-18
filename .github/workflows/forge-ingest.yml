@@ -14,6 +14,14 @@ on:
         description: "forge-ci/forge workflow run id (numeric)"
         required: true
         type: string
+      forge_repository:
+        description: Repository owning the Forge run (including reusable caller runs)
+        required: true
+        default: forge-ci/forge
+        type: choice
+        options:
+          - forge-ci/forge
+          - zackees/soldr-toolchain
       tool:
         description: "Logical tool name (e.g. apple-sdk)"
         required: true
@@ -113,10 +121,11 @@ jobs:
       - name: Download forge artifacts
         env:
           GH_TOKEN: ${{ secrets.FORGE_INGEST_TOKEN || github.token }}
+          FORGE_REPOSITORY: ${{ inputs.forge_repository }}
         run: |
           mkdir -p forge-downloads
           gh run download "${{ inputs.forge_run_id }}" \
-            --repo forge-ci/forge \
+            --repo "$FORGE_REPOSITORY" \
             --dir forge-downloads
 
       - name: Run ingest
@@ -194,4 +203,4 @@ jobs:
           git push -u origin "$branch"
           gh pr create --repo zackees/soldr-toolchain --base assets --head "$branch" \
             --title "ingest: ${{ inputs.tool }} ${{ inputs.version }} ${{ inputs.shape }}" \
-            --body "Forge run [${{ inputs.forge_run_id }}](https://github.com/forge-ci/forge/actions/runs/${{ inputs.forge_run_id }}) -> catalogue entry for \`${{ inputs.tool }}/${{ inputs.version }}/${{ inputs.shape }}\`. See provenance log on the assets branch (\`.forge-ingest.log.jsonl\`)."
+            --body "Forge run [${{ inputs.forge_run_id }}](https://github.com/${{ inputs.forge_repository }}/actions/runs/${{ inputs.forge_run_id }}) -> catalogue entry for \`${{ inputs.tool }}/${{ inputs.version }}/${{ inputs.shape }}\`. See provenance log on the assets branch (\`.forge-ingest.log.jsonl\`)."

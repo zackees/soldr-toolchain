@@ -26,45 +26,57 @@ runner default. 26.x packages additionally preserve Xcode's Swift resource tree.
 The consumer must use Linux host plugins and importer headers while selecting
 Darwin target resources; captured macOS host plugins cannot execute on Linux.
 
-## Prepared dispatches (not executed)
+## Hosted dispatch and publication
 
-After the recipe PR is merged:
+Forge runner selection and exact recipe support landed in
+[forge-ci/forge#30](https://github.com/forge-ci/forge/pull/30). SDK 26.x uses
+macos-26 for file extraction. The resolver searches installed Xcode bundles
+for the exact SDK even if another Xcode is the runner default.
+
+The dispatcher calls the pinned reusable Forge workflow. Artifacts belong to
+the caller's run, so ingest uses that repository and run ID with its own token.
+No personal or cross-repository token and no polling/run-discovery loop is
+required. This also prevents a sibling run's artifacts being selected.
 
 ```sh
-# Extraction only; requires the selected Forge runner to have SDK 26.5/Xcode.
-gh workflow run forge-dispatch.yml --repo zackees/soldr-toolchain --ref main \
-  -f tool=apple-sdk -f version=26.5 -f shape=thin-aarch64 -f recipe_ref=main
-# Use shape=universal2 for the full SDK with every architecture slice.
-
-gh workflow run forge-dispatch.yml --repo zackees/soldr-toolchain --ref main \
-  -f tool=swift -f version=6.3.2 -f shape=linux-x64-gnu -f recipe_ref=main
-
 gh workflow run forge-dispatch.yml --repo zackees/soldr-toolchain --ref main \
   -f tool=llvm-tools -f version=21.1.5 -f shape=linux-x64-gnu -f recipe_ref=main
-
+# Publish the resulting LLVM unit before compiler-rt resolves its inputs.
 gh workflow run forge-dispatch.yml --repo zackees/soldr-toolchain --ref main \
   -f tool=compiler-rt -f version=21.1.5 -f shape=darwin-arm64 -f recipe_ref=main
+gh workflow run forge-dispatch.yml --repo zackees/soldr-toolchain --ref main \
+  -f tool=swift -f version=6.3.2 -f shape=linux-x64-gnu -f recipe_ref=main
+gh workflow run forge-dispatch.yml --repo zackees/soldr-toolchain --ref main \
+  -f tool=apple-sdk -f version=26.5 -f shape=thin-aarch64 -f recipe_ref=main
+# Dispatch universal2 after the thin unit has been ingested/published.
 ```
 
-`forge-dispatch.yml` dispatches `forge-ci/forge/forge-conan.yml`, waits, then
-queues `forge-ingest.yml`. The new runtime and Swift producers select Linux x64.
-Forge currently maps macos_arm64 to **macos-15**, not macos-26; its runner/Xcode
-selection must provide the requested SDK before the extraction dispatch can
-succeed. The recipe refuses a missing/older SDK. The compiler-rt worker must have
-soldr's managed LLVM/SDK available, or explicit SOLDR_LLVM_ROOT and
-SOLDR_APPLE_SDK_ROOT. These environment prerequisites are not forwarded by the
-dispatcher. Do not claim a successful production dispatch until they are supplied.
+Compiler-rt automatically provisions the published LLVM 21.1.5 Linux unit and
+the existing SDK unit from a verified catalogue/state pair. Every part and the
+assembled archive must match its declared SHA256 and byte count. The helper,
+reader and schema modules are exported with the Conan recipe, so it works in
+the hosted container without workstation paths. Both SOLDR_LLVM_ROOT and
+SOLDR_APPLE_SDK_ROOT may still be supplied together. Captured SDK metadata
+records its actual version; the existing unit named 14.5 currently contains 15.5.
 
-For an already completed Forge run, ingestion is:
+The official Linux LLVM 21.1.5 binary requires GLIBC 2.34. Its producer therefore
+builds clang/lld/binutils from the pinned source inside Forge's GLIBC 2.17 image,
+packages shared libraries with relative RPATH, static C++ runtime, and native
+Linux compiler-rt resources, and
+measures every shipped ELF file. No floor exception is taken.
+
+For a reusable caller run already completed, explicit ingest is:
 
 ```sh
 gh workflow run forge-ingest.yml --repo zackees/soldr-toolchain --ref main \
-  -f forge_run_id=RUN_ID -f tool=apple-sdk -f version=26.5 -f shape=thin-aarch64
+  -f forge_repository=zackees/soldr-toolchain -f forge_run_id=RUN_ID \
+  -f tool=apple-sdk -f version=26.5 -f shape=thin-aarch64
 ```
 
-Use the matching tool/version/shape for the other bundles. Ingestion opens a
-catalogue PR; reviewed publication remains a separate step. Preserve immutable
-bytes and the current v2 publication policy in [ASSET_CATALOG.md](ASSET_CATALOG.md).
+Ingest opens an assets PR. Merge and the existing atomic multipart publisher
+remain separate steps; preserve immutable bytes and the v2 publication policy
+in [ASSET_CATALOG.md](ASSET_CATALOG.md). Planning alone is safe:
+`uv run --group dev python -m scripts.plan_forge_dispatch --tool compiler-rt --version 21.1.5 --shape darwin-arm64 --dry-run`
 
 ## Required proof before downstream activation
 

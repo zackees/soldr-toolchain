@@ -32,7 +32,11 @@ class CompilerRtDarwinArm64(ConanFile):
     no_copy_source = True
 
     def export(self):
-        copy(self, "_darwin_cross.py", src=str(Path(__file__).resolve().parent.parent), dst=self.export_folder)
+        root = Path(__file__).resolve().parent.parent
+        for filename in ("_darwin_cross.py", "_provision_darwin.py"):
+            copy(self, filename, src=str(root), dst=self.export_folder)
+        for filename in ("__init__.py", "generation_reader.py", "catalogue_v2.py", "publication_model.py"):
+            copy(self, filename, src=str(root.parent / "scripts"), dst=str(Path(self.export_folder) / "scripts"))
 
     def validate(self):
         if str(self.settings.os) != "Linux" or str(self.settings.arch) != "x86_64":
