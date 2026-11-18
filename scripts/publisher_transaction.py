@@ -266,7 +266,13 @@ class GitDataApi:
         return _sha(self.request("POST", "/commits", {"message": message, "tree": tree, "parents": list(parents)}), "commit")
 
     def create_ref(self, ref: str, sha: str) -> None:
-        self.request("POST", "/refs", {"ref": ref if ref.startswith("refs/") else "refs/" + ref, "sha": sha})
+        normalized = ref if ref.startswith("refs/") else "refs/" + ref
+        try:
+            self.request("POST", "/refs", {"ref": normalized, "sha": sha})
+        except PublishError as exc:
+            # GitHub can return only "Reference update failed". Preserve the
+            # public object identity so operators can inspect the rejected tree.
+            raise PublishError(f"cannot create {normalized} at commit {sha}: {exc}") from exc
 
     def commit_tree(self, sha: str) -> str:
         response = self.request("GET", "/commits/" + sha)
