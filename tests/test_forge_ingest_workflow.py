@@ -37,3 +37,8 @@ def test_workflow_exposes_the_build_label() -> None:
     assert "--build-label" in text
     # A labelled rebuild must not collide with the original ingest branch.
     assert "label_suffix" in text
+
+
+def test_ingest_token_can_read_its_caller_artifacts():
+    text = WORKFLOW.read_text(encoding="utf-8")
+    assert "  actions: read" in text
