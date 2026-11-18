@@ -154,9 +154,32 @@ def write_meta(build_folder: str, shape: str, captured: dict, log) -> None:
     log.info(f"meta.json: {json.dumps(meta)}")
 
 
-def resolve_sdk(options, log) -> tuple[str, str, str]:
+def copy_swift_resources(sdk_root: Path, dest: Path) -> None:
+    """Capture Xcode's target resource directory for SDK 26.x without compiling.
+
+    SDK module interfaces alone omit toolchain-owned Darwin overlays/shims.
+    Preserve their relative layout; the Linux consumer supplies host plugins.
+    """
+    import shutil
+
+    developer = next(
+        (p for p in sdk_root.resolve().parents if p.name == "Developer" and p.parent.name == "Contents"),
+        None,
+    )
+    if developer is None:
+        raise ValueError(f"SDK 26.x requires an Xcode Developer directory: {sdk_root}")
+    resources = developer / "Toolchains/XcodeDefault.xctoolchain/usr/lib/swift"
+    for required in ("macosx", "shims"):
+        if not (resources / required).is_dir():
+            raise ValueError(f"Xcode Swift resources missing {resources / required}")
+    shutil.copytree(resources, dest, symlinks=True)
+
+
+def resolve_sdk(options, log, package_version=None) -> tuple[str, str, str]:
     """Same logic as apple-sdk-universal2's _resolve_sdk."""
     requested = str(options.sdk_version)
+    if requested == "auto" and package_version is not None:
+        requested = str(package_version)
     sdk_arg = "macosx" if requested == "auto" else f"macosx{requested}"
     try:
         sdk_path = subprocess.check_output(
@@ -170,8 +193,12 @@ def resolve_sdk(options, log) -> tuple[str, str, str]:
             ["xcrun", "--sdk", "macosx", "--show-sdk-path"], text=True
         ).strip()
     captured = subprocess.check_output(
-        ["xcrun", "--sdk", "macosx", "--show-sdk-version"], text=True
+        ["xcrun", "--sdk", sdk_path, "--show-sdk-version"], text=True
     ).strip()
+    if requested != "auto" and captured != requested:
+        raise ValueError(
+            f"requested SDK version {requested} but runner returned {captured}; refuse to mislabel"
+        )
     try:
         xcode_version = (
             subprocess.check_output(["xcodebuild", "-version"], text=True)

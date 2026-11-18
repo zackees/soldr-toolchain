@@ -60,11 +60,11 @@ class AppleSDKThinAArch64(ConanFile):
         "frameworks, .tbd files with archs: rewritten to [arm64]) per "
         "soldr-toolchain#14 full-SDK policy. No directory trimming."
     )
-    license = "Apple-MIT-Style"
+    license = "LicenseRef-Apple-Xcode-SDK"
     package_type = "header-library"
     no_copy_source = True
     settings = "os", "arch"
-    options = {"sdk_version": ("auto", "11.3", "13.3", "14.5", "15.2")}
+    options = {"sdk_version": ("auto", "11.3", "13.3", "14.5", "15.2", "26.0", "26.1", "26.2", "26.3", "26.4", "26.5")}
     default_options = {"sdk_version": "auto"}
 
     TARGET_ARCH = "arm64"  # Apple's name; Rust calls this aarch64
@@ -77,11 +77,13 @@ class AppleSDKThinAArch64(ConanFile):
 
     def build(self):
         sdk_root, captured_version, xcode_version = thin.resolve_sdk(
-            self.options, self.output
+            self.options, self.output, self.version
         )
         self.output.info(f"thinning SDK at {sdk_root} → arch={self.TARGET_ARCH}")
         dest = Path(self.build_folder) / "sdk"
         thin.thin_sdk_tree(Path(sdk_root), self.TARGET_ARCH, dest, self.output)
+        if int(captured_version.split(".")[0]) >= 26:
+            thin.copy_swift_resources(Path(sdk_root), Path(self.build_folder) / "swift-resource-dir")
         thin.write_meta(
             self.build_folder,
             shape="thin-aarch64",
@@ -96,6 +98,9 @@ class AppleSDKThinAArch64(ConanFile):
         )
 
     def package(self):
+        resources = Path(self.build_folder) / "swift-resource-dir"
+        if resources.is_dir():
+            copy(self, "*", src=str(resources), dst=str(Path(self.package_folder) / "swift-resource-dir"))
         copy(
             self,
             "*",

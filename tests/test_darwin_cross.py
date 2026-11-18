@@ -67,3 +67,48 @@ def test_sources_are_pinned_and_ingest_routes_exist():
 def test_llvm_bundle_exposes_darwin_linker():
     path = Path(__file__).resolve().parents[1] / "recipes/llvm-tools-linux-x64/conanfile.py"
     assert '"ld64.lld"' in path.read_text()
+
+
+def test_extract_rejects_path_traversal(tmp_path):
+    import io
+    import tarfile
+    archive = tmp_path / "hostile.tar.gz"
+    with tarfile.open(archive, "w:gz") as tf:
+        entry = tarfile.TarInfo("../escaped")
+        entry.size = 3
+        tf.addfile(entry, io.BytesIO(b"bad"))
+    with pytest.raises(tarfile.FilterError):
+        helper().extract(archive, tmp_path / "out")
+    assert not (tmp_path / "escaped").exists()
+
+
+def test_swift_rejects_untrusted_signer(monkeypatch, tmp_path):
+    h = helper()
+    monkeypatch.setattr(h.subprocess, "run", lambda *a, **kw: None)
+    monkeypatch.setattr(h.subprocess, "check_output", lambda *a, **kw: "[GNUPG:] VALIDSIG " + "A" * 40)
+    with pytest.raises(RuntimeError, match="pinned Swift 6"):
+        h.verify_swift_signature(tmp_path / "archive", tmp_path / "sig", tmp_path / "keys", tmp_path / "gpg")
+
+
+def test_swift_signature_requires_valid_signature(monkeypatch, tmp_path):
+    import subprocess
+    h = helper()
+    monkeypatch.setattr(h.subprocess, "run", lambda *a, **kw: None)
+    def fail(*args, **kwargs):
+        raise subprocess.CalledProcessError(1, "gpg")
+    monkeypatch.setattr(h.subprocess, "check_output", fail)
+    with pytest.raises(subprocess.CalledProcessError):
+        h.verify_swift_signature(tmp_path / "archive", tmp_path / "sig", tmp_path / "keys", tmp_path / "gpg")
+
+
+def test_sdk_26_captures_toolchain_owned_swift_resources(tmp_path):
+    sdk_root = tmp_path / "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk"
+    sdk_root.mkdir(parents=True)
+    resources = tmp_path / "Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift"
+    (resources / "macosx").mkdir(parents=True)
+    (resources / "shims").mkdir()
+    (resources / "macosx/Metal.swiftmodule").write_text("target overlay")
+    sdk.copy_swift_resources(sdk_root, tmp_path / "captured")
+    assert (tmp_path / "captured/macosx/Metal.swiftmodule").read_text() == "target overlay"
+    with pytest.raises(ValueError, match="Xcode Developer"):
+        sdk.copy_swift_resources(tmp_path / "standalone-sdk", tmp_path / "missing")

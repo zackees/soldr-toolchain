@@ -43,6 +43,7 @@ per the docker-cross-all design.
 from __future__ import annotations
 
 import io
+import importlib.util
 import json
 import lzma
 import tarfile
@@ -54,12 +55,24 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.files import copy
 
 
-LLVM_VERSION_DEFAULT = "20.1.7"
+LLVM_VERSION_DEFAULT = "21.1.5"
 # LLVM upstream renamed the linux archives in the 21.x cycle:
 #   old (≤ 20.x): clang+llvm-<ver>-x86_64-linux-gnu-ubuntu-<distro>.tar.xz
 #   new (≥ 21.x): LLVM-<ver>-Linux-X64.tar.xz
 # Recipe targets the new format; pin a ≥21 release at dispatch time.
 ASSET_NAME_TPL = "LLVM-{ver}-Linux-X64.tar.xz"
+
+
+def _load_recipe_helper():
+    root = Path(__file__).resolve().parent
+    for directory in (root, root.parent):
+        path = directory / "_darwin_cross.py"
+        if path.is_file():
+            spec = importlib.util.spec_from_file_location("soldr_recipe__darwin_cross", path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            return module
+    raise ImportError("_darwin_cross.py was not exported beside the recipe")
 
 
 class LlvmToolsLinuxX64(ConanFile):
@@ -82,6 +95,7 @@ class LlvmToolsLinuxX64(ConanFile):
         "lld",
         "lld-link",
         "ld.lld",
+        "ld64.lld",
         "llvm-lib",
         "llvm-rc",
         "llvm-dlltool",
@@ -92,6 +106,9 @@ class LlvmToolsLinuxX64(ConanFile):
         "dsymutil",
         "llvm-dsymutil",
     )
+
+    def export(self):
+        copy(self, "_darwin_cross.py", src=str(Path(__file__).resolve().parent.parent), dst=self.export_folder)
 
     def build(self):
         ver = str(self.version)
@@ -162,6 +179,8 @@ class LlvmToolsLinuxX64(ConanFile):
                     # Preserve executable mode.
                     if member.mode & 0o111:
                         target.chmod(0o755)
+
+        _load_recipe_helper().ensure_darwin_tools(out_root)
 
         meta = {
             "llvm_version": ver,
