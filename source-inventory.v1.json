@@ -646,6 +646,14 @@
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/llvm-tools/21.1.5/linux-x64-gnu/bundle.tar.zst",
+      "sha256": "fedd696223d4762988d7109f3c0b3bbf541f9601213feefe0cef004544ce36d4"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/lzma/5.6.3/darwin-arm64/bundle.tar.zst",
       "sha256": "5dcdd2fc5e16ac3c8dff6633828987512337dc7ee70a736301f5099b5192a4de"
     },
@@ -1112,6 +1120,14 @@
       "asset": "bundle.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/sqlite/3.46.0/windows-x64/bundle.tar.zst",
       "sha256": "d5e5fd2b789304a6fcace32dbab100939b1b9c5796d1e373da2384a8a369dc17"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/swift/6.3.2/linux-x64-gnu/bundle.tar.zst",
+      "sha256": "338a2872e428dc62024c59a55eb3f615447e0e96dbe9695554e4dfe3738019da"
     },
     {
       "owner": "zackees",
@@ -1600,6 +1616,22 @@
       "asset": "sdk.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/14.5/darwin-x86_64/sdk.tar.zst",
       "sha256": "785e3362f9548940f13f287c3e387186f8e9e5520211f3e04a887b666b2e6587"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "sdk.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/26.5/darwin-aarch64/sdk.tar.zst",
+      "sha256": "688b2d957c82242e0e3c859bccb332cb475859e0ad2bb32b7ed10e7c483582e6"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "sdk.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/26.5/darwin-universal2/sdk.tar.zst",
+      "sha256": "b6f64c9f71844cae9ab90000f7ac343ca44d8ecd24ce5ef17aaadb19cd4ee844"
     },
     {
       "owner": "zackees",
