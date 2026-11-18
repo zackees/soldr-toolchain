@@ -8,6 +8,7 @@ import re
 import shutil
 import shlex
 import subprocess
+import sys
 import struct
 import tarfile
 import urllib.request
@@ -155,17 +156,18 @@ def compiler_rt_command(source: Path, build: Path, llvm: Path, sdk: Path, sdk_ve
 
 
 def build_compiler_rt(work: Path) -> None:
-    def managed_path(variable, query):
-        value = os.environ.get(variable)
-        if value:
-            return Path(value).resolve()
-        return Path(subprocess.check_output([
-            "soldr", "cc", "--target", "aarch64-apple-darwin", query,
-        ], text=True).strip()).resolve()
-    llvm = managed_path("SOLDR_LLVM_ROOT", "--print-cc")
-    if llvm.is_file():
-        llvm = llvm.parent.parent
-    sdk = managed_path("SOLDR_APPLE_SDK_ROOT", "--print-sysroot")
+    llvm_value, sdk_value = os.environ.get("SOLDR_LLVM_ROOT"), os.environ.get("SOLDR_APPLE_SDK_ROOT")
+    if bool(llvm_value) != bool(sdk_value):
+        raise RuntimeError("SOLDR_LLVM_ROOT and SOLDR_APPLE_SDK_ROOT must be supplied together")
+    if llvm_value and sdk_value:
+        llvm, sdk = Path(llvm_value).resolve(), Path(sdk_value).resolve()
+    else:
+        provisioner = Path(__file__).with_name("_provision_darwin.py")
+        args = [sys.executable, str(provisioner), "--output", str(work / "inputs")]
+        if os.environ.get("SOLDR_TOOLCHAIN_CATALOGUE_URL"):
+            args += ["--catalogue-url", os.environ["SOLDR_TOOLCHAIN_CATALOGUE_URL"]]
+        inputs = json.loads(subprocess.check_output(args, text=True))
+        llvm, sdk = Path(inputs["llvm_root"]), Path(inputs["sdk_root"])
     version = subprocess.check_output([str(llvm / "bin/clang"), "--version"], text=True)
     if not re.search(r"clang version 21\.1\.5\b", version):
         raise RuntimeError("compiler-rt must match managed LLVM 21.1.5 exactly")
@@ -222,6 +224,7 @@ def package_compiler_rt(work: Path, build: Path, llvm: Path, source: Path, sdk_v
         "llvm_version": LLVM_VERSION, "source_url": LLVM_URL, "source_sha256": LLVM_SHA256,
         "sdk_version": sdk_version, "target": "aarch64-apple-darwin",
         "dylib_signatures": signatures, "availability_builtin_defined": True,
+        "managed_inputs": json.loads((work / "inputs/provenance.json").read_text()) if (work / "inputs/provenance.json").is_file() else None,
     }, indent=2) + "\n")
 
 
@@ -295,3 +298,58 @@ def verify_macho_signature(path: Path) -> dict:
         actual = hashlib.sha256(data[i * page_size:min((i + 1) * page_size, limit)]).digest()
         require(actual == cd[hashes + i * 32:hashes + (i + 1) * 32], f"signature page {i} mismatch")
     return {"arch": "arm64", "signature": "ad-hoc-sha256", "pages": slots, "sha256": digest(path)}
+
+
+def llvm_tools_command(source: Path, build: Path) -> list[str]:
+    flags = {
+        "CMAKE_BUILD_TYPE":"Release", "LLVM_ENABLE_PROJECTS":"clang;lld",
+        "LLVM_TARGETS_TO_BUILD":"X86;AArch64", "LLVM_INCLUDE_TESTS":"OFF",
+        "LLVM_INCLUDE_BENCHMARKS":"OFF", "LLVM_INCLUDE_EXAMPLES":"OFF",
+        "LLVM_BUILD_LLVM_DYLIB":"ON", "LLVM_LINK_LLVM_DYLIB":"ON",
+        "CLANG_LINK_CLANG_DYLIB":"ON", "LLVM_ENABLE_LIBXML2":"OFF",
+        "LLVM_ENABLE_ZSTD":"OFF", "LLVM_ENABLE_TERMINFO":"OFF",
+        "CMAKE_BUILD_WITH_INSTALL_RPATH":"ON", "CMAKE_INSTALL_RPATH":"$ORIGIN/../lib",
+        "CMAKE_EXE_LINKER_FLAGS":"-static-libstdc++ -static-libgcc",
+        "CMAKE_SHARED_LINKER_FLAGS":"-static-libstdc++ -static-libgcc",
+    }
+    return ["cmake","-G","Ninja","-S",str(source/"llvm"),"-B",str(build)] + [
+        f"-D{key}={value}" for key,value in flags.items()
+    ]
+
+
+def build_llvm_tools(work: Path) -> None:
+    archive = work / "llvm-project.tar.xz"
+    download(LLVM_URL, archive, LLVM_SHA256)
+    extract(archive, work / "source")
+    source = work / "source" / f"llvm-project-{LLVM_VERSION}.src"
+    build = work / "llvm-build"
+    subprocess.run(llvm_tools_command(source,build),check=True)
+    tools = ["clang","lld","llvm-ar","llvm-rc","llvm-objcopy","llvm-readobj","dsymutil","clang-resource-headers"]
+    subprocess.run(["cmake","--build",str(build),"--target",*tools,"--parallel",str(os.cpu_count() or 2)],check=True)
+    package = work / "package"
+    (package/"bin").mkdir(parents=True)
+    (package/"lib").mkdir()
+    for name in tools[:-1]:
+        shutil.copy2(build/"bin"/name,package/"bin"/name)
+    for path in (build/"lib").iterdir():
+        if path.is_file() and path.name.startswith(("libLLVM","libclang-cpp")) and '.so' in path.name:
+            destination = package / "lib" / path.name
+            if path.is_symlink():
+                destination.symlink_to(path.readlink())
+            else:
+                shutil.copy2(path, destination)
+    aliases = {"clang++":"clang","clang-cl":"clang","clang-cpp":"clang",
+               "ld.lld":"lld","ld64.lld":"lld","lld-link":"lld",
+               "llvm-lib":"llvm-ar","llvm-dlltool":"llvm-ar","llvm-ranlib":"llvm-ar",
+               "llvm-strip":"llvm-objcopy","llvm-dsymutil":"dsymutil"}
+    for alias,target in aliases.items():
+        (package/"bin"/alias).symlink_to(target)
+    shutil.copytree(build/"lib/clang/21/include",package/"lib/clang/21/include",symlinks=True)
+    shutil.copy2(source/"llvm/LICENSE.TXT",package/"LLVM-LICENSE.TXT")
+    ensure_darwin_tools(package)
+    floors = verify_elf_tree(package)
+    version = subprocess.check_output([str(package/"bin/clang"),"--version"],text=True)
+    if not re.search(r"clang version 21\.1\.5\b",version):
+        raise RuntimeError("packaged clang version mismatch")
+    (work/"meta.json").write_text(json.dumps({"llvm_version":LLVM_VERSION,"source_url":LLVM_URL,
+        "source_sha256":LLVM_SHA256,"elf_glibc_versions":floors},indent=2)+'\n')

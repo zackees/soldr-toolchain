@@ -175,6 +175,13 @@ def copy_swift_resources(sdk_root: Path, dest: Path) -> None:
     shutil.copytree(resources, dest, symlinks=True)
 
 
+def versioned_sdk_paths(version: str) -> list[Path]:
+    paths = Path("/Applications").glob(
+        f"Xcode*.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{version}.sdk"
+    )
+    return sorted(paths, key=lambda path: (f"Xcode_{version}.app" not in str(path), str(path)))
+
+
 def resolve_sdk(options, log, package_version=None) -> tuple[str, str, str]:
     """Same logic as apple-sdk-universal2's _resolve_sdk."""
     requested = str(options.sdk_version)
@@ -188,10 +195,14 @@ def resolve_sdk(options, log, package_version=None) -> tuple[str, str, str]:
     except subprocess.CalledProcessError:
         if requested == "auto":
             raise
-        log.warning(f"requested SDK {requested} missing; falling back to default")
-        sdk_path = subprocess.check_output(
-            ["xcrun", "--sdk", "macosx", "--show-sdk-path"], text=True
-        ).strip()
+        candidates = versioned_sdk_paths(requested)
+        if candidates:
+            sdk_path = str(candidates[0])
+        else:
+            log.warning(f"requested SDK {requested} missing; checking default before rejecting mismatch")
+            sdk_path = subprocess.check_output(
+                ["xcrun", "--sdk", "macosx", "--show-sdk-path"], text=True
+            ).strip()
     captured = subprocess.check_output(
         ["xcrun", "--sdk", sdk_path, "--show-sdk-version"], text=True
     ).strip()
@@ -200,8 +211,10 @@ def resolve_sdk(options, log, package_version=None) -> tuple[str, str, str]:
             f"requested SDK version {requested} but runner returned {captured}; refuse to mislabel"
         )
     try:
+        developer = next((p for p in Path(sdk_path).resolve().parents if p.name == "Developer" and p.parent.name == "Contents"), None)
+        xcodebuild = str(developer / "usr/bin/xcodebuild") if developer else "xcodebuild"
         xcode_version = (
-            subprocess.check_output(["xcodebuild", "-version"], text=True)
+            subprocess.check_output([xcodebuild, "-version"], text=True)
             .splitlines()[0]
             .split(" ", 1)[-1]
             .strip()

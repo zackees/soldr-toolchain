@@ -5,11 +5,13 @@ SHA256-pinned `llvm-project-21.1.5.src.tar.xz`, builds LLVM's Darwin archive/lip
 tools for the Linux host, and cross-builds compiler-rt with the exact managed
 21.1.5 clang and an extracted Apple SDK. No Darwin program executes.
 
-Requires cmake, Ninja, a host C/C++ compiler, Python 3.12+, and pre-provisioned
-managed LLVM/SDK. Set `SOLDR_LLVM_ROOT` to the directory containing `bin/clang`
-and `SOLDR_APPLE_SDK_ROOT` to the SDK directory; otherwise the producer asks
-`soldr cc --target aarch64-apple-darwin --print-cc/--print-sysroot`. Forge's Linux
-producer environment must supply these prerequisites before dispatch.
+Hosted builds provision the published LLVM 21.1.5 Linux bundle and the existing
+Apple SDK unit from a verified catalogue-v2/state pair. Every part and final
+archive is checked for SHA256 and size. The recipe exports the downloader and
+shared reader modules. No workstation paths or installed soldr binary are needed.
+CMake, Ninja, zstd, Python 3.12+ and a host C/C++ compiler are producer tools
+supplied by Forge. To override provisioning, supply both SOLDR_LLVM_ROOT and
+SOLDR_APPLE_SDK_ROOT together.
 
 The package overlays `lib/clang/21/lib/darwin/` and includes ASan/UBSan dynamic
 runtimes, the availability builtins archive `libclang_rt.osx.a`, any other built
@@ -24,9 +26,9 @@ gh workflow run forge-dispatch.yml --repo zackees/soldr-toolchain --ref main \
   -f tool=compiler-rt -f version=21.1.5 -f shape=darwin-arm64 -f recipe_ref=main
 ```
 
-Prepared command only; **not dispatched**. The dispatcher explicitly selects the
+The dispatcher explicitly selects the
 Linux x64 producer even though the artifact shape is `darwin-arm64`.
 Catalogue: `compiler-rt/21.1.5/darwin-arm64/bundle.tar.zst`.
 
-See [the cross-build guide](../../docs/LINUX_DARWIN_CROSS.md) for required link,
-architecture and signature proofs and remaining production prerequisites.
+See [the cross-build guide](../../docs/LINUX_DARWIN_CROSS.md) for the required link,
+architecture and signature proofs.

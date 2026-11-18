@@ -60,3 +60,21 @@ def test_ingest_reads_artifacts_from_caller_repository():
     assert 'forge_repository=${{ github.repository }}' in dispatch
     assert 'forge_run_id=${{ github.run_id }}' in dispatch
     assert 'FORGE_REPOSITORY: ${{ inputs.forge_repository }}' in ingest
+
+
+def test_sdk_discovery_finds_exact_sdk_under_another_xcode(monkeypatch):
+    import subprocess
+    from recipes import _apple_sdk_thin as sdk
+    target = Path('/Applications/Xcode_26.5.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk')
+    monkeypatch.setattr(sdk, 'versioned_sdk_paths', lambda version: [target])
+    def query(argv, **kwargs):
+        if argv[0] == 'xcrun' and argv[-1] == '--show-sdk-path':
+            raise subprocess.CalledProcessError(1,argv)
+        if argv[-1] == '--show-sdk-version':
+            assert argv[2] == str(target)
+            return '26.5'
+        assert argv[0].startswith('/Applications/Xcode_26.5.app/')
+        return 'Xcode 26.5'
+    monkeypatch.setattr(sdk.subprocess, 'check_output', query)
+    result = sdk.resolve_sdk(SimpleNamespace(sdk_version='auto'),None,'26.5')
+    assert result == (str(target),'26.5','26.5')

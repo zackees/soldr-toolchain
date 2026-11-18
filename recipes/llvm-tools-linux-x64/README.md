@@ -1,39 +1,20 @@
-# `llvm-tools-linux-x64`
+# LLVM 21.1.5 tools for Linux x64
 
-Forge-built Conan recipe — LLVM toolchain bundle for a Linux x64
-cross-compile driver host. Closes soldr#934 + soldr#942.
+Builds clang, lld, LLVM binutils and dsymutil from SHA256-pinned LLVM 21.1.5
+source inside Forge's digest-pinned GLIBC 2.17 container. The upstream Linux
+binary requires GLIBC 2.34 and cannot be republished under the catalogue floor.
 
-## What's inside
+Ships X86/AArch64 backends, shared LLVM/Clang libraries, resource headers and
+relative tool aliases: clang++, clang-cl, ld.lld, ld64.lld, lld-link, llvm-lib,
+llvm-dlltool, llvm-ranlib, llvm-strip, dsymutil and llvm-dsymutil. Every shipped
+ELF is measured; relative RPATH finds the package libraries. LLVM notices and
+source identity are retained in the package.
 
-Whitelist-extracted from the official `clang+llvm-<ver>-x86_64-linux-gnu-ubuntu-22.04.tar.xz`
-release archive at `github.com/llvm/llvm-project/releases`:
-
-```
-package/
-├── bin/
-│   ├── clang / clang++       ← clang driver
-│   ├── clang-cl              ← MSVC-mode driver (cc-rs target for Windows MSVC cross)
-│   ├── lld / lld-link        ← LLVM linker (Mach-O/PE/ELF — replaces lib.exe + link.exe + ld)
-│   ├── llvm-lib              ← MSVC lib.exe replacement
-│   ├── llvm-rc / llvm-dlltool ← rc.exe / dlltool replacements
-│   ├── llvm-strip            ← strip replacement
-│   ├── llvm-objcopy          ← rust-objcopy underlying tool (closes #934 strip-fail)
-│   └── llvm-dsymutil         ← packed Darwin DWARF materialization
-├── lib/libLLVM.so.<ver>      ← runtime lib rust-objcopy needs at exec time
-└── include/clang/...          ← C/C++ headers cc-rs uses when compiling deps
+```sh
+gh workflow run forge-dispatch.yml --repo zackees/soldr-toolchain --ref main \
+  -f tool=llvm-tools -f version=21.1.5 -f shape=linux-x64-gnu -f recipe_ref=main
 ```
 
-## Dispatch
-
-```bash
-gh workflow run forge-conan.yml --repo forge-ci/forge \
-    -f recipe_repo=zackees/soldr-toolchain \
-    -f recipe_ref=main \
-    -f recipe_path=recipes/llvm-tools-linux-x64 \
-    -f name=llvm-tools-linux-x64 \
-    -f version=20.1.7 \
-    -f linux_x64=true \
-    -f windows_x64=false -f macos_arm64=false
-```
-
-Ingested catalogue path: `llvm-tools/20.1.7/linux-x64-gnu/bundle.tar.zst`
+Unit: `llvm-tools/21.1.5/linux-x64-gnu/bundle.tar.zst`.
+The exact-recipe mode preserves this Linux cross-driver name during planning.
+See [the cross-build guide](../../docs/LINUX_DARWIN_CROSS.md).
