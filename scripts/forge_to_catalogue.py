@@ -148,7 +148,10 @@ TOOL_RECIPE_NAME["nodelib"] = {
     "windows-x64": "nodelib-windows-x64",
     "windows-arm64": "nodelib-windows-arm64",
 }
-TOOL_RECIPE_NAME["compiler-rt"] = {"darwin-arm64": "compiler-rt-darwin-arm64"}
+TOOL_RECIPE_NAME["compiler-rt"] = {
+    "darwin-arm64": "compiler-rt-darwin-arm64",
+    "windows-x64": "compiler-rt-windows-x64",
+}
 TOOL_RECIPE_NAME["swift"] = {"linux-x64-gnu": "swift-linux-x64-gnu"}
 TOOL_RECIPE_NAME["llvm-tools"] = {
     "linux-x64-gnu": "llvm-tools-linux-x64",

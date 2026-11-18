@@ -370,3 +370,6 @@ uv run --group dev python -m scripts.build_asset_index \
 See [Linux-hosted Darwin toolchain production](docs/LINUX_DARWIN_CROSS.md) for
 LLVM 21.1.5 compiler-rt, Swift 6, SDK 26.x extraction, dsymutil aliases, prepared
 Forge commands and the required cross-link evidence.
+
+For Windows MSVC x64 builtins, intrinsic-header precedence and the Microsoft CRT
+licensing boundary, see [Linux-hosted Windows cross compilation](docs/LINUX_WINDOWS_CROSS.md).

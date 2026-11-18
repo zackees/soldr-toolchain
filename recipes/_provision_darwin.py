@@ -76,12 +76,13 @@ def extract_unit(archive: Path, output: Path) -> None:
             raise RuntimeError('zstd unit decompression failed')
 
 
-def provision(output: Path, catalogue_url: str = CATALOGUE_URL) -> dict:
+def provision(output: Path, catalogue_url: str = CATALOGUE_URL, *, llvm_only: bool = False) -> dict:
     catalogue = json_url(catalogue_url)
     state = json_url(catalogue['publication_state']['url'])
     generation = read_verified_generation(catalogue, state)
     records = []
-    for kind, unit in [('llvm',LLVM_UNIT), ('sdk',SDK_UNIT)]:
+    inputs = [('llvm',LLVM_UNIT)] if llvm_only else [('llvm',LLVM_UNIT), ('sdk',SDK_UNIT)]
+    for kind, unit in inputs:
         matches = [entry for entry in generation.entries if entry.asset == unit]
         if len(matches) != 1:
             raise ValueError(f'expected one published unit {unit}, found {len(matches)}')
