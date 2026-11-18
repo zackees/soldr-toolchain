@@ -115,6 +115,18 @@ def test_sdk_26_captures_toolchain_owned_swift_resources(tmp_path):
         sdk.copy_swift_resources(tmp_path / "standalone-sdk", tmp_path / "missing")
 
 
+def test_sdk_26_accepts_sdk_owned_swift_shims(tmp_path):
+    sdk_root = tmp_path / "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk"
+    (sdk_root / 'usr/lib/swift/shims').mkdir(parents=True)
+    (sdk_root / 'usr/lib/swift/shims/module.modulemap').write_text('module SwiftShims {}')
+    resources = tmp_path / "Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift"
+    (resources / 'macosx').mkdir(parents=True)
+    (resources / 'macosx/Metal.swiftmodule').write_text('target overlay')
+    sdk.copy_swift_resources(sdk_root, tmp_path / 'captured')
+    assert (tmp_path / 'captured/macosx/Metal.swiftmodule').read_text() == 'target overlay'
+    assert (tmp_path / 'captured/shims/module.modulemap').read_text() == 'module SwiftShims {}'
+
+
 @pytest.mark.parametrize("symbols, ok", [("000000 T ___isPlatformVersionAtLeast\n", True), ("000000 T ___isPlatformVersionAtLeastFake\n", False), ("", False)])
 def test_builtins_require_exact_global_definition(monkeypatch, symbols, ok):
     h = helper()

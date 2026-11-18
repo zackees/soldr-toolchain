@@ -173,10 +173,15 @@ def copy_swift_resources(sdk_root: Path, dest: Path) -> None:
     if developer is None:
         raise ValueError(f"SDK 26.x requires an Xcode Developer directory: {sdk_root}")
     resources = developer / "Toolchains/XcodeDefault.xctoolchain/usr/lib/swift"
-    for required in ("macosx", "shims"):
-        if not (resources / required).is_dir():
-            raise ValueError(f"Xcode Swift resources missing {resources / required}")
+    if not (resources / "macosx").is_dir():
+        raise ValueError(f"Xcode Swift resources missing {resources / 'macosx'}")
     shutil.copytree(resources, dest, symlinks=True)
+    # New Xcodes can put the target shims in the SDK instead of the toolchain.
+    # The complete SDK is already captured; normalize its shims here when they
+    # use this layout, while preserving any toolchain-owned shims unchanged.
+    sdk_shims = sdk_root / "usr/lib/swift/shims"
+    if not (dest / "shims").exists() and sdk_shims.is_dir():
+        shutil.copytree(sdk_shims, dest / "shims", symlinks=True)
 
 
 def versioned_sdk_paths(version: str) -> list[Path]:
