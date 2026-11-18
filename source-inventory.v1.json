@@ -566,6 +566,14 @@
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/compiler-rt/21.1.5/windows-x64/bundle.tar.zst",
+      "sha256": "f5da2d73d77d6d454b02deeb99aa636a6759a4268b80805359a9cc4ef9cfca2f"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/gnu-linux-toolchain/gcc-13.3.0-glibc-2.17-1/linux-arm64-gnu/bundle.tar.zst",
       "sha256": "34347c57818c71d4353a2019389c6196ad1ef40b59e311b690fde54279e47b74"
     },
