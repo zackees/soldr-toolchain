@@ -76,12 +76,13 @@ def extract_unit(archive: Path, output: Path) -> None:
             raise RuntimeError('zstd unit decompression failed')
 
 
-def provision(output: Path, catalogue_url: str = CATALOGUE_URL) -> dict:
+def provision(output: Path, catalogue_url: str = CATALOGUE_URL, *, llvm_only: bool = False) -> dict:
     catalogue = json_url(catalogue_url)
     state = json_url(catalogue['publication_state']['url'])
     generation = read_verified_generation(catalogue, state)
     records = []
-    for kind, unit in [('llvm',LLVM_UNIT), ('sdk',SDK_UNIT)]:
+    inputs = [('llvm',LLVM_UNIT)] if llvm_only else [('llvm',LLVM_UNIT), ('sdk',SDK_UNIT)]
+    for kind, unit in inputs:
         matches = [entry for entry in generation.entries if entry.asset == unit]
         if len(matches) != 1:
             raise ValueError(f'expected one published unit {unit}, found {len(matches)}')
@@ -103,11 +104,12 @@ def main() -> None:
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--catalogue-url', default=CATALOGUE_URL)
     parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--llvm-only', action='store_true', help='Fetch LLVM without an Apple SDK for Windows resource repackaging.')
     args = parser.parse_args()
     if args.dry_run:
-        print(json.dumps({'catalogue':args.catalogue_url,'units':[LLVM_UNIT,SDK_UNIT],'output':str(args.output)}))
+        print(json.dumps({'catalogue':args.catalogue_url,'units':[LLVM_UNIT] if args.llvm_only else [LLVM_UNIT,SDK_UNIT],'output':str(args.output)}))
         return
-    print(json.dumps(provision(args.output, args.catalogue_url)))
+    print(json.dumps(provision(args.output, args.catalogue_url, llvm_only=args.llvm_only)))
 
 
 if __name__ == '__main__':
