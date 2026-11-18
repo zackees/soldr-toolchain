@@ -24,6 +24,22 @@
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "sdk.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/26.5/darwin-aarch64/sdk.tar.zst",
+      "sha256": "688b2d957c82242e0e3c859bccb332cb475859e0ad2bb32b7ed10e7c483582e6"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/swift/6.3.2/linux-x64-gnu/bundle.tar.zst",
+      "sha256": "338a2872e428dc62024c59a55eb3f615447e0e96dbe9695554e4dfe3738019da"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "sdk.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/apple-sdk/26.5/darwin-universal2/sdk.tar.zst",
       "sha256": "b6f64c9f71844cae9ab90000f7ac343ca44d8ecd24ce5ef17aaadb19cd4ee844"
     }
