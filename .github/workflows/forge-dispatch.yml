@@ -107,7 +107,7 @@ jobs:
       fail-fast: false
       max-parallel: 1
       matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
-    uses: forge-ci/forge/.github/workflows/forge-conan.yml@1c1ef65e566c90291e98941fa1479b8b359994c9
+    uses: forge-ci/forge/.github/workflows/forge-conan.yml@c4ed94c8973148adb9696231cc93aa7fa241a1f2
     with:
       recipe_repo: zackees/soldr-toolchain
       recipe_ref: ${{ inputs.recipe_ref }}
