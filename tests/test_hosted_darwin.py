@@ -53,6 +53,33 @@ def test_linux_llvm_builds_from_pinned_source_at_floor():
     assert '-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON' in command
 
 
+def test_llvm_bundle_can_inspect_compiler_rt_builtins(tmp_path, monkeypatch):
+    source = tmp_path / 'source' / f'llvm-project-{cross.LLVM_VERSION}.src'
+    (source / 'llvm').mkdir(parents=True)
+    (source / 'llvm/LICENSE.TXT').write_text('LLVM license')
+    monkeypatch.setattr(cross, 'download', lambda *a: None)
+    monkeypatch.setattr(cross, 'extract', lambda *a: None)
+    monkeypatch.setattr(cross, 'verify_elf_tree', lambda *a: {})
+    monkeypatch.setattr(cross.subprocess, 'check_output', lambda *a, **kw: 'clang version 21.1.5')
+
+    def build(argv, **kwargs):
+        if '--build' not in argv:
+            return
+        root = tmp_path / 'llvm-build'
+        (root / 'bin').mkdir(parents=True)
+        targets = argv[argv.index('--target') + 1:argv.index('--parallel')]
+        for name in targets:
+            (root / 'bin' / name).write_text(name)
+        runtimes = root / 'lib/clang/21/lib/linux'
+        runtimes.mkdir(parents=True)
+        for name in ('libclang_rt.asan-x86_64.a', 'libclang_rt.ubsan_standalone-x86_64.a'):
+            (runtimes / name).touch()
+
+    monkeypatch.setattr(cross.subprocess, 'run', build)
+    cross.build_llvm_tools(tmp_path)
+    assert (tmp_path / 'package/bin/llvm-nm').is_file()
+
+
 def test_ingest_reads_artifacts_from_caller_repository():
     root = Path(__file__).resolve().parents[1]
     dispatch = (root/'.github/workflows/forge-dispatch.yml').read_text()

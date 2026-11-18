@@ -326,7 +326,7 @@ def build_llvm_tools(work: Path) -> None:
     source = work / "source" / f"llvm-project-{LLVM_VERSION}.src"
     build = work / "llvm-build"
     subprocess.run(llvm_tools_command(source,build),check=True)
-    tools = ["clang","lld","llvm-ar","llvm-rc","llvm-objcopy","llvm-readobj","dsymutil","clang-resource-headers","runtimes"]
+    tools = ["clang","lld","llvm-ar","llvm-rc","llvm-objcopy","llvm-readobj","llvm-nm","dsymutil","clang-resource-headers","runtimes"]
     subprocess.run(["cmake","--build",str(build),"--target",*tools,"--parallel",str(os.cpu_count() or 2)],check=True)
     package = work / "package"
     (package/"bin").mkdir(parents=True)
