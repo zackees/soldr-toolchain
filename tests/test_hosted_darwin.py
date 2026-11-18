@@ -101,3 +101,32 @@ def test_zstd_padding_is_drained_before_wait(tmp_path, monkeypatch):
     monkeypatch.setattr(provision.subprocess,'Popen',lambda *a,**kw:Decoder())
     provision.extract_unit(tmp_path/'archive', tmp_path/'out')
     assert (tmp_path/'out/payload').read_bytes() == b'ok'
+
+
+def test_sdk_thins_read_only_stub_without_mutating_source(tmp_path):
+    from recipes import _apple_sdk_thin as sdk
+    source = tmp_path / 'source'
+    source.mkdir()
+    stub = source / 'libcharset.tbd'
+    text = '---\narchs: [ x86_64, arm64 ]\n'
+    stub.write_text(text)
+    stub.chmod(0o444)
+    log = SimpleNamespace(info=lambda _: None, warning=lambda _: None)
+    sdk.thin_sdk_tree(source, 'arm64', tmp_path / 'thin', log)
+    assert 'archs:           [ arm64 ]' in (tmp_path / 'thin/libcharset.tbd').read_text()
+    assert stub.read_text() == text and stub.stat().st_mode & 0o222 == 0
+
+
+def test_sdk_prefers_matching_xcode_over_default_toolchain(monkeypatch):
+    from recipes import _apple_sdk_thin as sdk
+    target = Path('/Applications/Xcode_26.5.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk')
+    monkeypatch.setattr(sdk, 'versioned_sdk_paths', lambda _: [target])
+    def query(argv, **kwargs):
+        if argv[-1] == '--show-sdk-path':
+            return str(target).replace('Xcode_26.5.app', 'Xcode_26.6.app')
+        if argv[-1] == '--show-sdk-version':
+            return '26.5'
+        return 'Xcode 26.5' if 'Xcode_26.5.app' in argv[0] else 'Xcode 26.6'
+    monkeypatch.setattr(sdk.subprocess, 'check_output', query)
+    result = sdk.resolve_sdk(SimpleNamespace(sdk_version='auto'), None, '26.5')
+    assert result == (str(target), '26.5', '26.5')
