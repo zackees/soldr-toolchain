@@ -169,6 +169,21 @@ def test_github_transport_failure_names_githubs_error_body(monkeypatch: pytest.M
         )
 
 
+def test_ref_creation_failure_identifies_unpublished_commit() -> None:
+    calls = []
+    def reject(method, path, body):
+        calls.append((method, path, body))
+        raise PublishError('HTTP 422: Reference update failed')
+    api = GitDataApi('owner', 'repo', reject)
+    ref, commit = 'heads/generations/example-data', 'a' * 40
+    with pytest.raises(PublishError) as failure:
+        api.create_ref(ref, commit)
+    message = str(failure.value)
+    assert 'refs/' + ref in message and commit in message
+    assert 'Reference update failed' in message
+    assert calls == [('POST', '/repos/owner/repo/git/refs', {'ref': 'refs/' + ref, 'sha': commit})]
+
+
 @pytest.mark.parametrize(
     "url",
     [
