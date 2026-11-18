@@ -67,7 +67,10 @@ def download(url: str, destination: Path, expected: str | None = None) -> None:
 
 def verify_llvm_signature(archive: Path, signature: Path, keys: Path, home: Path) -> None:
     home.mkdir(mode=0o700, parents=True, exist_ok=True)
-    subprocess.run(['gpg', '--homedir', str(home), '--batch', '--import', str(keys)], check=True)
+    # The glibc2.17 producer's older GPG can import the pinned RSA signer while
+    # rejecting unrelated newer keys in LLVM's shared bundle. Verification below
+    # still fails closed unless the archive verifies with exactly LLVM_SIGNER.
+    subprocess.run(['gpg', '--homedir', str(home), '--batch', '--import', str(keys)], check=False)
     result = subprocess.run(['gpg', '--homedir', str(home), '--batch', '--status-fd', '1',
                              '--verify', str(signature), str(archive)], text=True, capture_output=True)
     valid = re.findall(r'^\[GNUPG:\] VALIDSIG ([A-F0-9]+) ', result.stdout, re.MULTILINE)
