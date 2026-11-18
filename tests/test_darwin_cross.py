@@ -58,6 +58,7 @@ def test_swift_floor_rejects_newer_glibc():
 def test_sources_are_pinned_and_ingest_routes_exist():
     h = helper()
     assert h.LLVM_VERSION == "21.1.5"
+    assert h.SWIFT_VERSION == "6.3.2"
     assert len(h.LLVM_SHA256) == len(h.SWIFT_SHA256) == 64
     for tool, shape in [("compiler-rt", "darwin-arm64"), ("swift", "linux-x64-gnu")]:
         assert fc.TOOL_RECIPE_NAME[tool][shape]
@@ -144,6 +145,11 @@ def test_ad_hoc_signature_verifies_pages_and_rejects_tampering(tmp_path):
     path = tmp_path / "probe.dylib"
     path.write_bytes(code + signature)
     assert h.verify_macho_signature(path)["pages"] == 1
+    scattered = bytearray(code + signature)
+    struct.pack_into(">I", scattered, 64 + 20 + 44, 1)
+    path.write_bytes(scattered)
+    with pytest.raises(RuntimeError, match="scatter"):
+        h.verify_macho_signature(path)
     damaged = bytearray(code + signature)
     damaged[63] ^= 1
     path.write_bytes(damaged)

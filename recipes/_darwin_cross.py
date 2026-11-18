@@ -15,8 +15,8 @@ from pathlib import Path
 
 LLVM_VERSION = "21.1.5"
 LLVM_SHA256 = "1794be4bf974e99a3fe1da4b2b9b1456c02ae9479c942f365441d8d207bd650c"
-SWIFT_VERSION = "6.2.3"
-SWIFT_SHA256 = "fe1513e441ab653a134f9fd35855fe5dddac5fa716c0b0fe119eb76757525f05"
+SWIFT_VERSION = "6.3.2"
+SWIFT_SHA256 = "648daccc9062045cb42431f6c7d620858b729abccb6bb9075a6b990e6259e897"
 SWIFT_KEY = "52BB7E3DE28A71BE22EC05FFEF80A866B47A981F"
 SWIFT_URL = (
     f"https://download.swift.org/swift-{SWIFT_VERSION}-release/amazonlinux2/"
@@ -29,6 +29,8 @@ LLVM_URL = (
 
 
 def download(url: str, path: Path, sha256: str | None = None) -> None:
+    if sha256 is not None and path.is_file() and digest(path) == sha256:
+        return
     with urllib.request.urlopen(url, timeout=600) as response, path.open("wb") as out:
         shutil.copyfileobj(response, out)
     if sha256 is not None and digest(path) != sha256:
@@ -260,6 +262,7 @@ def verify_macho_signature(path: Path) -> dict:
     blob = data[offset:offset + length]
     magic, total, entries = struct.unpack_from(">III", blob)
     require(magic == 0xFADE0CC0 and total <= length and 12 + entries * 8 <= total, "invalid signature superblob")
+    require(entries == 1, "expected only a primary CodeDirectory")
     directories = []
     for i in range(entries):
         kind, start = struct.unpack_from(">II", blob, 12 + 8 * i)
@@ -274,10 +277,20 @@ def verify_macho_signature(path: Path) -> dict:
     version, flags, hashes, identifier, special, slots, limit = struct.unpack_from(">7I", cd, 8)
     hash_size, hash_type, _, page_shift = struct.unpack_from(">4B", cd, 36)
     require(0x20000 <= version <= 0x20400 and flags & 2, "expected ad-hoc CodeDirectory")
+    header_size = next(size for minimum, size in (
+        (0x20400, 88), (0x20300, 64), (0x20200, 52), (0x20100, 48), (0x20000, 44)
+    ) if version >= minimum)
+    require(cd_length >= header_size, "truncated versioned CodeDirectory header")
+    if version >= 0x20100:
+        require(struct.unpack_from(">I", cd, 44)[0] == 0, "unsupported scatter signature")
+    if version >= 0x20200:
+        require(struct.unpack_from(">I", cd, 48)[0] == 0, "unexpected ad-hoc team identifier")
+    if version >= 0x20300:
+        require(struct.unpack_from(">Q", cd, 56)[0] in (0, limit), "unsupported 64-bit signed extent")
     require(hash_size == 32 and hash_type == 2 and 0 < page_shift <= 20, "unsupported signature hash")
     page_size = 1 << page_shift
     require(limit == offset and slots == (limit + page_size - 1) // page_size, "invalid signed extent")
-    require(special == 0 and 44 <= identifier < hashes and hashes + slots * 32 <= cd_length, "invalid signature hash table")
+    require(special == 0 and header_size <= identifier < hashes and hashes + slots * 32 <= cd_length, "invalid signature hash table")
     for i in range(slots):
         actual = hashlib.sha256(data[i * page_size:min((i + 1) * page_size, limit)]).digest()
         require(actual == cd[hashes + i * 32:hashes + (i + 1) * 32], f"signature page {i} mismatch")

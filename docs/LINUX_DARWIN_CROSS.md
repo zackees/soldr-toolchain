@@ -12,7 +12,7 @@ completed artifacts. Tracking: [#221](https://github.com/zackees/soldr-toolchain
 | --- | --- | --- |
 | LLVM 21.1.5 host tools | llvm-tools-linux-x64 | Linux clang, ld64.lld, dsymutil and llvm-dsymutil aliases |
 | Darwin compiler-rt 21.1.5 | compiler-rt-darwin-arm64 on Linux x64 | Overlay lib/clang/21/lib/darwin; never mix LLVM patch versions |
-| Swift 6.2.3 host compiler | swift-linux-x64-gnu | Preserve bin/../lib, importer resources and Linux host plugins |
+| Swift 6.3.2 host compiler | swift-linux-x64-gnu | Preserve bin/../lib, importer resources and Linux host plugins |
 | SDK 26.5 and target Swift resources | existing apple-sdk-* family on extraction runner | sdk/ plus swift-resource-dir/ with Xcode macosx overlays and shims |
 
 The official [LLVM 21.1.5 release](https://github.com/llvm/llvm-project/releases/tag/llvmorg-21.1.5)
@@ -37,7 +37,7 @@ gh workflow run forge-dispatch.yml --repo zackees/soldr-toolchain --ref main \
 # Use shape=universal2 for the full SDK with every architecture slice.
 
 gh workflow run forge-dispatch.yml --repo zackees/soldr-toolchain --ref main \
-  -f tool=swift -f version=6.2.3 -f shape=linux-x64-gnu -f recipe_ref=main
+  -f tool=swift -f version=6.3.2 -f shape=linux-x64-gnu -f recipe_ref=main
 
 gh workflow run forge-dispatch.yml --repo zackees/soldr-toolchain --ref main \
   -f tool=llvm-tools -f version=21.1.5 -f shape=linux-x64-gnu -f recipe_ref=main
@@ -113,3 +113,9 @@ all produce signed arm64 executables. Ad-hoc integrity verification does not
 establish Developer ID identity, notarization, runtime execution or Gatekeeper
 approval. Swift's real archive package step passes its signature and ELF gates.
 SDK 26.5 extraction and the full Swift/Metal/AppKit link remain activation gates.
+
+Apple lists Swift 6.3 for SDK 26.5 in its
+[Xcode release notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-26_6-release-notes).
+The host recipe therefore pins the signed Swift 6.3.2 Amazon Linux 2 release;
+the older 6.2.3 archive was useful for initial packaging research but does not
+establish compatibility with the 26.5 interfaces.
