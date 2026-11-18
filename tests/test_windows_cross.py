@@ -55,11 +55,12 @@ def test_windows_provisioning_never_downloads_apple_sdk(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize('architectures,symbols,error', [
-    ('Arch: x86_64\nArch: x86_64', '00000000 T __udivti3\n', None),
-    ('Arch: x86_64\nArch: aarch64', '00000000 T __udivti3\n', 'architecture'),
+    ('Format: COFF-x86-64\nArch: x86_64\nFormat: COFF-x86-64\nArch: x86_64', '00000000 T __udivti3\n', None),
+    ('Format: COFF-x86-64\nArch: x86_64\nFormat: COFF-ARM64\nArch: aarch64', '00000000 T __udivti3\n', 'architecture'),
+    ('Format: elf64-x86-64\nArch: x86_64', '00000000 T __udivti3\n', 'format'),
     ('', '00000000 T __udivti3\n', 'architecture'),
-    ('Arch: x86_64', '         U __udivti3\n', '__udivti3'),
-    ('Arch: x86_64', '00000000 T __udivti3_extra\n', '__udivti3'),
+    ('Format: COFF-x86-64\nArch: x86_64', '         U __udivti3\n', '__udivti3'),
+    ('Format: COFF-x86-64\nArch: x86_64', '00000000 T __udivti3_extra\n', '__udivti3'),
 ])
 def test_builtins_require_amd64_and_exact_global_definition(monkeypatch, architectures, symbols, error):
     h = helper()

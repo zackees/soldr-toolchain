@@ -6,6 +6,8 @@ following the Linux-for-everything direction in
 Downstream evidence is `obs-rust/obs-studio@ci/windows-tier2-run-only`,
 [obs-studio#5009](https://github.com/obs-rust/obs-studio/issues/5009) and
 [obs-studio#5008](https://github.com/obs-rust/obs-studio/issues/5008).
+Consumer provisioning and driver fixes:
+[soldr#4167](https://github.com/forge-ci/soldr/issues/4167).
 
 ## Compiler-rt and intrinsic headers
 
@@ -20,9 +22,9 @@ reference or change OBS source to work around the missing managed library.
 The reported SSE failures are a separate, reproduced header precedence bug in
 soldr 0.9.53. Its targeted clang wrapper prepends xwin CRT/SDK `-isystem` paths,
 so `<intrin.h>` and `<immintrin.h>` resolve to Microsoft's declarations instead
-of clang's inline implementations. A Linux C probe using `_mm_loadu_ps`,
-`_mm_shuffle_ps`, `_mm_mul_ps`, `_mm_storeu_ps` leaves four undefined symbols at
-`-O2`. Inserting clang's resource include directory before the first xwin
+of clang's inline implementations. A Linux C probe covering all **19** reported
+SSE intrinsic symbols reproduces all 19 undefined references at `-O2`.
+Inserting clang's resource include directory before the first xwin
 `-isystem` argument produces an object with **no undefined symbols**. The fix
 belongs in soldr's driver ordering. No new SSE shims are needed in this recipe.
 

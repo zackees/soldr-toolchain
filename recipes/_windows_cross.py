@@ -103,8 +103,9 @@ def llvm_root(work: Path) -> Path:
 def verify_builtins(archive: Path, llvm: Path) -> None:
     info = subprocess.check_output([str(llvm/'bin/llvm-readobj'), '--file-headers', str(archive)], text=True)
     architectures = re.findall(r'^Arch: (\S+)', info, re.MULTILINE)
-    if not architectures or set(architectures) != {'x86_64'}:
-        raise RuntimeError('unexpected or missing compiler-rt COFF architecture')
+    formats = re.findall(r'^Format: (\S+)', info, re.MULTILINE)
+    if not architectures or set(architectures) != {'x86_64'} or len(formats) != len(architectures) or set(formats) != {'COFF-x86-64'}:
+        raise RuntimeError('unexpected or missing compiler-rt COFF architecture/format')
     symbols = subprocess.check_output([str(llvm/'bin/llvm-nm'), '--defined-only', '--extern-only', str(archive)], text=True)
     if not re.search(r'^\s*(?:[0-9a-fA-F]+\s+)?T __udivti3$', symbols, re.MULTILINE):
         raise RuntimeError('Windows builtins lack a global definition of __udivti3')
