@@ -152,6 +152,7 @@ def test_sdk_prefers_matching_xcode_over_default_toolchain(monkeypatch):
         if argv[-1] == '--show-sdk-path':
             return str(target).replace('Xcode_26.5.app', 'Xcode_26.6.app')
         if argv[-1] == '--show-sdk-version':
+            assert kwargs.get('env', {}).get('DEVELOPER_DIR') == str(target.parents[4])
             return '26.5'
         return 'Xcode 26.5' if 'Xcode_26.5.app' in argv[0] else 'Xcode 26.6'
     monkeypatch.setattr(sdk.subprocess, 'check_output', query)
