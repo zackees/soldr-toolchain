@@ -64,6 +64,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
+  actions: read
   contents: write
   pull-requests: write
 
