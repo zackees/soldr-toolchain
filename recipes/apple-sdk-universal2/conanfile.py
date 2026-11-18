@@ -85,7 +85,7 @@ prune_manpages = _load_recipe_helper(
 ).prune_manpages
 
 
-SUPPORTED_SDK_VERSIONS = ("auto", "11.3", "13.3", "14.5", "15.2")
+SUPPORTED_SDK_VERSIONS = ("auto", "11.3", "13.3", "14.5", "15.2", "26.0", "26.1", "26.2", "26.3", "26.4", "26.5")
 
 
 class AppleSDKUniversal2(ConanFile):
@@ -96,7 +96,7 @@ class AppleSDKUniversal2(ConanFile):
         "lipo-thinning. Full SDK tree (headers, frameworks, .tbd files) "
         "is included verbatim per soldr-toolchain#14 full-SDK policy."
     )
-    license = "Apple-MIT-Style"
+    license = "LicenseRef-Apple-Xcode-SDK"
     package_type = "header-library"
     no_copy_source = True
     settings = "os", "arch"
@@ -132,6 +132,10 @@ class AppleSDKUniversal2(ConanFile):
         shutil.copytree(sdk_root, dest, symlinks=True)
         prune_manpages(dest, self.output)
 
+        if int(captured_version.split(".")[0]) >= 26:
+            helper = _load_recipe_helper("soldr_recipe__apple_sdk_thin", "_apple_sdk_thin.py")
+            helper.copy_swift_resources(Path(sdk_root), Path(self.build_folder) / "swift-resource-dir")
+
         # Provenance metadata for the catalogue ingest.
         meta = {
             "shape": "universal2",
@@ -145,6 +149,9 @@ class AppleSDKUniversal2(ConanFile):
         )
 
     def package(self):
+        resources = Path(self.build_folder) / "swift-resource-dir"
+        if resources.is_dir():
+            copy(self, "*", src=str(resources), dst=str(Path(self.package_folder) / "swift-resource-dir"))
         # Move `sdk/` + `meta.json` into the Conan package folder. Forge
         # wraps the package_folder in tar.gz; ingest re-tars + zstd-
         # compresses for the catalogue.
@@ -165,45 +172,5 @@ class AppleSDKUniversal2(ConanFile):
 
     def _resolve_sdk(self) -> tuple[str, str, str]:
         """Return (sdk_path, captured_version, xcode_version)."""
-        requested = str(self.options.sdk_version)
-        if requested == "auto":
-            sdk_arg = "macosx"
-        else:
-            sdk_arg = f"macosx{requested}"
-
-        try:
-            sdk_path = subprocess.check_output(
-                ["xcrun", "--sdk", sdk_arg, "--show-sdk-path"],
-                text=True,
-            ).strip()
-        except subprocess.CalledProcessError as exc:
-            if requested == "auto":
-                raise ConanInvalidConfiguration(
-                    f"xcrun --sdk macosx failed; no SDK on runner: {exc}"
-                ) from exc
-            self.output.warning(
-                f"requested SDK {requested} not on runner; falling back to default"
-            )
-            sdk_path = subprocess.check_output(
-                ["xcrun", "--sdk", "macosx", "--show-sdk-path"],
-                text=True,
-            ).strip()
-
-        captured_version = subprocess.check_output(
-            ["xcrun", "--sdk", "macosx", "--show-sdk-version"],
-            text=True,
-        ).strip()
-        if requested not in ("auto",) and not captured_version.startswith(requested):
-            raise ConanInvalidConfiguration(
-                f"requested SDK version {requested} but runner returned "
-                f"{captured_version}; refuse to mislabel."
-            )
-
-        try:
-            xcode_version = subprocess.check_output(
-                ["xcodebuild", "-version"], text=True
-            ).splitlines()[0].split(" ", 1)[-1].strip()
-        except (subprocess.CalledProcessError, FileNotFoundError, IndexError):
-            xcode_version = "unknown"
-
-        return sdk_path, captured_version, xcode_version
+        helper = _load_recipe_helper("soldr_recipe__apple_sdk_thin", "_apple_sdk_thin.py")
+        return helper.resolve_sdk(self.options, self.output, self.version)

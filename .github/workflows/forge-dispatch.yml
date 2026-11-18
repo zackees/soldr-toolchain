@@ -27,6 +27,9 @@ on:
           - openssl
           - libuuid
           - llvm-host-libs
+          - swift
+          - compiler-rt
+          - llvm-tools
           - cmake
           - ninja
           - uv
@@ -144,6 +147,9 @@ jobs:
               "openssl": syslib_shapes,
               "libuuid": libuuid_shapes,
               "llvm-host-libs": gnu_toolchain_shapes,
+              "swift": ["linux-x64-gnu"],
+              "compiler-rt": ["darwin-arm64"],
+              "llvm-tools": ["linux-x64-gnu"],
               "cmake": prebuilt_shapes,
               "ninja": prebuilt_shapes,
               "uv": legacy_syslib_shapes,
@@ -187,6 +193,7 @@ jobs:
         run: |
           set -euo pipefail
           case "${{ inputs.tool }}" in
+            llvm-tools) recipe_path="recipes/llvm-tools-linux-x64" ;;
             cargo-chef|crgx) recipe_path="recipes/rust-cli" ;;
             *) recipe_path="recipes/${{ inputs.tool }}-${{ matrix.shape }}" ;;
           esac
@@ -203,7 +210,7 @@ jobs:
           macos_x64=false
           macos_arm64=false
           case "${{ inputs.tool }}" in
-            cmake|ninja|uv|mingw-w64-gcc|gnu-linux-toolchain|musl-linux-toolchain)
+            compiler-rt|swift|llvm-tools|cmake|ninja|uv|mingw-w64-gcc|gnu-linux-toolchain|musl-linux-toolchain)
               # Pure download+repackage recipes: the artifact is
               # identical no matter which runner builds it, so every
               # shape runs on the cheap Linux x64 runner (same trick

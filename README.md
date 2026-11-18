@@ -364,3 +364,9 @@ uv run --group dev python -m scripts.build_asset_index \
     --branch assets \
     --offline   # omit for the SHA256SUMS HTTP fetch pass
 ```
+
+## Darwin artifacts compiled on Linux
+
+See [Linux-hosted Darwin toolchain production](docs/LINUX_DARWIN_CROSS.md) for
+LLVM 21.1.5 compiler-rt, Swift 6, SDK 26.x extraction, dsymutil aliases, prepared
+Forge commands and the required cross-link evidence.
