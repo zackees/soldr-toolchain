@@ -558,6 +558,14 @@
       "repo": "soldr-toolchain",
       "tag": "assets",
       "asset": "bundle.tar.zst",
+      "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/compiler-rt/21.1.5/darwin-arm64/bundle.tar.zst",
+      "sha256": "bcf66e74b80500ed606891f12996b0af6c8a2f52d32237dd8e3ddc50c7b5db2e"
+    },
+    {
+      "owner": "zackees",
+      "repo": "soldr-toolchain",
+      "tag": "assets",
+      "asset": "bundle.tar.zst",
       "url": "https://media.githubusercontent.com/media/zackees/soldr-toolchain/assets/gnu-linux-toolchain/gcc-13.3.0-glibc-2.17-1/linux-arm64-gnu/bundle.tar.zst",
       "sha256": "34347c57818c71d4353a2019389c6196ad1ef40b59e311b690fde54279e47b74"
     },
