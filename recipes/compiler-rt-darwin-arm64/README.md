@@ -14,7 +14,10 @@ producer environment must supply these prerequisites before dispatch.
 The package overlays `lib/clang/21/lib/darwin/` and includes ASan/UBSan dynamic
 runtimes, the availability builtins archive `libclang_rt.osx.a`, any other built
 osx runtimes, sanitizer headers and the LLVM license. Packaging rejects missing
-required files, non-arm64 objects, or absent `__isPlatformVersionAtLeast`.
+required files, non-arm64 objects, invalid ad-hoc SHA256 signature pages, or
+an absent global definition of `__isPlatformVersionAtLeast`. Signature evidence
+is retained in meta.json. Local source build, package, sanitizer and availability
+link probes passed against the actual SDK 15.5; this is not an SDK 26.5 proof.
 
 ```sh
 gh workflow run forge-dispatch.yml --repo zackees/soldr-toolchain --ref main \

@@ -126,3 +126,30 @@ def test_builtins_require_exact_global_definition(monkeypatch, symbols, ok):
     else:
         with pytest.raises(RuntimeError, match="definition"):
             h.verify_builtins(Path("archive.a"), Path("llvm-nm"))
+
+
+def test_ad_hoc_signature_verifies_pages_and_rejects_tampering(tmp_path):
+    import hashlib
+    import struct
+    h = helper()
+    identifier = b"probe\0"
+    hashes = 88 + len(identifier)
+    directory_length = hashes + 32
+    signature_size = 20 + directory_length
+    code = struct.pack("<8I", 0xFEEDFACF, 0x100000C, 0, 6, 1, 16, 0, 0)
+    code += struct.pack("<4I", 0x1D, 16, 64, signature_size) + b"\0" * 16
+    directory = struct.pack(">9I4BI", 0xFADE0C02, directory_length, 0x20400, 2, hashes, 88, 0, 1, 64, 32, 2, 0, 12, 0)
+    directory += b"\0" * (88 - len(directory)) + identifier + hashlib.sha256(code).digest()
+    signature = struct.pack(">5I", 0xFADE0CC0, signature_size, 1, 0, 20) + directory
+    path = tmp_path / "probe.dylib"
+    path.write_bytes(code + signature)
+    assert h.verify_macho_signature(path)["pages"] == 1
+    damaged = bytearray(code + signature)
+    damaged[63] ^= 1
+    path.write_bytes(damaged)
+    with pytest.raises(RuntimeError, match="page 0 mismatch"):
+        h.verify_macho_signature(path)
+    damaged[4:8] = struct.pack("<I", 0x1000007)
+    path.write_bytes(damaged)
+    with pytest.raises(RuntimeError, match="expected arm64"):
+        h.verify_macho_signature(path)

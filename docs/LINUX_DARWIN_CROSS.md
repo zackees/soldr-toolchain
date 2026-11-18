@@ -101,3 +101,15 @@ repository's packaging precedent, not redistribution permission. Preserve Apple
 notices and apply the repository's existing entitlement/publication policy;
 private/entitled bytes can use the curated-entry mechanism in ASSET_CATALOG.md.
 No Apple bytes are committed to main by these recipes.
+
+## Local evidence and limits
+
+Linux source validation built LLVM 21.1.5 compiler-rt against the local SDK whose
+SDKSettings.json reports **15.5** (despite its managed cache directory being
+named 14.5). All eight produced dylibs are thin arm64, with independently checked
+ad-hoc SHA256 CodeDirectory pages. The global availability builtin is defined.
+Address+undefined, standalone undefined, and availability-builtin link probes
+all produce signed arm64 executables. Ad-hoc integrity verification does not
+establish Developer ID identity, notarization, runtime execution or Gatekeeper
+approval. Swift's real archive package step passes its signature and ELF gates.
+SDK 26.5 extraction and the full Swift/Metal/AppKit link remain activation gates.

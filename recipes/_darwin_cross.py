@@ -8,6 +8,7 @@ import re
 import shutil
 import shlex
 import subprocess
+import struct
 import tarfile
 import urllib.request
 from pathlib import Path
@@ -16,8 +17,6 @@ LLVM_VERSION = "21.1.5"
 LLVM_SHA256 = "1794be4bf974e99a3fe1da4b2b9b1456c02ae9479c942f365441d8d207bd650c"
 SWIFT_VERSION = "6.2.3"
 SWIFT_SHA256 = "fe1513e441ab653a134f9fd35855fe5dddac5fa716c0b0fe119eb76757525f05"
-CODESIGN_URL = "https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign/0.29.0/apple-codesign-0.29.0-x86_64-unknown-linux-musl.tar.gz"
-CODESIGN_SHA256 = "dbe85cedd8ee4217b64e9a0e4c2aef92ab8bcaaa41f20bde99781ff02e600002"
 SWIFT_KEY = "52BB7E3DE28A71BE22EC05FFEF80A866B47A981F"
 SWIFT_URL = (
     f"https://download.swift.org/swift-{SWIFT_VERSION}-release/amazonlinux2/"
@@ -213,19 +212,14 @@ def package_compiler_rt(work: Path, build: Path, llvm: Path, source: Path, sdk_v
         info = subprocess.check_output([str(llvm / "bin/llvm-readobj"), "--file-headers", str(path)], text=True)
         if "Arch: aarch64" not in info or re.search(r"Arch: (?!aarch64)", info):
             raise RuntimeError(f"unexpected compiler-rt architecture: {path}")
-    signer_archive = work / "codesign.tar.gz"
-    download(CODESIGN_URL, signer_archive, CODESIGN_SHA256)
-    extract(signer_archive, work / "codesign")
-    signer = work / "codesign/apple-codesign-0.29.0-x86_64-unknown-linux-musl/rcodesign"
-    for path in dest.glob("*.dylib"):
-        # ld64.lld signs arm64 output; independently verify the complete signature.
-        subprocess.run([str(signer), "verify", "-C", "/dev/null", str(path)], check=True)
+    signatures = {path.name: verify_macho_signature(path) for path in dest.glob("*.dylib")}
     verify_builtins(dest / "libclang_rt.osx.a", llvm / "bin/llvm-nm")
     shutil.copytree(source / "compiler-rt/include/sanitizer", work / "package/lib/clang/21/include/sanitizer")
     shutil.copy2(source / "compiler-rt/LICENSE.TXT", work / "package/LICENSE.TXT")
     (work / "meta.json").write_text(json.dumps({
         "llvm_version": LLVM_VERSION, "source_url": LLVM_URL, "source_sha256": LLVM_SHA256,
         "sdk_version": sdk_version, "target": "aarch64-apple-darwin",
+        "dylib_signatures": signatures, "availability_builtin_defined": True,
     }, indent=2) + "\n")
 
 
@@ -233,3 +227,58 @@ def verify_builtins(archive: Path, nm: Path) -> None:
     symbols = subprocess.check_output([str(nm), "--defined-only", "--extern-only", str(archive)], text=True)
     if not re.search(r"\b___isPlatformVersionAtLeast$", symbols, re.MULTILINE):
         raise RuntimeError("Darwin builtins lack a definition of __isPlatformVersionAtLeast")
+
+
+def verify_macho_signature(path: Path) -> dict:
+    """Verify every SHA256 CodeDirectory page of our thin arm64 ad-hoc images.
+
+    Linker signatures have no CMS certificate. This verifies integrity, not a
+    Developer ID identity or Gatekeeper approval. Reject formats we don't emit.
+    """
+    data = path.read_bytes()
+
+    def require(ok, message):
+        if not ok:
+            raise RuntimeError(f"{path}: {message}")
+
+    require(len(data) >= 32 and data[:4] == b"\xcf\xfa\xed\xfe", "expected thin Mach-O 64")
+    require(struct.unpack_from("<I", data, 4)[0] == 0x100000C, "expected arm64")
+    count, size = struct.unpack_from("<II", data, 16)
+    require(32 + size <= len(data) and count <= size // 8, "invalid load commands")
+    cursor, signature = 32, None
+    for _ in range(count):
+        require(cursor + 8 <= 32 + size, "truncated load command")
+        command, length = struct.unpack_from("<II", data, cursor)
+        require(length >= 8 and cursor + length <= 32 + size, "invalid load command size")
+        if command == 0x1D:
+            require(length == 16 and signature is None, "invalid LC_CODE_SIGNATURE")
+            signature = struct.unpack_from("<II", data, cursor + 8)
+        cursor += length
+    require(signature is not None, "missing code signature")
+    offset, length = signature
+    require(offset >= 32 + size and offset + length <= len(data) and length >= 20, "signature outside image")
+    blob = data[offset:offset + length]
+    magic, total, entries = struct.unpack_from(">III", blob)
+    require(magic == 0xFADE0CC0 and total <= length and 12 + entries * 8 <= total, "invalid signature superblob")
+    directories = []
+    for i in range(entries):
+        kind, start = struct.unpack_from(">II", blob, 12 + 8 * i)
+        require(12 + entries * 8 <= start <= total - 8, "invalid signature slot")
+        if kind == 0:
+            directories.append(start)
+    require(len(directories) == 1, "expected one primary CodeDirectory")
+    start = directories[0]
+    cd_magic, cd_length = struct.unpack_from(">II", blob, start)
+    require(cd_magic == 0xFADE0C02 and cd_length >= 44 and start + cd_length <= total, "invalid CodeDirectory")
+    cd = blob[start:start + cd_length]
+    version, flags, hashes, identifier, special, slots, limit = struct.unpack_from(">7I", cd, 8)
+    hash_size, hash_type, _, page_shift = struct.unpack_from(">4B", cd, 36)
+    require(0x20000 <= version <= 0x20400 and flags & 2, "expected ad-hoc CodeDirectory")
+    require(hash_size == 32 and hash_type == 2 and 0 < page_shift <= 20, "unsupported signature hash")
+    page_size = 1 << page_shift
+    require(limit == offset and slots == (limit + page_size - 1) // page_size, "invalid signed extent")
+    require(special == 0 and 44 <= identifier < hashes and hashes + slots * 32 <= cd_length, "invalid signature hash table")
+    for i in range(slots):
+        actual = hashlib.sha256(data[i * page_size:min((i + 1) * page_size, limit)]).digest()
+        require(actual == cd[hashes + i * 32:hashes + (i + 1) * 32], f"signature page {i} mismatch")
+    return {"arch": "arm64", "signature": "ad-hoc-sha256", "pages": slots, "sha256": digest(path)}
