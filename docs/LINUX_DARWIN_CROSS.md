@@ -26,6 +26,13 @@ runner default. 26.x packages additionally preserve Xcode's Swift resource tree.
 The consumer must use Linux host plugins and importer headers while selecting
 Darwin target resources; captured macOS host plugins cannot execute on Linux.
 
+Build the Darwin Swift resource directory from the SDK's `macosx`, `shims`,
+`apinotes` and `swiftToCxx` directories. Add only the Linux toolchain's `host`
+plugins and its Clang importer resources. Copying the entire Linux `lib/swift`
+tree introduces Linux CoreFoundation, dispatch and os headers ahead of the SDK;
+SDK 26.5 then fails on undefined CoreFoundation macros such as
+`CF_SWIFT_SENDABLE`. Pass the target shim directory explicitly with `-I`.
+
 ## Hosted dispatch and publication
 
 Forge runner selection and exact recipe support landed in
@@ -92,6 +99,60 @@ Swift/SDK closure, nor OBS's CMake/bridge renderer closure. Provisioning and
 CMake/native exposure are tracked in
 [soldr#4165](https://github.com/forge-ci/soldr/issues/4165).
 
+### Reproducing the Linux Swift proof
+
+Set `SWIFT_ROOT` to the Swift unit's `package/`, `SDK_PACKAGE` to the thin SDK
+unit's `package/`, and `LLVM_ROOT` to a staged LLVM tree containing the
+compiler-rt overlay from the table above. Keep the input units immutable.
+Set `PROOF_DIR` to a fresh directory outside this code checkout, then run from
+this checkout on Linux x64:
+
+```sh
+SDKROOT="$SDK_PACKAGE/sdk"
+RESOURCES="$PROOF_DIR/swift-resources"
+mkdir -p "$RESOURCES"
+cp -a "$SWIFT_ROOT/lib/swift/host" "$RESOURCES/host"
+for name in macosx shims apinotes swiftToCxx; do
+  cp -a "$SDK_PACKAGE/swift-resource-dir/$name" "$RESOURCES/$name"
+done
+cp -aL "$SWIFT_ROOT/lib/swift/clang" "$RESOURCES/clang"
+
+"$SWIFT_ROOT/bin/swiftc" -swift-version 6 -target arm64-apple-macosx11.0 \
+  -sdk "$SDKROOT" -resource-dir "$RESOURCES" \
+  -I "$SDKROOT/usr/lib/swift" -I "$RESOURCES/shims" \
+  -Xcc -resource-dir -Xcc "$RESOURCES/clang" \
+  -Xfrontend -enable-cross-import-overlays \
+  -module-cache-path "$PROOF_DIR/module-cache" \
+  -emit-object -parse-as-library -g -save-temps -module-name SoldrMetalProbe \
+  -F "$SDKROOT/System/Library/Frameworks" \
+  docs/examples/MetalProbe.swift -o "$PROOF_DIR/MetalProbe.o"
+
+"$SWIFT_ROOT/bin/swiftc" -target arm64-apple-macosx11.0 \
+  -sdk "$SDKROOT" -resource-dir "$RESOURCES" \
+  -tools-directory "$LLVM_ROOT/bin" -use-ld=lld -emit-library -g \
+  "$PROOF_DIR/MetalProbe.o" -o "$PROOF_DIR/libSoldrMetalProbe.dylib" \
+  -L "$SDKROOT/usr/lib/swift" -F "$SDKROOT/System/Library/Frameworks" \
+  -framework AppKit -framework Metal -Xlinker -adhoc_codesign \
+  -Xlinker -install_name -Xlinker @rpath/libSoldrMetalProbe.dylib
+
+"$LLVM_ROOT/bin/dsymutil" "$PROOF_DIR/libSoldrMetalProbe.dylib" \
+  -o "$PROOF_DIR/SoldrMetalProbe.dSYM"
+uv run --group dev python - "$PROOF_DIR/libSoldrMetalProbe.dylib" <<'PY'
+from pathlib import Path
+import sys
+from recipes._darwin_cross import verify_macho_signature
+print(verify_macho_signature(Path(sys.argv[1])))
+PY
+"$LLVM_ROOT/bin/llvm-nm" --defined-only --extern-only \
+  "$PROOF_DIR/libSoldrMetalProbe.dylib"
+"$LLVM_ROOT/bin/llvm-readobj" --file-headers --sections \
+  "$PROOF_DIR/SoldrMetalProbe.dSYM/Contents/Resources/DWARF/libSoldrMetalProbe.dylib"
+```
+
+The Swift driver invokes managed `clang -fuse-ld=lld`, which selects the adjacent
+`ld64.lld`, and discovers the bundle's exact `dsymutil` spelling. Keep the object
+and saved intermediates until debug extraction finishes.
+
 ## Sources and licensing
 
 Swift.org documents [PGP verification](https://www.swift.org/install/linux/tarball/).
@@ -116,15 +177,24 @@ No Apple bytes are committed to main by these recipes.
 
 ## Local evidence and limits
 
-Linux source validation built LLVM 21.1.5 compiler-rt against the local SDK whose
+The hosted Linux producer built LLVM 21.1.5 compiler-rt against the SDK whose
 SDKSettings.json reports **15.5** (despite its managed cache directory being
 named 14.5). All eight produced dylibs are thin arm64, with independently checked
 ad-hoc SHA256 CodeDirectory pages. The global availability builtin is defined.
-Address+undefined, standalone undefined, and availability-builtin link probes
-all produce signed arm64 executables. Ad-hoc integrity verification does not
+With the real SDK 26.5 and the staged LLVM/runtime units, address+undefined,
+standalone undefined, and availability-builtin link probes all produce signed
+arm64 executables. Ad-hoc integrity verification does not
 establish Developer ID identity, notarization, runtime execution or Gatekeeper
 approval. Swift's real archive package step passes its signature and ELF gates.
-SDK 26.5 extraction and the full Swift/Metal/AppKit link remain activation gates.
+The SDK 26.5 extraction and Swift/Metal/AppKit proof also passed on Linux x64:
+Swift 6.3.2 compiled the example with the published SDK, and managed LLVM 21.1.5
+linked a 54,832-byte arm64 Mach-O dylib. Independent verification checked all
+14 ad-hoc SHA256 code pages, the exported C entrypoint, and an arm64 dSYM with
+`__debug_info` (2,451,728 bytes). A macOS 11.0 deployment build also passed:
+83,472-byte dylib, 21 verified signature pages, and 2,534,796-byte arm64 dSYM.
+The SDK interfaces declare Apple Swift 6.3.2,
+so no host-version substitution was needed. The consumer provisioning/CMake
+integration in soldr#4165 remains separate from this producer proof.
 
 Apple lists Swift 6.3 for SDK 26.5 in its
 [Xcode release notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-26_6-release-notes).
