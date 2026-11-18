@@ -112,3 +112,17 @@ def test_sdk_26_captures_toolchain_owned_swift_resources(tmp_path):
     assert (tmp_path / "captured/macosx/Metal.swiftmodule").read_text() == "target overlay"
     with pytest.raises(ValueError, match="Xcode Developer"):
         sdk.copy_swift_resources(tmp_path / "standalone-sdk", tmp_path / "missing")
+
+
+@pytest.mark.parametrize("symbols, ok", [("000000 T ___isPlatformVersionAtLeast\n", True), ("000000 T ___isPlatformVersionAtLeastFake\n", False), ("", False)])
+def test_builtins_require_exact_global_definition(monkeypatch, symbols, ok):
+    h = helper()
+    def nm(argv, **kw):
+        assert "--defined-only" in argv and "--extern-only" in argv
+        return symbols
+    monkeypatch.setattr(h.subprocess, "check_output", nm)
+    if ok:
+        h.verify_builtins(Path("archive.a"), Path("llvm-nm"))
+    else:
+        with pytest.raises(RuntimeError, match="definition"):
+            h.verify_builtins(Path("archive.a"), Path("llvm-nm"))

@@ -26,7 +26,7 @@ helper = _load_helper()
 
 class SwiftLinuxX64(ConanFile):
     name = "swift-linux-x64-gnu"
-    license = "Apache-2.0 WITH LLVM-exception"
+    license = "Apache-2.0 WITH Swift-exception AND Apache-2.0 WITH LLVM-exception"
     package_type = "application"
     settings = "os", "arch"
     no_copy_source = True

@@ -176,7 +176,7 @@ def build_compiler_rt(work: Path) -> None:
     host_build = work / "host-tools"
     subprocess.run([
         "cmake", "-G", "Ninja", "-S", str(source / "llvm"), "-B", str(host_build),
-        "-DCMAKE_BUILD_TYPE=Release", "-DLLVM_TARGETS_TO_BUILD=AArch64",
+        "-DCMAKE_BUILD_TYPE=Release", "-DLLVM_TARGETS_TO_BUILD=",
         "-DLLVM_INCLUDE_TESTS=OFF", "-DLLVM_INCLUDE_BENCHMARKS=OFF",
         "-DLLVM_ENABLE_LIBXML2=OFF", "-DLLVM_ENABLE_ZSTD=OFF", "-DLLVM_ENABLE_ZLIB=OFF",
     ], check=True)
@@ -197,6 +197,10 @@ def build_compiler_rt(work: Path) -> None:
     build = work / "rt-build"
     subprocess.run(compiler_rt_command(source, build, llvm, sdk, sdk_version), check=True)
     subprocess.run(["cmake", "--build", str(build), "--parallel", str(os.cpu_count() or 2)], check=True)
+    package_compiler_rt(work, build, llvm, source, sdk_version)
+
+
+def package_compiler_rt(work: Path, build: Path, llvm: Path, source: Path, sdk_version: str) -> None:
     dest = work / "package/lib/clang/21/lib/darwin"
     dest.mkdir(parents=True)
     for path in (build / "lib/darwin").glob("libclang_rt.*osx*"):
@@ -216,12 +220,16 @@ def build_compiler_rt(work: Path) -> None:
     for path in dest.glob("*.dylib"):
         # ld64.lld signs arm64 output; independently verify the complete signature.
         subprocess.run([str(signer), "verify", "-C", "/dev/null", str(path)], check=True)
-    symbols = subprocess.check_output([str(llvm / "bin/llvm-nm"), str(dest / "libclang_rt.osx.a")], text=True)
-    if "___isPlatformVersionAtLeast" not in symbols:
-        raise RuntimeError("Darwin builtins lack __isPlatformVersionAtLeast")
+    verify_builtins(dest / "libclang_rt.osx.a", llvm / "bin/llvm-nm")
     shutil.copytree(source / "compiler-rt/include/sanitizer", work / "package/lib/clang/21/include/sanitizer")
     shutil.copy2(source / "compiler-rt/LICENSE.TXT", work / "package/LICENSE.TXT")
     (work / "meta.json").write_text(json.dumps({
         "llvm_version": LLVM_VERSION, "source_url": LLVM_URL, "source_sha256": LLVM_SHA256,
         "sdk_version": sdk_version, "target": "aarch64-apple-darwin",
     }, indent=2) + "\n")
+
+
+def verify_builtins(archive: Path, nm: Path) -> None:
+    symbols = subprocess.check_output([str(nm), "--defined-only", "--extern-only", str(archive)], text=True)
+    if not re.search(r"\b___isPlatformVersionAtLeast$", symbols, re.MULTILINE):
+        raise RuntimeError("Darwin builtins lack a definition of __isPlatformVersionAtLeast")
