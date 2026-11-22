@@ -18,7 +18,7 @@
         "url": "cargo-binstall/manifest.json",
         "size_bytes": 74032,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "b134778d16cc0a31f9b180f6a864901f99e1cf9eb4bad25b9d33ae2ae1c559ed"
+        "sha256": "735eebd36e2adb03497858b5ae0dbc3ceb26ead8cf1b952769b8f682033964e6"
       },
       "summary": "cargo-bins/cargo-binstall",
       "kind_hint": "tool"
@@ -126,9 +126,9 @@
     "zccache": {
       "descriptor": {
         "url": "zccache/manifest.json",
-        "size_bytes": 355045,
+        "size_bytes": 355071,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "fa9ebbf48a8dfb7fc8523a74456310fc3a043326e66f49aaad90029833103b2c"
+        "sha256": "b7dece898cdf3b6d0b28eb60239e33795a614e6c99b0f1f73b835e3d2af9f433"
       },
       "summary": "zackees/zccache",
       "kind_hint": "tool"
