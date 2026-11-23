@@ -56,9 +56,9 @@
     "cargo-xwin": {
       "descriptor": {
         "url": "cargo-xwin/manifest.json",
-        "size_bytes": 177912,
+        "size_bytes": 180466,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "17cdcb8b3b1a8c0900053790fccf5e58006ea4a1f6d5af3ade7a84b9c37edd47"
+        "sha256": "087256eb7836eca4b35850c4e3ab70708c547968483ee9c58182632dfca95260"
       },
       "summary": "rust-cross/cargo-xwin",
       "kind_hint": "tool"
@@ -126,9 +126,9 @@
     "zccache": {
       "descriptor": {
         "url": "zccache/manifest.json",
-        "size_bytes": 355071,
+        "size_bytes": 355097,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "b7dece898cdf3b6d0b28eb60239e33795a614e6c99b0f1f73b835e3d2af9f433"
+        "sha256": "1e370a3df244defdf140b8002e7de43ca2307d80e8932e93c5267d2176cfc59a"
       },
       "summary": "zackees/zccache",
       "kind_hint": "tool"
