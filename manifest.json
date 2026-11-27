@@ -56,9 +56,9 @@
     "cargo-xwin": {
       "descriptor": {
         "url": "cargo-xwin/manifest.json",
-        "size_bytes": 180466,
+        "size_bytes": 183020,
         "media_type": "application/vnd.manifest.v1+json",
-        "sha256": "087256eb7836eca4b35850c4e3ab70708c547968483ee9c58182632dfca95260"
+        "sha256": "7748bb601299fed23300baaf2bcb1cd4625dc6503a95fa17d57e7ecf13d54643"
       },
       "summary": "rust-cross/cargo-xwin",
       "kind_hint": "tool"
